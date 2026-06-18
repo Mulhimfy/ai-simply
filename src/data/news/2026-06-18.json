@@ -1,0 +1,198 @@
+{
+  "date": "2026-06-18",
+  "fetchedAt": "2026-06-18T11:06:11.394Z",
+  "items": [
+    {
+      "title": "Geoengineering still faces major practical challenges",
+      "link": "https://www.technologyreview.com/2026/06/18/1139227/geoengineering-engineering-challenges/",
+      "date": "Thu, 18 Jun 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The search for dark matter has been blown wide open",
+      "link": "https://www.technologyreview.com/2026/06/18/1138755/search-for-dark-matter-blown-wide-open/",
+      "date": "Thu, 18 Jun 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The UK Will Scan Asylum-Seekers’ Faces for Age Checks—Despite Knowing the Tech Is Flawed",
+      "link": "https://www.wired.com/story/facial-age-estimate-uk-asylum-seekers/",
+      "date": "Thu, 18 Jun 2026 06:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "How to turn off AI in your Google Docs",
+      "link": "https://techcrunch.com/2026/06/17/how-to-turn-off-ai-in-your-google-docs/",
+      "date": "Thu, 18 Jun 2026 01:23:51 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "The Korean Telecom Giant at the Center of Anthropic’s Mythos Controversy",
+      "link": "https://www.wired.com/story/sk-telecom-anthropic-mythos-export-controls/",
+      "date": "Wed, 17 Jun 2026 22:52:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Roelof Botha joins SpaceX’s board of directors",
+      "link": "https://techcrunch.com/2026/06/17/roelof-botha-joins-spacexs-board-of-directors/",
+      "date": "Wed, 17 Jun 2026 20:32:52 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "After unveiling ridiculously expensive AR glasses, Snap’s stock takes a dive",
+      "link": "https://techcrunch.com/2026/06/17/after-unveiling-ridiculously-expensive-ar-glasses-snaps-stock-takes-a-dive/",
+      "date": "Wed, 17 Jun 2026 20:24:28 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "NEA’s Tiffany Luck says enterprises are still figuring out their AI ROI",
+      "link": "https://techcrunch.com/video/neas-tiffany-luck-says-enterprises-are-still-figuring-out-their-ai-roi/",
+      "date": "Wed, 17 Jun 2026 20:17:38 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "AI coding agents taught robots how to install GPUs and cut zip ties",
+      "link": "https://arstechnica.com/ai/2026/06/ai-coding-agents-can-autonomously-direct-robot-training/",
+      "date": "Wed, 17 Jun 2026 19:25:19 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Anthropic got hit by export rules nobody understands",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/951703/anthropic-shutdown-export-controls",
+      "date": "2026-06-17T14:28:50-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Operating a Humanoid With Your Body Is a Hot Job in China’s Hardware Capital",
+      "link": "https://www.wired.com/story/humanoid-robot-training-in-chinas-hardware-capital/",
+      "date": "Wed, 17 Jun 2026 18:25:35 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "\"Dangerous\" AI models are coming no matter what",
+      "link": "https://arstechnica.com/ai/2026/06/dangerous-ai-models-are-coming-no-matter-what/",
+      "date": "Wed, 17 Jun 2026 17:50:46 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Two-thirds of Americans think AI is advancing too quickly",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/951653/pew-research-ai-chatbot-usage-advancing-too-quickly",
+      "date": "2026-06-17T13:20:24-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The White House Wants Anthropic to Block All Jailbreaks. That May Not Be Possible",
+      "link": "https://www.wired.com/story/the-white-house-wants-anthropic-to-block-all-jailbreaks-that-may-not-be-possible/",
+      "date": "Wed, 17 Jun 2026 17:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Vibe-decoding the White House-Anthropic fight over Fable",
+      "link": "https://www.theverge.com/column/951516/trump-anthropic-feud-mythos-fable-white-house",
+      "date": "2026-06-17T12:27:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Can anyone look cool wearing Snap’s $2,000 glasses?",
+      "link": "https://www.theverge.com/report/951481/snap-specs-wearables-smart-glasses-fashion",
+      "date": "2026-06-17T12:13:34-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Ten months later, the $100 Google Home Speaker is finally available for preorder",
+      "link": "https://arstechnica.com/google/2026/06/the-gemini-powered-google-home-speaker-arrives-on-june-25-for-100/",
+      "date": "Wed, 17 Jun 2026 15:57:14 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "MolmoMotion: Language-guided 3D motion forecasting",
+      "link": "https://huggingface.co/blog/allenai/molmomotion",
+      "date": "Wed, 17 Jun 2026 15:26:44 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "How Musicians Can Get Paid for Training AI",
+      "link": "https://spectrum.ieee.org/ai-music-attribution",
+      "date": "Wed, 17 Jun 2026 15:04:23 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: a reality check for geoengineering and the science of interoception",
+      "link": "https://www.technologyreview.com/2026/06/17/1139200/the-download-solar-geoengineering-interoception/",
+      "date": "Wed, 17 Jun 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "General Motors Is Cutting Its Development Cycles in Half",
+      "link": "https://spectrum.ieee.org/gm-ai-design",
+      "date": "Wed, 17 Jun 2026 12:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "From the Hugging Face Hub to robot hardware with Strands Agents and LeRobot",
+      "link": "https://huggingface.co/blog/amazon/strands-lerobot-hub-to-hardware",
+      "date": "Wed, 17 Jun 2026 10:18:05 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "GLM-5.2: Built for Long-Horizon Tasks",
+      "link": "https://huggingface.co/blog/zai-org/glm-52-blog",
+      "date": "Wed, 17 Jun 2026 09:01:25 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Entrepreneurs in Nairobi make the case for going solar",
+      "link": "https://www.technologyreview.com/2026/06/17/1138600/entrepreneurs-nairobi-case-for-going-solar/",
+      "date": "Wed, 17 Jun 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Agentic Resource Discovery: Let agents search",
+      "link": "https://huggingface.co/blog/agentic-resource-discovery-launch",
+      "date": "Wed, 17 Jun 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Trump admin tries to block Clean Air Act lawsuit over xAI's gas turbines",
+      "link": "https://arstechnica.com/tech-policy/2026/06/trump-admin-helps-xai-fight-pollution-lawsuit-says-military-needs-grok-for-war/",
+      "date": "Tue, 16 Jun 2026 22:22:44 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Visual Language Models Train Robots to Read Human Emotions",
+      "link": "https://spectrum.ieee.org/robot-emotions-visual-language-models",
+      "date": "Sat, 13 Jun 2026 13:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "How a Google DeepMind Spin-off Hunts Hidden Drug Targets",
+      "link": "https://spectrum.ieee.org/isomorphic-labs-ai-drug-discovery",
+      "date": "Thu, 11 Jun 2026 12:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Google just redesigned the search box for the first time in 25 years — here’s why it matters more than you think.",
+      "link": "https://venturebeat.com/technology/google-just-redesigned-the-search-box-for-the-first-time-in-25-years-heres-why-it-matters-more-than-you-think",
+      "date": "Tue, 19 May 2026 17:45:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Railway secures $100 million to challenge AWS with AI-native cloud infrastructure",
+      "link": "https://venturebeat.com/infrastructure/railway-secures-usd100-million-to-challenge-aws-with-ai-native-cloud",
+      "date": "Thu, 22 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Claude Code costs up to $200 a month. Goose does the same thing for free.",
+      "link": "https://venturebeat.com/infrastructure/claude-code-costs-up-to-usd200-a-month-goose-does-the-same-thing-for-free",
+      "date": "Mon, 19 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Listen Labs raises $69M after viral billboard hiring stunt to scale AI customer interviews",
+      "link": "https://venturebeat.com/technology/listen-labs-raises-usd69m-after-viral-billboard-hiring-stunt-to-scale-ai",
+      "date": "Fri, 16 Jan 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
