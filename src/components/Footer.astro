@@ -87,8 +87,8 @@ const freeToolLinks = [
 	<div class="nl-toast__body">
 		<div class="nl-toast__icon" aria-hidden="true">📬</div>
 		<div class="nl-toast__copy">
-			<h3>Get the AI brief.</h3>
-			<p>Plain-English AI news. Free. Once a week.</p>
+			<h3>Get deep business tactics</h3>
+			<p>Actionable strategies to grow your business — free, weekly.</p>
 		</div>
 	</div>
 	<form id="nl-toast-form" class="nl-toast__form" action={BEEHIIV_FORM_URL} method="POST" target="_blank" rel="noopener">
@@ -125,9 +125,9 @@ const freeToolLinks = [
 	if (!toast || !toastForm || !toastClose || !toastSuccess) return;
 
 	const STORAGE_KEY = 'nl_toast_state';
-	const SHOW_DELAY_MS = 25 * 1000;
-	const DISMISS_HIDE_DAYS = 7;
-	const SUBSCRIBED_HIDE_DAYS = 365;
+	const SCROLL_TRIGGER_PX = 300;
+	// Reset each page load / SPA navigation so the toast reappears on every page.
+	let closedThisView = false;
 
 	function getState() {
 		try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { return {}; }
@@ -136,35 +136,34 @@ const freeToolLinks = [
 		try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {}
 	}
 	function shouldShow() {
-		const s = getState();
-		if (s.subscribed) return false;
-		if (s.hideUntil && Date.now() < s.hideUntil) return false;
-		return true;
+		if (closedThisView) return false;
+		if (toast.classList.contains('nl-toast--in')) return false;
+		return !getState().subscribed; // stop nagging people who already subscribed
 	}
 	function showToast() {
 		if (!shouldShow()) return;
 		toast.hidden = false;
 		requestAnimationFrame(() => toast.classList.add('nl-toast--in'));
 	}
-	function hideToast(daysHidden) {
+	function hideToast() {
 		toast.classList.remove('nl-toast--in');
 		setTimeout(() => { toast.hidden = true; }, 250);
-		setState(Object.assign(getState(), { hideUntil: Date.now() + daysHidden * 24 * 60 * 60 * 1000 }));
 	}
 
-	// Single timer across SPA navigations so we don't re-trigger on every page change.
-	if (window.__nlToastTimer) clearTimeout(window.__nlToastTimer);
-	if (shouldShow()) {
-		window.__nlToastTimer = setTimeout(showToast, SHOW_DELAY_MS);
-	}
+	// Show on scroll, on every page. Guard against stacking listeners across SPA navigations.
+	const onScroll = () => { if (window.scrollY > SCROLL_TRIGGER_PX) showToast(); };
+	if (window.__nlToastScroll) window.removeEventListener('scroll', window.__nlToastScroll);
+	window.__nlToastScroll = onScroll;
+	window.addEventListener('scroll', onScroll, { passive: true });
+	onScroll(); // handle pages that load already scrolled
 
-	toastClose.addEventListener('click', () => hideToast(DISMISS_HIDE_DAYS));
+	toastClose.addEventListener('click', () => { closedThisView = true; hideToast(); });
 
 	toastForm.addEventListener('submit', () => {
-		setState({ subscribed: true, hideUntil: Date.now() + SUBSCRIBED_HIDE_DAYS * 24 * 60 * 60 * 1000 });
+		setState({ subscribed: true });
 		toastForm.hidden = true;
 		toastSuccess.hidden = false;
-		setTimeout(() => hideToast(SUBSCRIBED_HIDE_DAYS), 4000);
+		setTimeout(hideToast, 4000);
 	});
 })();
 </script>
