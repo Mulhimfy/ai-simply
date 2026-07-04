@@ -1,6 +1,6 @@
 ---
 name: SlidesAI
-description: Google Slides add-on that turns any text or topic into a presentation automatically using AI.
+description: Google Slides add-on that turns pasted text or a topic into a formatted presentation automatically.
 category: ai-productivity
 subcategory: AI Presentation Generator
 url: https://www.slidesai.io
@@ -8,36 +8,44 @@ pricing: freemium
 tags: [google-slides, presentations, ai-generator, add-on, education]
 featured: false
 pubDate: 2026-04-05
+updatedDate: 2026-07-04
 rating: 4.0
 ratingCount: 980
 pros:
-  - Works directly inside Google Slides — no new tool to learn
-  - Generates full decks from pasted text or a topic
-  - Free tier available
-  - Good for teachers and students making educational slides
+  - "Runs directly inside Google Slides — no separate app to learn"
+  - "Generates a full deck from pasted text or a topic prompt"
+  - "Free tier available for light use"
+  - "Handles many languages, useful for educators"
 cons:
-  - Limited design customization compared to standalone tools
-  - Free plan restricts to 3 presentations per month
+  - "Design polish trails standalone tools like Gamma and Tome"
+  - "Free plan caps presentations and character count"
+  - "Output usually needs manual cleanup and reformatting"
 ---
 
-SlidesAI is a Google Slides add-on that generates complete presentations from any text you provide. Paste an article, a document, or a topic, choose a style, and it creates a full slide deck inside Google Slides — with slides, bullet points, and layouts already formatted.
+SlidesAI is a Google Slides add-on that generates a complete presentation from text you provide. Paste an article, notes, or a topic, choose a style and number of slides, and it produces a formatted deck — titles, bullet points, and layouts — directly inside Google Slides. Because it lives in the add-on menu, it fits users who already work in Google Workspace and don't want to move content into a separate design app.
+
+It competes with standalone AI deck builders like Gamma, Tome, and Beautiful.ai. Those tools generally produce more visually polished results, but they live outside Slides. SlidesAI's trade-off is convenience over design: it is fastest when your final deck has to be a native Google Slides file you'll keep editing by hand.
 
 ## Key Features
 
-- Converts text, documents, or topics into slide decks
-- Works as a Google Slides add-on — no separate app
+- Converts pasted text, documents, or a topic into a slide deck
+- Runs as a native Google Slides add-on — no export/import step
 - Multiple presentation styles and color themes
-- AI rewrites slides for conciseness and clarity
-- Presenter notes generated automatically
-- Supports 100+ languages
+- Automatic condensing of long text into bullet points
+- Generates speaker notes for slides
+- Supports a wide range of languages
 
 ## Pricing
 
-- **Free**: 3 presentations/month, up to 2,500 characters
-- **Basic ($10/month)**: 10 presentations, 6,000 characters
-- **Pro ($20/month)**: Unlimited presentations, premium themes
-- **Premium ($30/month)**: Priority processing, API access
+- **Free**: A few presentations per month with a per-request character limit
+- **Basic (~$10/month)**: More presentations and higher character limits
+- **Pro (~$20/month)**: Unlimited presentations and premium themes
+- **Premium (~$30/month)**: Priority processing and additional features
 
 ## Best For
 
-Teachers, students, and professionals who already use Google Workspace and want the fastest way to turn notes or documents into slides without switching tools.
+Teachers, students, and professionals already in Google Workspace who need to turn notes or a document into an editable Slides deck quickly, and who plan to refine the layout themselves.
+
+## Limitations
+
+The generated design is functional rather than striking, so decks usually need manual cleanup, and dedicated tools like Gamma or Beautiful.ai look better out of the box. The free plan's presentation and character caps are tight, and SlidesAI only outputs to Google Slides — there's no PowerPoint-native workflow.
