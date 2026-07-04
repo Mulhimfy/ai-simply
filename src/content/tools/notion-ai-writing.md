@@ -1,51 +1,50 @@
 ---
-name: Anyword
-description: AI copywriting platform that scores ads, emails, and landing pages for predicted conversion before you publish.
+name: Notion AI
+description: Notion's built-in AI writing assistant — draft, summarize, and edit inside the same docs, wikis, and notes where your work already lives.
 category: ai-writing
-subcategory: AI Copywriting
-url: https://anyword.com
+subcategory: AI Writing Assistant
+url: https://www.notion.so/product/ai
 pricing: freemium
-tags: [copywriting, ads, email, landing-pages, conversion]
+tags: [writing, notes, summarize, docs, productivity]
 featured: false
 pubDate: 2026-03-31
 updatedDate: 2026-07-04
 pros:
-  - "Predicts conversion performance, not just fluency"
-  - "Covers every paid channel — Google, Meta, LinkedIn, email"
-  - "Brand voice enforcement keeps campaigns consistent"
-  - "Can score and rewrite copy you already have"
+  - "Writes in the same workspace where your docs and notes already live"
+  - "Strong at summarizing long pages and meeting notes"
+  - "Can pull context from across connected Notion pages"
+  - "One assistant handles drafting, editing, and Q&A"
 cons:
-  - "Pricing runs higher than general AI writers"
-  - "Scores are estimates, weighted toward US/English data"
-  - "Overkill if you only need long-form blog content"
+  - "Weaker at long-form SEO copy than dedicated writers"
+  - "Only useful if your content already lives in Notion"
+  - "Add-on pricing stacks on top of the base Notion plan"
 ---
 
-Anyword is a marketing-focused AI writer built for the people who buy ads for a living. Instead of only generating copy, it attaches a Predictive Performance Score to each variation — a conversion-likelihood estimate drawn from real campaign outcomes — so you can rank ten options and ship the strongest one. It's the same engine behind Anyword's main product, framed here around paid-channel copywriting.
+Notion AI is the writing assistant built directly into Notion, the all-in-one docs, wiki, and notes app. Rather than opening a separate tool, you trigger it inside any page — highlight text to rewrite it, hit space on a blank line to draft from a prompt, or ask it to summarize a wall of meeting notes into action items. The pitch is proximity: the AI works where your content already sits.
 
-The distinction from tools like Jasper, Copy.ai, or Writesonic is the outcome data. Those writers are tuned for readable output at volume; Anyword is tuned to guess what will actually get clicks and sign-ups. It generates ad copy for Google, Facebook, Instagram, and LinkedIn, subject lines with predicted open rates, and full landing-page sections, each carrying its own score.
+Because it reads the surrounding workspace, Notion AI is strongest at grounded tasks — turning rough bullet points into a clean paragraph, tightening a draft, translating, adjusting tone, or answering questions about what's on the page. Notion AI Q&A extends that across connected pages, so you can ask "what did we decide about pricing?" and get an answer pulled from your own docs.
 
-Brand voice training keeps the tone consistent across a campaign, and the Data-Driven Editor lets you paste in existing copy to have it scored and improved rather than rewritten from scratch.
+The comparison with Jasper, Copy.ai, or Writesonic comes down to purpose. Those are campaign-copy engines tuned to generate marketing content at volume. Notion AI is a generalist assistant for people who write and organize inside Notion — notes, project docs, and internal wikis rather than ad variations.
 
 ## Key Features
 
-- Predictive performance scoring on every generated variation
-- Channel-specific ad copy for Google, Meta, and LinkedIn
-- Email subject lines with predicted open rates
-- Landing-page and website copy generation
-- Brand voice training and enforcement across a team
-- A/B variation generation for headlines and CTAs
+- Inline drafting, rewriting, and tone adjustment on any page
+- One-click summaries of long documents and meeting notes
+- AI Q&A that answers from across your connected Notion pages
+- Autofill for database properties (summaries, tags, key takeaways)
+- Translation and grammar/clarity fixes
+- Action-item and to-do extraction from raw notes
 
 ## Pricing
 
-- **Trial**: Limited free access to test scoring before committing
-- **Starter (~$39–49/month)**: Unlimited words, all channels, one seat
-- **Data-Driven (~$79–99/month)**: Custom scoring models and advanced analytics
-- **Business/Enterprise**: Multiple brand voices, team workflows, custom pricing
+- **Free**: A limited number of AI trial responses on the free plan
+- **Add-on (~$8–10/member/month)**: Unlimited AI usage layered onto a paid Notion plan
+- **Business/Enterprise**: AI included or bundled with higher-tier Notion plans
 
 ## Best For
 
-Performance marketers and growth teams running paid social, search, and email campaigns — anyone who wants a data-backed way to choose between copy variations instead of relying on gut feel.
+Teams and individuals who already run their work in Notion and want drafting, summarizing, and document Q&A without leaving the app. It's a natural fit for internal docs, project notes, and knowledge bases.
 
 ## Limitations
 
-The performance score is a prediction, not a promise, and it leans on US, English-language campaign data, so treat it as guidance rather than certainty elsewhere. Anyword costs more than general writers like Copy.ai, and if your main need is long-form SEO articles rather than conversion copy, a dedicated tool such as Frase is a better fit.
+Notion AI only earns its keep if your content lives in Notion — as a standalone writer it trails dedicated tools, and for long-form SEO articles something like Frase or Surfer SEO is stronger. Pricing is an add-on stacked on the base plan, so heavy AI users pay for both, and output quality depends on how well your workspace is organized.
