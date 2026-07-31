@@ -1,0 +1,198 @@
+{
+  "date": "2026-07-31",
+  "fetchedAt": "2026-07-31T09:38:53.230Z",
+  "items": [
+    {
+      "title": "Montana’s new “right to try” law can’t come soon enough for some",
+      "link": "https://www.technologyreview.com/2026/07/31/1140945/montanas-new-right-to-try-law-cant-come-soon-enough-for-some/",
+      "date": "Fri, 31 Jul 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Anthropic Says Claude Hacked 3 Organizations During Cybersecurity Tests",
+      "link": "https://www.wired.com/story/anthropic-says-claude-hacked-real-systems-during-cybersecurity-tests/",
+      "date": "Fri, 31 Jul 2026 01:24:26 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Anthropic says its own AI models breached three companies during security tests",
+      "link": "https://techcrunch.com/2026/07/30/anthropic-says-its-own-ai-models-breached-three-companies-during-security-tests/",
+      "date": "Fri, 31 Jul 2026 01:06:54 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "AI hedge fund Situational Awareness may have sold its public portfolio, but it still has its Anthropic shares",
+      "link": "https://techcrunch.com/2026/07/30/ai-hedge-fund-situational-awareness-may-have-sold-its-public-portfolio-but-it-still-has-its-anthropic-shares/",
+      "date": "Thu, 30 Jul 2026 23:25:58 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Reddit reports a solid quarter but shows signs of AI’s impact",
+      "link": "https://techcrunch.com/2026/07/30/reddit-reports-a-solid-quarter-but-shows-signs-of-ais-impact/",
+      "date": "Thu, 30 Jul 2026 23:08:58 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Investors love AI, as long as you’re a cloud host",
+      "link": "https://techcrunch.com/2026/07/30/investors-love-ai-as-long-as-youre-a-cloud-host/",
+      "date": "Thu, 30 Jul 2026 22:41:41 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Tim Cook hints at iCloud Plus tier for AI power users",
+      "link": "https://www.theverge.com/tech/973552/apple-ceo-tim-cook-icloud-plus-ai",
+      "date": "2026-07-30T18:29:45-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The loss of Situational Awareness",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/973467/ai-bet-situational-awareness-oops-stonks",
+      "date": "2026-07-30T16:46:25-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Everyone Is Freaking Out About OpenAI and Anthropic’s Race for Dominance",
+      "link": "https://www.wired.com/story/everyone-is-freaking-out-about-openai-and-anthropics-race-for-dominance/",
+      "date": "Thu, 30 Jul 2026 20:12:57 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Chrome may get faster updates with no restart required",
+      "link": "https://arstechnica.com/ai/2026/07/chrome-may-get-faster-updates-with-no-restart-required/",
+      "date": "Thu, 30 Jul 2026 19:26:56 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "LinkedIn actually adds a ‘seems like AI slop’ button",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/973384/linkedin-seems-like-ai-slop-button",
+      "date": "2026-07-30T14:43:26-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Google reveals Gemini Robotics 2.0, promising improved dexterity and safety",
+      "link": "https://arstechnica.com/ai/2026/07/google-reveals-gemini-robotics-2-0-promising-improved-dexterity-and-safety/",
+      "date": "Thu, 30 Jul 2026 17:58:02 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Nvidia’s Open Source Alliance Is Missing Some Key Names: OpenAI and Anthropic",
+      "link": "https://www.wired.com/story/nvidias-open-source-alliance-snubs-openai-and-anthropic/",
+      "date": "Thu, 30 Jul 2026 17:51:10 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Google DeepMind’s new AI model can control a robot’s entire body",
+      "link": "https://www.theverge.com/tech/973276/google-deepmind-gemini-robotics-2-whole-body",
+      "date": "2026-07-30T13:18:45-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Montana’s plan to become an experimental medical hub just pushed forward",
+      "link": "https://www.technologyreview.com/2026/07/30/1140942/montana-experimental-medical-hub-pushed-forward-right-to-try/",
+      "date": "Thu, 30 Jul 2026 17:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Chrome Needs Twice-a-Week Patching Thanks to AI Bug Hunting",
+      "link": "https://www.wired.com/story/chrome-needs-twice-a-week-patching-thanks-to-ai-bug-hunting-for-now/",
+      "date": "Thu, 30 Jul 2026 17:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "GPU Management: Why Idle GPUs Are the New Grounded Aircraft",
+      "link": "https://huggingface.co/blog/Dharma-AI/gpu-management",
+      "date": "Thu, 30 Jul 2026 15:09:09 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "New MCP specification addresses the main barrier to enterprise adoption",
+      "link": "https://arstechnica.com/ai/2026/07/with-a-stateless-makeover-new-mcp-spec-targets-enterprise-scale/",
+      "date": "Thu, 30 Jul 2026 14:53:07 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Are AI Models Working Harder Than They Need to?",
+      "link": "https://spectrum.ieee.org/ai-energy-weightless-neural-networks",
+      "date": "Thu, 30 Jul 2026 13:35:32 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: tricking LLMs, and reviving geothermal plants",
+      "link": "https://www.technologyreview.com/2026/07/30/1140936/the-download-tricking-llms-reviving-geothermal/",
+      "date": "Thu, 30 Jul 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "A fundamental flaw leaves LLMs strikingly vulnerable to attack",
+      "link": "https://www.technologyreview.com/2026/07/30/1140927/a-fundamental-flaw-leaves-llms-vulnerable-to-attack/",
+      "date": "Thu, 30 Jul 2026 10:15:19 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Mythos attack on 3rd-round PQC algorithm candidate puts it out of commission",
+      "link": "https://arstechnica.com/security/2026/07/mythos-uncovers-crypto-weaknesses-that-went-unknown-for-years/",
+      "date": "Wed, 29 Jul 2026 22:07:06 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Siobahn Day Grady Wants Everyone to Be AI Literate",
+      "link": "https://spectrum.ieee.org/siobahn-day-grady-ai-hbcu",
+      "date": "Wed, 29 Jul 2026 14:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "AI Is Hyper-Scaling Digital Inequality",
+      "link": "https://spectrum.ieee.org/ai-digital-divide",
+      "date": "Wed, 29 Jul 2026 11:00:04 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The OlmoEarth Platform: Geospatial inference at planetary scale",
+      "link": "https://huggingface.co/blog/allenai/olmoearth-infrastructure",
+      "date": "Tue, 28 Jul 2026 16:27:42 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "LFM2.5-Encoders for Fast Long-Context Inference on CPU",
+      "link": "https://huggingface.co/blog/LiquidAI/lfm2-5-encoders",
+      "date": "Tue, 28 Jul 2026 15:01:45 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Why AI-Driven Cognitive Systems Are Redefining Radar and Electronic Warfare",
+      "link": "https://content.knowledgehub.wiley.com/improving-the-capabilities-of-cognitive-radar-and-electronic-warfare-systems/",
+      "date": "Mon, 27 Jul 2026 17:54:07 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "NVIDIA Cosmos-H-Dreams: Bringing Real-Time Generative Simulation to Surgical Robotics",
+      "link": "https://huggingface.co/blog/nvidia/cosmos-h-dreams",
+      "date": "Mon, 27 Jul 2026 09:32:20 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Google just redesigned the search box for the first time in 25 years — here’s why it matters more than you think.",
+      "link": "https://venturebeat.com/technology/google-just-redesigned-the-search-box-for-the-first-time-in-25-years-heres-why-it-matters-more-than-you-think",
+      "date": "Tue, 19 May 2026 17:45:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Railway secures $100 million to challenge AWS with AI-native cloud infrastructure",
+      "link": "https://venturebeat.com/infrastructure/railway-secures-usd100-million-to-challenge-aws-with-ai-native-cloud",
+      "date": "Thu, 22 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Claude Code costs up to $200 a month. Goose does the same thing for free.",
+      "link": "https://venturebeat.com/infrastructure/claude-code-costs-up-to-usd200-a-month-goose-does-the-same-thing-for-free",
+      "date": "Mon, 19 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Listen Labs raises $69M after viral billboard hiring stunt to scale AI customer interviews",
+      "link": "https://venturebeat.com/technology/listen-labs-raises-usd69m-after-viral-billboard-hiring-stunt-to-scale-ai",
+      "date": "Fri, 16 Jan 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
