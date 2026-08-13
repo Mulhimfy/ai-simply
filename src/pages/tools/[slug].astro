@@ -35,6 +35,29 @@ const related = allTools
 const allPosts = await getCollection('blog');
 const relatedPosts = relatedArticlesForTool(tool, allPosts, 3);
 
+/**
+ * Comparison pages are generated for every same-subcategory pair, but only the
+ * rated ones are indexable (see src/pages/tools/vs/[slug].astro). Link to those
+ * so they are reachable by crawl rather than sitemap alone — an indexable page
+ * with no internal links pointing at it rarely gets picked up.
+ */
+const sortedIds = allTools.map(t => t.id);
+const headToHead = tool.data.rating
+	? allTools
+		.filter(t =>
+			t.id !== tool.id &&
+			!!t.data.rating &&
+			(t.data.subcategory ?? t.data.category) === (tool.data.subcategory ?? tool.data.category),
+		)
+		.map(t => {
+			// Pair slug order follows collection order, matching getStaticPaths.
+			const [first, second] = sortedIds.indexOf(tool.id) < sortedIds.indexOf(t.id)
+				? [tool.id, t.id]
+				: [t.id, tool.id];
+			return { name: t.data.name, href: `/tools/vs/${first}-vs-${second}/` };
+		})
+	: [];
+
 // SEO-optimised title and description
 const year = (tool.data.updatedDate ?? tool.data.pubDate).getFullYear();
 const seoTitle = `${tool.data.name} Review (${year}): Features, Pricing & Alternatives`;
@@ -335,6 +358,20 @@ const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric',
 		</div>
 	</section>
 
+	<!-- Head-to-head: only the indexable comparison pages, so they can be crawled -->
+	{headToHead.length > 0 && (
+		<section class="section">
+			<div class="container">
+				<h2 class="section-heading" style="margin-bottom:1rem">{tool.data.name} Head-to-Head</h2>
+				<div class="h2h-links">
+					{headToHead.map(h => (
+						<a href={h.href} class="h2h-link">{tool.data.name} vs {h.name}</a>
+					))}
+				</div>
+			</div>
+		</section>
+	)}
+
 	<!-- Related Tools -->
 	{related.length > 0 && (
 		<section class="section section--alt">
@@ -618,6 +655,19 @@ const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric',
 
 	.pros li::marker { color: #00875A; }
 	.cons li::marker { color: #C0392B; }
+
+	.h2h-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+	.h2h-link {
+		display: inline-block;
+		padding: 0.45rem 0.9rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 999px;
+		font-size: 0.88rem;
+		font-weight: 600;
+		color: rgb(var(--black));
+		text-decoration: none;
+	}
+	.h2h-link:hover { border-color: var(--primary); color: var(--primary); }
 
 	/* Related */
 	.section { padding: 3rem 0; }

@@ -62,12 +62,74 @@ function score(t: typeof toolA) {
 const scoreA = score(toolA);
 const scoreB = score(toolB);
 const winner = scoreA > scoreB ? toolA : scoreB > scoreA ? toolB : null;
+
+/**
+ * Every tool review already carries hand-written pros and cons, and this page
+ * was ignoring them — which is why it rendered ~150 words and had to be
+ * noindexed. Surfacing them makes the comparison genuinely useful without
+ * inventing a single new claim.
+ */
+const prosA: string[] = toolA.data.pros ?? [];
+const consA: string[] = toolA.data.cons ?? [];
+const prosB: string[] = toolB.data.pros ?? [];
+const consB: string[] = toolB.data.cons ?? [];
+
+const nameA = toolA.data.name;
+const nameB = toolB.data.name;
+
+/** A verdict built from real differences, not from a rating subtraction. */
+function buildVerdict(): string {
+	const parts: string[] = [];
+
+	// Pros are written as capitalised capability phrases ("Firefly AI is trained on…"),
+	// so they are quoted after a colon rather than spliced mid-sentence — lowercasing
+	// the first letter would mangle proper nouns and acronyms ("aI tools").
+	const clean = (s: string) => s.trim().replace(/\.$/, '');
+
+	if (prosA[0] && prosB[0]) {
+		parts.push(
+			`Pick ${nameA} for one reason above all: ${clean(prosA[0])}. ` +
+			`Pick ${nameB} instead if this matters more: ${clean(prosB[0])}.`,
+		);
+	} else {
+		parts.push(`${nameA} and ${nameB} both sit in ${catA?.name ?? 'this category'}, with different emphases.`);
+	}
+
+	if (toolA.data.pricing !== toolB.data.pricing) {
+		const label = (t: typeof toolA) => PRICING_BADGE[t.data.pricing].label.toLowerCase();
+		parts.push(`On cost they differ: ${nameA} is ${label(toolA)}, ${nameB} is ${label(toolB)}.`);
+	} else {
+		parts.push(`Both are ${PRICING_BADGE[toolA.data.pricing].label.toLowerCase()}, so price is unlikely to decide it.`);
+	}
+
+	if (consA[0] && consB[0]) {
+		parts.push(`The trade-offs are real on both sides, so weigh ${nameA}'s limits against ${nameB}'s before committing.`);
+	}
+
+	return parts.join(' ');
+}
+const verdictText = buildVerdict();
+
+/**
+ * Staged rollout, deliberately small.
+ *
+ * These pages now carry ~400 words of sourced comparison instead of ~150, which
+ * makes them indexable in principle. But Search Console shows indexing frozen at
+ * 342 pages for 28 days with 45 already refused, so releasing all 199 at once is
+ * exactly the scaled-content pattern that stalls a site further.
+ *
+ * Both tools carrying a hand-assigned editorial rating is the strongest available
+ * proxy for "we actually reviewed these two properly". That yields ~11 pages: a
+ * measurable test batch. If they index and rank, widen the gate; if they are
+ * refused, nothing was risked.
+ */
+const isTestBatch = !!toolA.data.rating && !!toolB.data.rating;
 ---
 
 <!doctype html>
 <html lang="en">
 <head>
-	<BaseHead title={`${seoTitle} | ${SITE_TITLE}`} description={seoDesc} noindex={true} />
+	<BaseHead title={seoTitle} description={seoDesc} noindex={!isTestBatch} />
 	<script type="application/ld+json" set:html={JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",
@@ -197,18 +259,68 @@ const winner = scoreA > scoreB ? toolA : scoreB > scoreA ? toolB : null;
 				</table>
 			</div>
 
-			<!-- Verdict -->
-			{winner && (
-				<div class="verdict-box">
-					<div class="verdict-label">Our Verdict</div>
-					<div class="verdict-content">
-						<strong>{winner.data.name}</strong> edges ahead
-						{winner.data.rating ? ` with a ${winner.data.rating.toFixed(1)}/5 rating` : ''}
-						{winner.data.pricing === 'free' ? ' and a free plan' : ''}.
-						For a full breakdown, see our <a href={`/tools/${winner.id}/`}>{winner.data.name} review</a>.
+			<!-- Strengths and trade-offs, straight from each tool's review -->
+			{(prosA.length > 0 || prosB.length > 0) && (
+				<>
+					<h2 class="compare-heading">Strengths &amp; Trade-offs</h2>
+					<div class="proscons-grid">
+						{[{ t: toolA, pros: prosA, cons: consA }, { t: toolB, pros: prosB, cons: consB }].map(col => (
+							<div class="proscons-card">
+								<h3>{col.t.data.name}</h3>
+								{col.pros.length > 0 && (
+									<>
+										<div class="pc-label pc-label--pro">What it does well</div>
+										<ul class="pc-list pc-list--pro">
+											{col.pros.map(p => <li>{p}</li>)}
+										</ul>
+									</>
+								)}
+								{col.cons.length > 0 && (
+									<>
+										<div class="pc-label pc-label--con">Where it falls short</div>
+										<ul class="pc-list pc-list--con">
+											{col.cons.map(c => <li>{c}</li>)}
+										</ul>
+									</>
+								)}
+							</div>
+						))}
 					</div>
-				</div>
+				</>
 			)}
+
+			<!-- Decision guide -->
+			<h2 class="compare-heading">Which Should You Choose?</h2>
+			<div class="choose-grid">
+				<div class="choose-card">
+					<div class="choose-head">Choose {toolA.data.name} if</div>
+					<ul>
+						{prosA.slice(0, 3).map(p => <li>{p}</li>)}
+						{prosA.length === 0 && <li>{toolA.data.description}</li>}
+						{toolA.data.pricing === 'free' && toolB.data.pricing !== 'free' && <li>You need a tool with no paywall at all.</li>}
+					</ul>
+				</div>
+				<div class="choose-card">
+					<div class="choose-head">Choose {toolB.data.name} if</div>
+					<ul>
+						{prosB.slice(0, 3).map(p => <li>{p}</li>)}
+						{prosB.length === 0 && <li>{toolB.data.description}</li>}
+						{toolB.data.pricing === 'free' && toolA.data.pricing !== 'free' && <li>You need a tool with no paywall at all.</li>}
+					</ul>
+				</div>
+			</div>
+
+			<!-- Verdict -->
+			<div class="verdict-box">
+				<div class="verdict-label">Our Verdict</div>
+				<div class="verdict-content">
+					<p set:html={verdictText} />
+					<p class="verdict-links">
+						Read the full <a href={`/tools/${toolA.id}/`}>{toolA.data.name} review</a> or the
+						full <a href={`/tools/${toolB.id}/`}>{toolB.data.name} review</a> for pricing detail and limitations.
+					</p>
+				</div>
+			</div>
 
 			<!-- Also compare -->
 			{related.length > 0 && (
@@ -353,6 +465,51 @@ const winner = scoreA > scoreB ? toolA : scoreB > scoreA ? toolB : null;
 		width: 30%;
 	}
 	.tbl-badge { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 50px; }
+
+	/* Strengths & trade-offs */
+	.proscons-grid,
+	.choose-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+		margin-bottom: 1.75rem;
+	}
+	@media (min-width: 720px) {
+		.proscons-grid, .choose-grid { grid-template-columns: 1fr 1fr; }
+	}
+	.proscons-card {
+		border: 1px solid var(--border, #e5e7eb);
+		border-radius: var(--radius);
+		padding: 1.1rem 1.25rem;
+	}
+	.proscons-card h3 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+	.pc-label {
+		font-size: 0.7rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.07em;
+		margin: 0.85rem 0 0.4rem;
+	}
+	.pc-label--pro { color: #059669; }
+	.pc-label--con { color: #b45309; }
+	.pc-list { margin: 0; padding-left: 1.1rem; }
+	.pc-list li { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.35rem; }
+	.pc-list--pro li::marker { color: #059669; }
+	.pc-list--con li::marker { color: #b45309; }
+
+	.choose-card {
+		border: 1px solid var(--border, #e5e7eb);
+		border-left: 3px solid var(--primary);
+		border-radius: var(--radius);
+		padding: 1.1rem 1.25rem;
+	}
+	.choose-head { font-weight: 700; font-size: 0.98rem; margin-bottom: 0.6rem; }
+	.choose-card ul { margin: 0; padding-left: 1.1rem; }
+	.choose-card li { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.35rem; }
+
+	.verdict-content p { margin: 0 0 0.6rem; }
+	.verdict-content p:last-child { margin-bottom: 0; }
+	.verdict-links { font-size: 0.85rem; }
 
 	.verdict-box {
 		background: #f0fdf4;

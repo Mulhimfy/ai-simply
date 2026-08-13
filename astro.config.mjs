@@ -82,6 +82,43 @@ async function loadThinSubcategoryPaths() {
 
 const thinSubcategoryPaths = await loadThinSubcategoryPaths();
 
+/**
+ * The staged test batch of comparison pages: those where both tools carry an
+ * editorial rating. Mirrors `isTestBatch` in src/pages/tools/vs/[slug].astro —
+ * every other /tools/vs/ page stays noindex and out of the sitemap.
+ */
+async function loadIndexableVsPaths() {
+	const rated = new Map(); // slug -> subcategory-or-category key
+	let files = [];
+	try {
+		files = await readdir('./src/content/tools');
+	} catch {
+		return new Set();
+	}
+	for (const file of files) {
+		if (!/\.(md|mdx)$/.test(file)) continue;
+		const raw = await readFile(join('./src/content/tools', file), 'utf8');
+		const fm = raw.match(/^---\s*\n([\s\S]*?)\n---/);
+		if (!fm) continue;
+		if (!/^rating:\s*[\d.]+/m.test(fm[1])) continue;
+		const cat = fm[1].match(/^category:\s*['"]?([^'"\n]+)['"]?/m)?.[1]?.trim();
+		const sub = fm[1].match(/^subcategory:\s*['"]?([^'"\n]+)['"]?/m)?.[1]?.trim();
+		rated.set(file.replace(/\.(md|mdx)$/, ''), sub || cat);
+	}
+	// Pairs are only generated within a shared subcategory, and in readdir order.
+	const slugs = [...rated.keys()];
+	const paths = new Set();
+	for (let i = 0; i < slugs.length; i++) {
+		for (let j = i + 1; j < slugs.length; j++) {
+			if (rated.get(slugs[i]) !== rated.get(slugs[j])) continue;
+			paths.add(`/tools/vs/${slugs[i]}-vs-${slugs[j]}/`);
+		}
+	}
+	return paths;
+}
+
+const indexableVsPaths = await loadIndexableVsPaths();
+
 export default defineConfig({
 	site: SITE,
 	integrations: [
@@ -91,7 +128,8 @@ export default defineConfig({
 				const pathname = new URL(page).pathname;
 				// Exclude noindex'd templated pages — they dilute crawl budget.
 				if (pathname.startsWith('/tools/alternatives/')) return false;
-				if (pathname.startsWith('/tools/vs/')) return false;
+				// Comparison pages: only the rated test batch is indexed.
+				if (pathname.startsWith('/tools/vs/')) return indexableVsPaths.has(pathname);
 				if (pathname.startsWith('/tools/tag/')) return false;
 				// Dated news snapshots are noindex'd; the /news/ hub stays.
 				if (/^\/news\/\d{4}-\d{2}-\d{2}\/$/.test(pathname)) return false;
