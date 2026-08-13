@@ -37,12 +37,24 @@ const free = tools.filter(t => t.data.pricing === 'free').length;
 const freemium = tools.filter(t => t.data.pricing === 'freemium').length;
 const paid = tools.filter(t => t.data.pricing === 'paid').length;
 
+/**
+ * Category names already start with "AI" ("AI Coding"), so the old
+ * `Best ${name} AI Tools` pattern produced "Best AI Coding AI Tools" — and
+ * "Others" produced "Best Others AI Tools". Normalise once and reuse.
+ */
+const categoryLabel = category.name === 'Others' ? 'Other AI' : category.name;
+const year = new Date().getFullYear();
+const seoTitle = `Best ${categoryLabel} Tools (${year}) — Ranked & Reviewed`;
+// Lowercase for mid-sentence use, but keep the "AI" initialism capitalised.
+const labelLower = categoryLabel.replace(/[A-Za-z]+/g, w => (w === 'AI' ? w : w.toLowerCase()));
+const seoDesc = `Compare the best ${labelLower} tools in ${year} — ${tools.length} curated picks with pricing, features, and ratings. ${category.description}.`;
+
 // These pages had no structured data at all — they are the main browse hubs,
 // so they get the list of tools they show plus their place in the hierarchy.
 const itemListSchema = {
 	'@context': 'https://schema.org',
 	'@type': 'ItemList',
-	name: `Best ${category.name} AI Tools`,
+	name: `Best ${categoryLabel} Tools`,
 	description: category.description,
 	numberOfItems: tools.length,
 	itemListElement: tools.map((t, i) => ({
@@ -68,8 +80,8 @@ const breadcrumbSchema = {
 <html lang="en">
 <head>
 	<BaseHead
-		title={`${category.name} Tools — Best ${category.name} AI Tools | ${SITE_TITLE}`}
-		description={`Browse the best ${category.name.toLowerCase()} AI tools. ${tools.length} curated tools to ${category.description.toLowerCase()}.`}
+		title={seoTitle}
+		description={seoDesc}
 	/>
 	<script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
 	<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />

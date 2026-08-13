@@ -29,7 +29,16 @@ const {
 	noindex = false,
 } = Astro.props;
 
-const fullTitle = title === SITE_TITLE ? title : `${title} | ${SITE_TITLE}`;
+/**
+ * Append the brand only when it is not already there. Many pages pass a title
+ * that already ends in "| AI Briefs" (or "— AI Briefs"), which used to render
+ * as "… | AI Briefs | AI Briefs" and burn ~11 characters of SERP title space.
+ */
+const brand = SITE_TITLE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const alreadyBranded =
+	new RegExp(`[|—–-]\\s*${brand}\\s*$`).test(title) || // "… | AI Briefs"
+	new RegExp(`^\\s*${brand}\\s*[|—–-]`).test(title);   // "AI Briefs — …"
+const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | ${SITE_TITLE}`;
 ---
 
 <!-- Global Metadata -->
