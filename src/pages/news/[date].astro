@@ -43,7 +43,10 @@ const description = `${items.length} AI headlines from ${new Set(items.map(i => 
 <!doctype html>
 <html lang="en">
 <head>
-	<BaseHead title={title} description={description} type="article" publishDate={new Date(date + 'T00:00:00Z')} />
+	{/* Dated snapshots are link lists with no original commentary, and a cron
+	    adds one every morning. Indexing them would trade 100+ thin URLs against
+	    31 real articles; the /news/ hub stays indexable and carries the topic. */}
+	<BaseHead title={title} description={description} type="article" publishDate={new Date(date + 'T00:00:00Z')} noindex={true} />
 </head>
 <body>
 <Header />

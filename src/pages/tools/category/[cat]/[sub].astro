@@ -52,6 +52,16 @@ const free = sorted.filter(t => t.data.pricing === 'free').length;
 const freemium = sorted.filter(t => t.data.pricing === 'freemium').length;
 const paid = sorted.filter(t => t.data.pricing === 'paid').length;
 
+/**
+ * A subcategory listing one or two tools has nothing a searcher can compare,
+ * so it reads as thin content and competes with its own parent category page.
+ * Below the threshold we keep the page (it is still a useful browse step) but
+ * drop it from the index and the sitemap — it earns its way back in as soon
+ * as a third tool is added.
+ */
+const MIN_TOOLS_FOR_INDEX = 3;
+const isThin = tools.length < MIN_TOOLS_FOR_INDEX;
+
 const year = new Date().getFullYear();
 const seoTitle = `Best ${subName} Tools (${year}) — Ranked & Reviewed`;
 const seoDesc = `Discover the best ${subName.toLowerCase()} tools in ${year}. Compare ${sorted.length > 0 ? sorted.length + ' curated' : ''} options with pricing, features, and ratings to find the right fit.`;
@@ -60,7 +70,7 @@ const seoDesc = `Discover the best ${subName.toLowerCase()} tools in ${year}. Co
 <!doctype html>
 <html lang="en">
 <head>
-	<BaseHead title={`${seoTitle} | ${SITE_TITLE}`} description={seoDesc} />
+	<BaseHead title={`${seoTitle} | ${SITE_TITLE}`} description={seoDesc} noindex={isThin} />
 	<script type="application/ld+json" set:html={JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "BreadcrumbList",

@@ -88,6 +88,57 @@ const breadcrumbSchema = {
 	],
 };
 
+/**
+ * "Best AI X (Ranked & Reviewed)" posts are numbered lists — `## 1. ChatGPT — …`.
+ * Lifting that ranking into ItemList makes the post eligible for Google's
+ * list/carousel treatment, and points each entry at our own tool page.
+ * Returns null for prose articles, which have no numbered headings.
+ */
+function buildItemList(markdown: string) {
+	const lines = markdown.split(/\r?\n/);
+	const items: { position: number; name: string; url?: string }[] = [];
+
+	lines.forEach((line, index) => {
+		const heading = line.match(/^##\s+(\d+)\.\s+(.+?)\s*$/);
+		if (!heading) return;
+
+		// Strip the "— Best for X" tagline; keep the product name itself.
+		const name = heading[2].split(/\s+[—–-]\s+/)[0].trim();
+		if (!name) return;
+
+		// First tool link appearing under this heading, before the next one.
+		let url: string | undefined;
+		for (let i = index + 1; i < lines.length; i++) {
+			if (/^##\s/.test(lines[i])) break;
+			const link = lines[i].match(/\]\((\/tools\/[a-z0-9-]+\/)\)/);
+			if (link) { url = new URL(link[1], SITE_URL).href; break; }
+		}
+
+		items.push({ position: Number(heading[1]), name, url });
+	});
+
+	if (items.length < 2) return null;
+
+	return {
+		"@context": "https://schema.org",
+		"@type": "ItemList",
+		"name": title,
+		"description": description,
+		"itemListOrder": "https://schema.org/ItemListOrderDescending",
+		"numberOfItems": items.length,
+		"itemListElement": items
+			.sort((a, b) => a.position - b.position)
+			.map(item => ({
+				"@type": "ListItem",
+				"position": item.position,
+				"name": item.name,
+				...(item.url && { "url": item.url }),
+			})),
+	};
+}
+
+const itemListSchema = body ? buildItemList(body) : null;
+
 const faqSchema = faqs && faqs.length > 0 ? {
 	"@context": "https://schema.org",
 	"@type": "FAQPage",
@@ -116,6 +167,7 @@ const faqSchema = faqs && faqs.length > 0 ? {
 	/>
 	<script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
 	<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+	{itemListSchema && <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />}
 	{faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
 </head>
 <body>

@@ -45,6 +45,43 @@ async function loadLastmodMap() {
 
 const lastmodMap = await loadLastmodMap();
 
+const MIN_TOOLS_FOR_INDEX = 3; // keep in sync with src/pages/tools/category/[cat]/[sub].astro
+
+function toSlug(str) {
+	return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Subcategory pages holding fewer than MIN_TOOLS_FOR_INDEX tools are noindex'd
+ * by the page template. Collect their pathnames so the sitemap agrees — a
+ * sitemap that advertises noindex'd URLs is a Search Console warning.
+ */
+async function loadThinSubcategoryPaths() {
+	const counts = new Map();
+	let files = [];
+	try {
+		files = await readdir('./src/content/tools');
+	} catch {
+		return new Set();
+	}
+	for (const file of files) {
+		if (!/\.(md|mdx)$/.test(file)) continue;
+		const raw = await readFile(join('./src/content/tools', file), 'utf8');
+		const fm = raw.match(/^---\s*\n([\s\S]*?)\n---/);
+		if (!fm) continue;
+		const cat = fm[1].match(/^category:\s*['"]?([^'"\n]+)['"]?/m)?.[1]?.trim();
+		const sub = fm[1].match(/^subcategory:\s*['"]?([^'"\n]+)['"]?/m)?.[1]?.trim();
+		if (!cat || !sub) continue;
+		const key = `/tools/category/${cat}/${toSlug(sub)}/`;
+		counts.set(key, (counts.get(key) ?? 0) + 1);
+	}
+	return new Set(
+		[...counts.entries()].filter(([, n]) => n < MIN_TOOLS_FOR_INDEX).map(([path]) => path),
+	);
+}
+
+const thinSubcategoryPaths = await loadThinSubcategoryPaths();
+
 export default defineConfig({
 	site: SITE,
 	integrations: [
@@ -56,6 +93,10 @@ export default defineConfig({
 				if (pathname.startsWith('/tools/alternatives/')) return false;
 				if (pathname.startsWith('/tools/vs/')) return false;
 				if (pathname.startsWith('/tools/tag/')) return false;
+				// Dated news snapshots are noindex'd; the /news/ hub stays.
+				if (/^\/news\/\d{4}-\d{2}-\d{2}\/$/.test(pathname)) return false;
+				// Subcategory pages with too few tools are noindex'd.
+				if (thinSubcategoryPaths.has(pathname)) return false;
 				return true;
 			},
 			serialize(item) {

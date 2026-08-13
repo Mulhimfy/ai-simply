@@ -57,7 +57,9 @@ const fullTitle = title === SITE_TITLE ? title : `${title} | ${SITE_TITLE}`;
 
 <!-- SEO -->
 <link rel="canonical" href={canonicalURL} />
-{noindex && <meta name="robots" content="noindex,nofollow" />}
+{/* `follow` (not `nofollow`) so crawlers still travel through thin pages to
+    the tool and article pages they link to — only indexing is withheld. */}
+{noindex && <meta name="robots" content="noindex,follow" />}
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
 <meta name="author" content={SITE_AUTHOR} />

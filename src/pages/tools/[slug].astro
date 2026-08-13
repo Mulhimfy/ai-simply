@@ -5,7 +5,8 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import ToolCard from '../../components/ToolCard.astro';
 import ShareButtons from '../../components/ShareButtons.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE, SITE_URL } from '../../consts';
+import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE, SITE_URL, DEFAULT_AUTHOR } from '../../consts';
+import { relatedArticlesForTool } from '../../lib/related-articles';
 
 export async function getStaticPaths() {
 	const tools = await getCollection('tools');
@@ -32,16 +33,7 @@ const related = allTools
 	.slice(0, 4);
 
 const allPosts = await getCollection('blog');
-const toolNameLower = tool.data.name.toLowerCase();
-const toolTags = (tool.data.tags ?? []).map((t: string) => t.toLowerCase());
-const relatedPosts = allPosts
-	.filter(p => {
-		const titleMatch = p.data.title.toLowerCase().includes(toolNameLower);
-		const tagOverlap = (p.data.tags ?? []).some((t: string) => toolTags.includes(t.toLowerCase()));
-		return titleMatch || tagOverlap;
-	})
-	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 3);
+const relatedPosts = relatedArticlesForTool(tool, allPosts, 3);
 
 // SEO-optimised title and description
 const year = (tool.data.updatedDate ?? tool.data.pubDate).getFullYear();
@@ -52,7 +44,6 @@ const seoDescription = `${tool.data.name} is a ${pricingLabel.toLowerCase()} ${s
 
 // Rating helpers
 const rating = tool.data.rating;
-const ratingCount = tool.data.ratingCount ?? 500;
 const fullStars = rating ? Math.floor(rating) : 0;
 const halfStar = rating ? (rating % 1 >= 0.5) : false;
 const emptyStars = rating ? 5 - fullStars - (halfStar ? 1 : 0) : 0;
@@ -63,29 +54,75 @@ const offersMap: Record<string, { price: string; priceCurrency: string }> = {
 	freemium: { price: '0', priceCurrency: 'USD' },
 	paid:     { price: '9.99', priceCurrency: 'USD' },
 };
+/** Turn a pros/cons array into the ItemList shape Google expects for pros & cons. */
+function notesList(items?: string[]) {
+	if (!items?.length) return undefined;
+	return {
+		'@type': 'ItemList',
+		itemListElement: items.map((name, i) => ({
+			'@type': 'ListItem',
+			position: i + 1,
+			name,
+		})),
+	};
+}
+
+const positiveNotes = notesList(tool.data.pros);
+const negativeNotes = notesList(tool.data.cons);
+
+/**
+ * Our scores are editorial (see /rating-methodology/), not visitor-submitted,
+ * so they belong in a `Review` authored by AI Briefs — not `aggregateRating`,
+ * which Google reserves for ratings a site actually collects from users.
+ * The nested Review also carries pros & cons for the rich result.
+ */
+const editorialReview = (rating || positiveNotes || negativeNotes) ? {
+	'@type': 'Review',
+	...(rating && {
+		reviewRating: {
+			'@type': 'Rating',
+			ratingValue: rating.toFixed(1),
+			bestRating: '5',
+			worstRating: '1',
+		},
+	}),
+	author: {
+		'@type': 'Organization',
+		name: SITE_TITLE,
+		url: SITE_URL,
+	},
+	publisher: {
+		'@type': 'Organization',
+		name: SITE_TITLE,
+		url: SITE_URL,
+	},
+	datePublished: tool.data.pubDate.toISOString(),
+	...(tool.data.updatedDate && { dateModified: tool.data.updatedDate.toISOString() }),
+	url: `${SITE_URL}/tools/${tool.id}/`,
+	...(positiveNotes && { positiveNotes }),
+	...(negativeNotes && { negativeNotes }),
+} : null;
+
 const softwareSchema: Record<string, unknown> = {
 	'@context': 'https://schema.org',
-	'@type': 'SoftwareApplication',
+	// Dual-typed so the page is eligible for Product review snippets
+	// (pros & cons, star rating) as well as software metadata.
+	'@type': ['SoftwareApplication', 'Product'],
 	name: tool.data.name,
 	description: tool.data.description,
 	url: tool.data.url,
 	applicationCategory: 'AIApplication',
 	operatingSystem: 'Web',
 	inLanguage: 'en-US',
+	datePublished: tool.data.pubDate.toISOString(),
+	...(tool.data.updatedDate && { dateModified: tool.data.updatedDate.toISOString() }),
 	offers: {
 		'@type': 'Offer',
 		...offersMap[tool.data.pricing],
 		availability: 'https://schema.org/OnlineOnly',
+		url: `${SITE_URL}/tools/${tool.id}/`,
 	},
-	...(rating && {
-		aggregateRating: {
-			'@type': 'AggregateRating',
-			ratingValue: rating.toFixed(1),
-			ratingCount,
-			bestRating: '5',
-			worstRating: '1',
-		},
-	}),
+	...(editorialReview && { review: editorialReview }),
 };
 
 // Structured data — BreadcrumbList
@@ -177,7 +214,7 @@ const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric',
 							{Array.from({ length: emptyStars }).map(() => <span class="star star--empty">★</span>)}
 						</div>
 						<span class="rating-value">{rating.toFixed(1)}</span>
-						<span class="rating-count">({ratingCount.toLocaleString()} reviews)</span>
+						<a href="/rating-methodology/" class="rating-count">Editorial score</a>
 					</div>
 				)}
 
@@ -457,7 +494,14 @@ const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric',
 	.star--empty { color: #d1d5db; }
 
 	.rating-value { font-weight: 700; font-size: 0.95rem; color: rgb(var(--black)); }
-	.rating-count { font-size: 0.82rem; color: rgb(var(--gray)); }
+	.rating-count {
+		font-size: 0.82rem;
+		color: rgb(var(--gray));
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		text-underline-offset: 2px;
+	}
+	.rating-count:hover { color: rgb(var(--black)); }
 
 	.tool-hero__tags {
 		display: flex;
