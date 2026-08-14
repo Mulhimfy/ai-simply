@@ -1,0 +1,198 @@
+{
+  "date": "2026-08-14",
+  "fetchedAt": "2026-08-14T08:10:15.913Z",
+  "items": [
+    {
+      "title": "The Safety Reckoning Inside OpenAI",
+      "link": "https://www.wired.com/story/openai-safety-security-ai-agents-culture/",
+      "date": "Thu, 13 Aug 2026 22:37:19 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Microsoft’s Clippy-like Mico character is no longer the face of Copilot",
+      "link": "https://www.theverge.com/tech/979871/microsoft-copilot-mico-retired",
+      "date": "2026-08-13T17:42:38-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Mark Zuckerberg’s AI Manifesto Is 6,500 Words—and Barely Says Anything",
+      "link": "https://www.wired.com/story/mark-zuckerbergs-ai-manifesto-is-6500-words-and-barely-says-anything/",
+      "date": "Thu, 13 Aug 2026 21:14:43 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Writer introduces new AI model and upgraded harness to contain token costs",
+      "link": "https://techcrunch.com/2026/08/13/writer-introduces-new-ai-model-and-upgraded-harness-to-contain-token-costs/",
+      "date": "Thu, 13 Aug 2026 21:13:24 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Roundtables: Inside the “Censorship-Industrial Complex” Idea Shaping US Policy",
+      "link": "https://www.technologyreview.com/2026/08/13/1141399/roundtables-inside-the-censorship-industrial-complex-idea-shaping-us-policy/",
+      "date": "Thu, 13 Aug 2026 21:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Databricks wanted to raise $1B, investors wanted $15B. It settled on $5B at a $190B valuation.",
+      "link": "https://techcrunch.com/2026/08/13/databricks-wanted-to-raise-1b-investors-wanted-15b-it-settled-on-5b-at-a-190b-valuation/",
+      "date": "Thu, 13 Aug 2026 20:14:39 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI is losing its second executive this week",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/979815/openai-denise-dresser-leaving-executive-departure",
+      "date": "2026-08-13T15:28:39-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "OpenAI introduces ‘Ultrafast,’ a new mode that makes GPT-5.6 Sol work at 14x the speed",
+      "link": "https://techcrunch.com/2026/08/13/openai-introduces-ultrafast-a-new-mode-that-makes-gpt-5-6-sol-work-at-14x-the-speed/",
+      "date": "Thu, 13 Aug 2026 19:22:40 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "IBM partners with OpenAI to bolster enterprise AI push",
+      "link": "https://techcrunch.com/2026/08/13/ibm-partners-with-openai-to-bolster-enterprise-ai-push/",
+      "date": "Thu, 13 Aug 2026 19:19:49 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Building a practical path to post-quantum cryptography",
+      "link": "https://www.technologyreview.com/2026/08/13/1141041/building-a-practical-path-to-post-quantum-cryptography/",
+      "date": "Thu, 13 Aug 2026 18:11:42 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The new Instagram logo is the perfect embodiment of AI slop",
+      "link": "https://arstechnica.com/ai/2026/08/the-new-instagram-logo-is-the-perfect-embodiment-of-ai-slop/",
+      "date": "Thu, 13 Aug 2026 17:32:10 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Record, train, and deploy from one place with Strands Agents, LeRobot, and Hugging Face Storage Buckets",
+      "link": "https://huggingface.co/blog/amazon/strands-lerobot-streaming-data-loop",
+      "date": "Thu, 13 Aug 2026 17:16:04 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Google announces Gemini 3.7 Flash just three weeks after previous release",
+      "link": "https://arstechnica.com/ai/2026/08/google-announces-gemini-3-7-flash-just-three-weeks-after-previous-release/",
+      "date": "Thu, 13 Aug 2026 17:00:13 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Suno is trying to look more like a real music production tool",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/979345/suno-studio-2-0-midi-chatbot-custom-effects",
+      "date": "2026-08-13T12:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "I looked inside an AI generated movie, and the best parts were all human",
+      "link": "https://www.theverge.com/entertainment/977994/higgsfield-ai-cully-hill-boys-black-list",
+      "date": "2026-08-13T11:30:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Anthropic could be worth $2 trillion when it goes public",
+      "link": "https://arstechnica.com/ai/2026/08/anthropic-could-be-worth-2-trillion-when-it-goes-public/",
+      "date": "Thu, 13 Aug 2026 13:58:56 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Flock is tightening its rules in response to a growing surveillance backlash",
+      "link": "https://www.technologyreview.com/2026/08/13/1141904/flock-is-tightening-its-rules-in-response-to-a-growing-surveillance-backlash/",
+      "date": "Thu, 13 Aug 2026 13:41:10 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The Download: kids’ thoughts on AI, and female clones of male mice",
+      "link": "https://www.technologyreview.com/2026/08/13/1141896/the-download-kids-thoughts-on-ai-female-clones-male-mice/",
+      "date": "Thu, 13 Aug 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Claude's new Scarlet Letter watermark is invisible—for now",
+      "link": "https://arstechnica.com/tech-policy/2026/08/claudes-new-scarlet-letter-watermark-is-invisible-for-now/",
+      "date": "Thu, 13 Aug 2026 11:10:18 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "There’s a Fatty Liver Epidemic. AI Could Help Get Ahead of It",
+      "link": "https://www.wired.com/story/fatty-liver-disease-ai-detection-cancer/",
+      "date": "Thu, 13 Aug 2026 09:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "What We Learned by Reproducing 2,200 papers from ICML",
+      "link": "https://huggingface.co/blog/icml-2026-open-reproductions",
+      "date": "Thu, 13 Aug 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "The White House Is Going to Expand Its AI Policy",
+      "link": "https://www.wired.com/story/the-white-house-is-going-to-expand-its-ai-policy/",
+      "date": "Wed, 12 Aug 2026 21:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Introducing OlmoEarth embeddings: Custom embedding exports from OlmoEarth Studio for downstream analysis",
+      "link": "https://huggingface.co/blog/allenai/olmoearth-embeddings",
+      "date": "Wed, 12 Aug 2026 16:14:36 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Inside the Data Bottleneck Slowing Visual and Physical AI",
+      "link": "https://content.knowledgehub.wiley.com/the-2026-state-of-visual-and-physical-ai-a-survey-of-700-practitioners-on-data-models-and-production/",
+      "date": "Wed, 12 Aug 2026 14:18:05 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "LFM2.5-VL-3B for Better and Faster Vision Capabilities for the Edge",
+      "link": "https://huggingface.co/blog/LiquidAI/lfm2-5-vl-3b",
+      "date": "Wed, 12 Aug 2026 14:00:51 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Pakistani Judges Give Their Verdict on JudgeGPT",
+      "link": "https://spectrum.ieee.org/judgegpt-experiment",
+      "date": "Wed, 12 Aug 2026 11:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "AI Safety Regulations in the U.S. Could Give Hackers an Edge",
+      "link": "https://spectrum.ieee.org/hugging-face-openai-cyberattack",
+      "date": "Thu, 06 Aug 2026 19:25:39 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "IEEE Course Teaches How to Use AI to Modernize Power Grids",
+      "link": "https://spectrum.ieee.org/ieee-course-ai-power-grids",
+      "date": "Wed, 05 Aug 2026 18:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Google just redesigned the search box for the first time in 25 years — here’s why it matters more than you think.",
+      "link": "https://venturebeat.com/technology/google-just-redesigned-the-search-box-for-the-first-time-in-25-years-heres-why-it-matters-more-than-you-think",
+      "date": "Tue, 19 May 2026 17:45:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Railway secures $100 million to challenge AWS with AI-native cloud infrastructure",
+      "link": "https://venturebeat.com/infrastructure/railway-secures-usd100-million-to-challenge-aws-with-ai-native-cloud",
+      "date": "Thu, 22 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Claude Code costs up to $200 a month. Goose does the same thing for free.",
+      "link": "https://venturebeat.com/infrastructure/claude-code-costs-up-to-usd200-a-month-goose-does-the-same-thing-for-free",
+      "date": "Mon, 19 Jan 2026 14:00:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Listen Labs raises $69M after viral billboard hiring stunt to scale AI customer interviews",
+      "link": "https://venturebeat.com/technology/listen-labs-raises-usd69m-after-viral-billboard-hiring-stunt-to-scale-ai",
+      "date": "Fri, 16 Jan 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
