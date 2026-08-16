@@ -70,10 +70,48 @@ async function fetchSubscription(id) {
 	return res.json();
 }
 
+/**
+ * Prove the credentials work before trusting any answer Polar gives us.
+ *
+ * Doubles as a daily canary: with no paid listings yet the run makes no other API call, so
+ * without this an expired or revoked token would go unnoticed until the day it actually
+ * mattered. Returns false only when the token is definitively rejected — an unexpected status
+ * is reported but allowed through, so a change in Polar's API can't wedge the whole sync.
+ */
+async function verifyToken() {
+	let res;
+	try {
+		res = await fetch(`${API}/subscriptions/?limit=1`, {
+			headers: { Authorization: `Bearer ${TOKEN}`, Accept: 'application/json' },
+		});
+	} catch (err) {
+		console.error(`Could not reach the Polar API: ${err.message}`);
+		return false;
+	}
+	if (res.status === 401 || res.status === 403) {
+		console.error(`Polar rejected POLAR_ACCESS_TOKEN (HTTP ${res.status}).`);
+		console.error('It is expired, revoked, or missing the subscriptions:read scope.');
+		console.error('Create a new Organization Access Token in Polar → Settings → Developers');
+		console.error('and update the POLAR_ACCESS_TOKEN secret on the repository.');
+		return false;
+	}
+	if (!res.ok) {
+		console.warn(`Token check returned HTTP ${res.status}; continuing anyway.`);
+		return true;
+	}
+	console.log('Polar credentials OK.');
+	return true;
+}
+
 async function main() {
 	if (!TOKEN) {
 		console.error('POLAR_ACCESS_TOKEN is not set. Create an Organization Access Token in Polar');
 		console.error('(Settings → Developers) with the subscriptions:read scope.');
+		process.exitCode = 1;
+		return;
+	}
+
+	if (!(await verifyToken())) {
 		process.exitCode = 1;
 		return;
 	}

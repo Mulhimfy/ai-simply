@@ -55,6 +55,10 @@ A resubscribe is `git mv src/content/tools-archive/tool.md src/content/tools/`.
 The script decides everything before it moves anything, so a failure part-way through can never
 leave the directory half-synced. Two safeguards protect paying customers:
 
+- **The token is checked before anything is trusted.** Each run makes one authenticated call
+  first and aborts if Polar rejects the credentials. That also makes the daily run a canary:
+  an expired or revoked token surfaces as a failed workflow the next morning rather than on the
+  day a customer finally cancels.
 - **API errors never remove a listing.** An unreachable or erroring Polar API leaves every
   listing published and exits non-zero, so the workflow fails loudly instead of silently
   deleting. A network blip must not cost a customer their listing.
