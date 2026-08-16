@@ -4,7 +4,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
-import { SITE_TITLE } from '../consts';
+import { SITE_TITLE, TOOL_LISTING } from '../consts';
 
 const toolCount = (await getCollection('tools')).length;
 ---
@@ -13,8 +13,8 @@ const toolCount = (await getCollection('tools')).length;
 <html lang="en">
 <head>
 	<BaseHead
-		title={`Pricing — Free to Use | ${SITE_TITLE}`}
-		description={`${SITE_TITLE} is free to use. Browse ${toolCount}+ AI tools, read reviews, and submit your own tool to reach thousands of AI enthusiasts.`}
+		title={`Pricing | ${SITE_TITLE}`}
+		description={`Browse ${toolCount}+ AI tools free, forever. List your own tool in the directory for ${TOOL_LISTING.priceLabel} — cancel any time.`}
 	/>
 </head>
 <body>
@@ -26,7 +26,7 @@ const toolCount = (await getCollection('tools')).length;
 				<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Pricing' }]} />
 				<div class="hero-badge">Pricing</div>
 				<h1>Simple, Transparent Pricing</h1>
-				<p>Browse and discover AI tools for free — forever. Submit your tool to reach our growing audience.</p>
+				<p>Browse and discover AI tools for free — forever. List your own tool for {TOOL_LISTING.priceLabel}, cancel any time.</p>
 			</div>
 		</section>
 
@@ -55,13 +55,13 @@ const toolCount = (await getCollection('tools')).length;
 				</div>
 
 				<div class="plan-card plan-card--featured">
-					<div class="plan-badge">Most Popular</div>
+					<div class="plan-badge">For tool makers</div>
 					<div class="plan-head">
 						<span class="plan-icon">🚀</span>
-						<h2>Submit a Tool</h2>
+						<h2>List Your Tool</h2>
 						<div class="plan-price">
-							<span class="price">Free</span>
-							<span class="period">during beta</span>
+							<span class="price">{TOOL_LISTING.price}</span>
+							<span class="period">/ {TOOL_LISTING.interval}</span>
 						</div>
 					</div>
 					<ul class="plan-features">
@@ -70,8 +70,10 @@ const toolCount = (await getCollection('tools')).length;
 						<li><span class="check">✓</span> Indexed by search engines</li>
 						<li><span class="check">✓</span> Reach AI enthusiasts & pros</li>
 						<li><span class="check">✓</span> Featured consideration</li>
+						<li><span class="check">✓</span> Cancel any time</li>
 					</ul>
-					<a href="/submit/" class="plan-btn plan-btn--primary">Submit Your Tool</a>
+					<a href="/submit/" class="plan-btn plan-btn--primary">List Your Tool</a>
+					<p class="plan-fineprint">Renews at {TOOL_LISTING.price} every {TOOL_LISTING.interval} until cancelled. Non-refundable.</p>
 				</div>
 
 				<div class="plan-card plan-card--soon">
@@ -100,7 +102,7 @@ const toolCount = (await getCollection('tools')).length;
 			<div class="trust-strip">
 				<div class="trust-item"><span>🔒</span> No account required to browse</div>
 				<div class="trust-item"><span>✅</span> Every tool manually reviewed</div>
-				<div class="trust-item"><span>⚡</span> Free listings during beta</div>
+				<div class="trust-item"><span>⚡</span> Cancel listings any time</div>
 				<div class="trust-item"><span>📬</span> 48-hour submission review</div>
 			</div>
 
@@ -110,11 +112,23 @@ const toolCount = (await getCollection('tools')).length;
 				<div class="faq-list">
 					<details class="faq-item">
 						<summary>Is {SITE_TITLE} really free to use?</summary>
-						<p>Yes, completely. Browsing all {toolCount}+ tools, reading reviews, tutorials, and articles costs nothing — no account or credit card required. We plan to introduce optional paid features for tool publishers in the future, but browsing will always be free.</p>
+						<p>Free to read, yes. Browsing all {toolCount}+ tools, reading reviews, tutorials, and articles costs nothing — no account or credit card required. Getting your own tool listed in the directory is the paid part, at {TOOL_LISTING.priceLabel}.</p>
 					</details>
 					<details class="faq-item">
 						<summary>How do I submit my AI tool?</summary>
-						<p>Use our <a href="/submit/">Submit a Tool</a> form. Fill in your tool's name, URL, description, category, and pricing model. We review every submission manually and typically respond within 48 hours.</p>
+						<p>Use our <a href="/submit/">Submit a Tool</a> form. Fill in your tool's name, URL, description, category, and pricing model, then complete checkout. We review every submission manually and typically respond within 48 hours.</p>
+					</details>
+					<details class="faq-item">
+						<summary>How does billing for a listing work?</summary>
+						<p>A listing is a subscription: {TOOL_LISTING.price} {TOOL_LISTING.currency} charged today and again every {TOOL_LISTING.interval} until you cancel. Payment is handled by Polar, our merchant of record, and your receipt email contains a link to the customer portal where you can cancel or update your card.</p>
+					</details>
+					<details class="faq-item">
+						<summary>Can I get a refund?</summary>
+						<p>No. All listing payments are non-refundable, including part-months and unused time. You can cancel at any point to stop future charges — there's no minimum term and no cancellation fee.</p>
+					</details>
+					<details class="faq-item">
+						<summary>What happens to my listing if I cancel?</summary>
+						<p>Your tool stays live for the rest of the {TOOL_LISTING.interval} you've already paid for. At the start of the next billing period the listing is automatically removed from the directory, along with its tool page, category placements, and sitemap entry.</p>
 					</details>
 					<details class="faq-item">
 						<summary>What makes a tool eligible for listing?</summary>
@@ -205,6 +219,7 @@ const toolCount = (await getCollection('tools')).length;
 .plan-head { text-align: center; }
 .plan-icon { font-size: 2.25rem; display: block; margin-bottom: 0.4rem; }
 .plan-head h2 { font-size: 1.25rem; margin-bottom: 0.65rem; }
+.plan-fineprint { font-size: 0.72rem; color: rgb(var(--gray)); text-align: center; margin: 0.65rem 0 0; line-height: 1.5; }
 .plan-price { display: flex; align-items: baseline; justify-content: center; gap: 0.4rem; }
 .price { font-size: 2.1rem; font-weight: 800; color: rgb(var(--black)); }
 .price.coming { font-size: 1.5rem; color: rgb(var(--gray)); }

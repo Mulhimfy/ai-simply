@@ -1,0 +1,43 @@
+name: Sync Paid Listings
+
+on:
+  schedule:
+    # 06:00 UTC daily — runs before the daily news snapshot.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-listings
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check paid listings against Polar
+        env:
+          POLAR_ACCESS_TOKEN: ${{ secrets.POLAR_ACCESS_TOKEN }}
+        run: node scripts/sync-listings.mjs
+
+      - name: Commit removals if any
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A src/content/tools/ src/content/tools-archive/
+          if git diff --cached --quiet; then
+            echo "All paid listings still active — nothing to do."
+            exit 0
+          fi
+          git commit -m "chore(listings): archive lapsed paid listings"
+          git push

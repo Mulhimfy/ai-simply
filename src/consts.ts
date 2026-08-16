@@ -13,6 +13,30 @@ export const DEFAULT_AUTHOR = {
 };
 export const BEEHIIV_FORM_URL = 'https://subscribe-forms.beehiiv.com/fda3e0ad-bcc8-4e4d-8f5b-123db9391be9';
 
+/**
+ * Paid directory listing, sold as a Polar subscription.
+ *
+ * IMPORTANT — `checkoutUrl` must stay a *reusable* Polar Checkout Link on the
+ * `buy.polar.sh/polar_cl_…` host. Visiting it mints a fresh single-use session per buyer.
+ * Never replace it with the `polar.sh/checkout/polar_c_…` URL that a session redirects to:
+ * that one is single-use and expires ~24h after it is created, so the button would break.
+ * Manage it under Polar → Products → "briefs" → Checkout Links.
+ *
+ * Verified against the Polar product on 2026-08-16: $99.99 USD, recurring_interval "month",
+ * success URL → /submit/success?checkout_id={CHECKOUT_ID}, return URL → /submit.
+ * Keep `price`/`interval` in sync with the product or the page will misquote the charge.
+ */
+export const TOOL_LISTING = {
+	price: '$99.99',
+	interval: 'month',
+	priceLabel: '$99.99 / month',
+	currency: 'USD',
+	checkoutUrl: 'https://buy.polar.sh/polar_cl_K4iTZyJTnV0ouLOGzbqf7BLD0aT2eouDGaj094b2OsV',
+	formspreeUrl: 'https://formspree.io/f/xkopzklp',
+	/** Polar's hosted customer portal — where buyers cancel. */
+	portalUrl: 'https://polar.sh/iqplot/portal',
+};
+
 export const TOOL_OF_THE_WEEK = { slug: 'chatgpt', label: 'Tool of the Week' };
 
 export const CATEGORY_COLORS: Record<string, string> = {

@@ -126,6 +126,8 @@ export default defineConfig({
 		sitemap({
 			filter: (page) => {
 				const pathname = new URL(page).pathname;
+				// Post-checkout confirmation is noindex'd; it's reachable only from Polar.
+				if (pathname === '/submit/success/') return false;
 				// Exclude noindex'd templated pages — they dilute crawl budget.
 				if (pathname.startsWith('/tools/alternatives/')) return false;
 				// Comparison pages: only the rated test batch is indexed.

@@ -1,0 +1,3 @@
+Lapsed paid listings are moved here by scripts/sync-listings.mjs.
+This directory is outside the tools glob in src/content.config.ts, so files here are not published.
+See docs/paid-listings.md.

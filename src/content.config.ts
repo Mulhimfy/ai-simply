@@ -52,6 +52,14 @@ const tools = defineCollection({
 			affiliateUrl: z.string().url().optional(),
 			sponsored: z.boolean().default(false),
 			verified: z.boolean().default(false),
+			/**
+			 * Paid listings only. Set to the Polar subscription id that pays for this listing.
+			 * `scripts/sync-listings.mjs` archives the file when that subscription stops being
+			 * active. Editorial tools leave it unset and are never touched by the sync.
+			 */
+			polarSubscriptionId: z.string().optional(),
+			/** Submission reference shown to the buyer at checkout (e.g. AIB-K3F9QZ2). */
+			listingRef: z.string().optional(),
 		}),
 });
 

@@ -9,7 +9,8 @@
     "astro": "astro",
     "fetch-og": "node scripts/fetch-og-images.mjs",
     "inject-shots": "node scripts/inject-screenshots.mjs",
-    "check-links": "node scripts/check-links.mjs"
+    "check-links": "node scripts/check-links.mjs",
+    "sync-listings": "node scripts/sync-listings.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",

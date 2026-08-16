@@ -3,7 +3,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
-import { SITE_TITLE, SITE_URL } from '../consts';
+import { SITE_TITLE, SITE_URL, TOOL_LISTING } from '../consts';
 ---
 
 <!doctype html>
@@ -21,7 +21,7 @@ import { SITE_TITLE, SITE_URL } from '../consts';
 	<div class="container">
 		<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Terms of Service' }]} />
 		<h1>Terms of Service</h1>
-		<p>Last updated: April 1, 2026</p>
+		<p>Last updated: August 16, 2026</p>
 	</div>
 </section>
 
@@ -35,6 +35,7 @@ import { SITE_TITLE, SITE_URL } from '../consts';
 			<li><a href="#content">Content & Intellectual Property</a></li>
 			<li><a href="#third-party">Third-Party Tools & Links</a></li>
 			<li><a href="#submissions">User Submissions</a></li>
+			<li><a href="#listings">Paid Listings, Billing & Refunds</a></li>
 			<li><a href="#disclaimers">Disclaimers</a></li>
 			<li><a href="#limitation">Limitation of Liability</a></li>
 			<li><a href="#privacy">Privacy</a></li>
@@ -86,32 +87,56 @@ import { SITE_TITLE, SITE_URL } from '../consts';
 		<p>We reserve the right to accept, reject, or remove any submission at our sole discretion. Submission does not guarantee listing.</p>
 	</section>
 
+	<section id="listings">
+		<h2>6. Paid Listings, Billing &amp; Refunds</h2>
+		<p>Listing a tool in our directory is a paid subscription. By completing checkout you agree to the following.</p>
+
+		<h3>Price and billing cycle</h3>
+		<p>A directory listing costs <strong>{TOOL_LISTING.price} {TOOL_LISTING.currency} per {TOOL_LISTING.interval}</strong>. The first payment is taken at checkout, and the same amount is charged automatically every {TOOL_LISTING.interval} thereafter until the subscription is cancelled. There is no minimum term.</p>
+		<p>Payments are processed by <strong>Polar</strong>, which acts as merchant of record. Polar's terms and privacy policy apply to the payment itself, and your card details are never received or stored by us. Applicable sales tax or VAT is included in the price shown.</p>
+
+		<h3>Refunds</h3>
+		<p><strong>All listing payments are final and non-refundable.</strong> We do not provide refunds or partial refunds for unused time, part-months, cancelled subscriptions, or listings removed for breach of these terms. If you do not want to be charged again, cancel before your next renewal date.</p>
+
+		<h3>Cancellation and removal</h3>
+		<p>You may cancel at any time from the Polar customer portal linked in your receipt email. Cancellation stops future charges; it does not refund charges already made.</p>
+		<p>When you cancel, your listing remains published for the remainder of the billing period you have already paid for. At the start of the next billing period the listing is <strong>automatically removed</strong> from the directory, including its tool page, its placement on category and comparison pages, and its sitemap entry. Removal is automated and is not reversible except by taking out a new subscription.</p>
+		<p>A failed or reversed payment is treated the same way: if a subscription lapses for non-payment, the listing is removed automatically.</p>
+
+		<h3>Review, rejection, and our right to remove</h3>
+		<p>Payment buys a listing subject to review, not a guaranteed one. Every submission is still checked against our listing criteria: the tool must use AI as a core feature, have a working product or demo, and have a clear pricing model; we do not list broken, parked, or fraudulent sites, or pure white-label repackaging.</p>
+		<p>If your tool does not meet those criteria, we will cancel the subscription so that you are not billed again, and the listing will not be published. We may also remove a listing and cancel its subscription at any time if the tool stops working, changes materially, or breaches these terms.</p>
+
+		<h3>Editorial independence</h3>
+		<p>A paid listing does not buy editorial coverage, a rating, a ranking position, or a favourable review. Our ratings and written assessments remain independent of any commercial relationship — see our <a href="/rating-methodology/">rating methodology</a>. Paid and sponsored placements are disclosed as such.</p>
+	</section>
+
 	<section id="disclaimers">
-		<h2>6. Disclaimers</h2>
+		<h2>7. Disclaimers</h2>
 		<p>The information on {SITE_TITLE} is provided for general informational and educational purposes only. It does not constitute professional, legal, financial, or technical advice.</p>
 		<p>While we strive to keep information accurate and up to date, AI tools and their features change frequently. We make no warranties, express or implied, regarding the completeness, accuracy, or reliability of any content on this site.</p>
 		<p>The service is provided "as is" and "as available" without warranties of any kind.</p>
 	</section>
 
 	<section id="limitation">
-		<h2>7. Limitation of Liability</h2>
+		<h2>8. Limitation of Liability</h2>
 		<p>To the fullest extent permitted by law, {SITE_TITLE} and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of — or inability to use — this site or any tool listed on it.</p>
 		<p>Our total liability for any claim arising out of these terms shall not exceed the amount you paid us in the twelve months preceding the claim (which, for free users, is zero).</p>
 	</section>
 
 	<section id="privacy">
-		<h2>8. Privacy</h2>
+		<h2>9. Privacy</h2>
 		<p>Your use of {SITE_TITLE} is also governed by our <a href="/privacy/">Privacy Policy</a>, which is incorporated into these Terms by reference. Please review it to understand how we collect, use, and protect your information.</p>
 	</section>
 
 	<section id="changes">
-		<h2>9. Changes to These Terms</h2>
+		<h2>10. Changes to These Terms</h2>
 		<p>We may update these Terms of Service from time to time. When we do, we will revise the "Last updated" date at the top of this page. Continued use of the site after changes constitutes your acceptance of the revised terms.</p>
 		<p>For significant changes, we may also notify users via our newsletter or a prominent notice on the site.</p>
 	</section>
 
 	<section id="contact">
-		<h2>10. Contact</h2>
+		<h2>11. Contact</h2>
 		<p>If you have questions about these Terms, please contact us:</p>
 		<ul>
 			<li><strong>Website:</strong> <a href="/contact/">{SITE_URL}/contact/</a></li>
@@ -154,6 +179,8 @@ import { SITE_TITLE, SITE_URL } from '../consts';
 
 .policy-content section { margin-bottom: 2.5rem; scroll-margin-top: 80px; }
 .policy-content h2 { font-size: 1.15rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+.policy-content h3 { font-size: 0.97rem; margin: 1.5rem 0 0.5rem; color: rgb(var(--black)); }
+.policy-content h3:first-of-type { margin-top: 1.1rem; }
 .policy-content p { font-size: 0.92rem; line-height: 1.75; color: rgb(var(--gray-dark)); margin-bottom: 0.85rem; }
 .policy-content ul { padding-left: 1.5rem; margin-bottom: 0.85rem; }
 .policy-content li { font-size: 0.92rem; line-height: 1.7; color: rgb(var(--gray-dark)); margin-bottom: 0.3rem; }
