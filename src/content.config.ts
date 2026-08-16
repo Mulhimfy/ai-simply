@@ -61,6 +61,11 @@ const tools = defineCollection({
 			listingEmail: z.string().optional(),
 			/** Filled in automatically by the sync from `listingEmail`. Don't hand-edit. */
 			polarSubscriptionId: z.string().optional(),
+			/**
+			 * Trial listings: publish now, but archive on this date unless a subscription for
+			 * `listingEmail` has appeared by then. Omit for listings that must be paid up front.
+			 */
+			listingGraceUntil: z.coerce.date().optional(),
 			/** Submission reference shown to the buyer at checkout (e.g. AIB-K3F9QZ2). */
 			listingRef: z.string().optional(),
 		}),

@@ -54,6 +54,15 @@ const LIVE_STATES = new Set(['active', 'trialing']);
 const SAFE_REMOVALS = 3;
 const SAFE_REMOVAL_RATIO = 0.34;
 
+/** Whole days from today until a YYYY-MM-DD date; negative once it has passed. */
+function daysUntil(dateStr) {
+	const target = Date.parse(`${String(dateStr).slice(0, 10)}T00:00:00Z`);
+	if (Number.isNaN(target)) return 0;
+	const today = new Date();
+	const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+	return Math.round((target - todayUtc) / 86400000);
+}
+
 /** Pull the frontmatter block out of a markdown file. */
 function frontmatter(raw) {
 	const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -185,7 +194,13 @@ async function main() {
 		const subId = field(fm, 'polarSubscriptionId');
 		const email = field(fm, 'listingEmail');
 		if (subId || email) {
-			paid.push({ file, subId, email: email?.toLowerCase(), name: field(fm, 'name') || file });
+			paid.push({
+				file,
+				subId,
+				email: email?.toLowerCase(),
+				graceUntil: field(fm, 'listingGraceUntil'),
+				name: field(fm, 'name') || file,
+			});
 		}
 	}
 
@@ -204,6 +219,7 @@ async function main() {
 	let kept = 0;
 	const failures = [];
 	const toArchive = [];
+	const graceExpired = [];
 
 	for (const listing of paid) {
 		let sub;
@@ -213,9 +229,22 @@ async function main() {
 			} else {
 				sub = byEmail.get(listing.email);
 				if (!sub) {
-					// No subscription has ever been taken out with that address. Treat it as a
-					// typo rather than a cancellation — removing a listing over a mistyped email
-					// would be worse than leaving it up for someone to notice.
+					// Nobody has ever subscribed with that address. What that means depends on
+					// whether the listing was published on the promise of payment or before it.
+					if (listing.graceUntil) {
+						const daysLeft = daysUntil(listing.graceUntil);
+						if (daysLeft >= 0) {
+							console.log(`  … ${listing.name} — unpaid, ${daysLeft} day(s) of grace left`);
+							kept++;
+						} else {
+							console.log(`  ✗ ${listing.name} — grace ended ${listing.graceUntil}, never paid → archive`);
+							graceExpired.push({ ...listing, status: 'grace expired' });
+						}
+						continue;
+					}
+					// No grace period was set, so this listing was meant to be paid for already.
+					// Treat the miss as a typo rather than a cancellation: removing someone over a
+					// mistyped address is worse than leaving it up for a human to notice.
 					failures.push(`${listing.file}: no subscription found for ${listing.email}`);
 					console.error(`  ! ${listing.name} — no subscription for ${listing.email}, leaving live`);
 					continue;
@@ -263,13 +292,16 @@ async function main() {
 		return;
 	}
 
-	for (const listing of toArchive) {
+	// Grace expiry is deliberately outside the circuit breaker above. Those listings were
+	// published on spec and never paid for, so a batch of them lapsing together is the
+	// expected outcome of a promotion ending, not the signature of a credentials fault.
+	for (const listing of [...toArchive, ...graceExpired]) {
 		if (DRY_RUN) continue;
 		await mkdir(ARCHIVE_DIR, { recursive: true });
 		await rename(path.join(TOOLS_DIR, listing.file), path.join(ARCHIVE_DIR, listing.file));
 	}
 
-	const archived = toArchive.length;
+	const archived = toArchive.length + graceExpired.length;
 	console.log(`\nKept ${kept}, archived ${archived}${DRY_RUN ? ' (dry run — nothing moved)' : ''}.`);
 
 	if (failures.length) {
