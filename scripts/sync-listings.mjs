@@ -2,8 +2,14 @@
 /**
  * Sync paid directory listings against Polar subscriptions.
  *
- * Any tool in src/content/tools/ that carries a `polarSubscriptionId` in its frontmatter is a
- * paid listing. This script asks Polar whether that subscription is still active:
+ * A tool in src/content/tools/ is a paid listing if its frontmatter carries either
+ * `listingEmail` (the address the buyer paid with) or `polarSubscriptionId`. Publishing a
+ * listing only needs the email — Polar does not persist the reference we send to checkout, but
+ * it does keep the customer's email, so that address is the one join key that exists on both
+ * sides. The sync resolves it to a subscription and writes `polarSubscriptionId` back into the
+ * file itself, after which lookups go straight to the id and survive an email change.
+ *
+ * Either way the question is the same: is that subscription still active?
  *
  *   active / trialing  → leave the listing alone
  *   anything else      → move the markdown file to src/content/tools-archive/
@@ -17,13 +23,13 @@
  * cancels today keeps their listing for the rest of the month they paid for, and it comes down
  * automatically on the next run after the period ends.
  *
- * Tools without `polarSubscriptionId` are editorial and are never touched.
+ * Tools with neither field are editorial and are never touched.
  *
  * Usage:
  *   POLAR_ACCESS_TOKEN=polar_oat_… node scripts/sync-listings.mjs [--dry-run]
  */
 
-import { readdir, readFile, mkdir, rename } from 'node:fs/promises';
+import { readdir, readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,6 +39,8 @@ const ARCHIVE_DIR = path.join(ROOT, 'src', 'content', 'tools-archive');
 
 const API = process.env.POLAR_API_URL || 'https://api.polar.sh/v1';
 const TOKEN = process.env.POLAR_ACCESS_TOKEN;
+/** The "briefs" listing product. Override only when testing against a stub API. */
+const PRODUCT_ID = process.env.POLAR_PRODUCT_ID || '91d400c7-5776-477e-8a87-aa710b77523f';
 const DRY_RUN = process.argv.includes('--dry-run');
 
 /** Subscription states that keep a listing published. */
@@ -68,6 +76,58 @@ async function fetchSubscription(id) {
 		throw new Error(`Polar API ${res.status} for subscription ${id}: ${await res.text()}`);
 	}
 	return res.json();
+}
+
+/**
+ * Every subscription ever taken out against the listing product, newest first.
+ *
+ * Polar does not persist the `reference_id` we append to the checkout URL — it only rides along
+ * in the browser URL — so the buyer's email is the one identifier that exists on both sides of
+ * the payment. This is what lets a listing be linked by email instead of by hand-copied UUID.
+ */
+async function fetchProductSubscriptions() {
+	const all = [];
+	for (let page = 1; ; page++) {
+		const url = `${API}/subscriptions/?product_id=${PRODUCT_ID}&limit=100&page=${page}`;
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${TOKEN}`, Accept: 'application/json' },
+		});
+		if (!res.ok) {
+			throw new Error(`Polar API ${res.status} listing subscriptions: ${await res.text()}`);
+		}
+		const body = await res.json();
+		all.push(...(body.items ?? []));
+		const maxPage = body.pagination?.max_page ?? 1;
+		if (page >= maxPage || (body.items ?? []).length === 0) break;
+	}
+	return all;
+}
+
+/** email → best subscription for it, preferring a live one over a lapsed one. */
+function indexByEmail(subs) {
+	const byEmail = new Map();
+	for (const sub of subs) {
+		const email = sub.customer?.email?.trim().toLowerCase();
+		if (!email) continue;
+		const existing = byEmail.get(email);
+		if (!existing || (!LIVE_STATES.has(existing.status) && LIVE_STATES.has(sub.status))) {
+			byEmail.set(email, sub);
+		}
+	}
+	return byEmail;
+}
+
+/** Write the resolved subscription id into a listing's frontmatter, under its email. */
+async function writeBackSubscriptionId(file, subId) {
+	const full = path.join(TOOLS_DIR, file);
+	const raw = await readFile(full, 'utf8');
+	if (/^polarSubscriptionId:/m.test(raw)) return;
+	const updated = raw.replace(
+		/^(listingEmail:.*)$/m,
+		`$1\npolarSubscriptionId: ${subId}`,
+	);
+	if (updated === raw) return;
+	await writeFile(full, updated);
 }
 
 /**
@@ -123,11 +183,21 @@ async function main() {
 		const raw = await readFile(path.join(TOOLS_DIR, file), 'utf8');
 		const fm = frontmatter(raw);
 		const subId = field(fm, 'polarSubscriptionId');
-		if (subId) paid.push({ file, subId, name: field(fm, 'name') || file });
+		const email = field(fm, 'listingEmail');
+		if (subId || email) {
+			paid.push({ file, subId, email: email?.toLowerCase(), name: field(fm, 'name') || file });
+		}
 	}
 
 	console.log(`Scanned ${files.length} tools — ${paid.length} paid listing(s) to check.`);
 	if (paid.length === 0) return { archived: 0, kept: 0 };
+
+	// One listing call covers every email lookup; ids still resolve individually.
+	let byEmail = new Map();
+	if (paid.some(l => !l.subId && l.email)) {
+		byEmail = indexByEmail(await fetchProductSubscriptions());
+		console.log(`Fetched ${byEmail.size} subscriber email(s) for the listing product.`);
+	}
 
 	// Decide everything first, then act. Nothing moves until every lookup is in, so a
 	// failure halfway through can't leave the directory half-synced.
@@ -138,7 +208,23 @@ async function main() {
 	for (const listing of paid) {
 		let sub;
 		try {
-			sub = await fetchSubscription(listing.subId);
+			if (listing.subId) {
+				sub = await fetchSubscription(listing.subId);
+			} else {
+				sub = byEmail.get(listing.email);
+				if (!sub) {
+					// No subscription has ever been taken out with that address. Treat it as a
+					// typo rather than a cancellation — removing a listing over a mistyped email
+					// would be worse than leaving it up for someone to notice.
+					failures.push(`${listing.file}: no subscription found for ${listing.email}`);
+					console.error(`  ! ${listing.name} — no subscription for ${listing.email}, leaving live`);
+					continue;
+				}
+				if (LIVE_STATES.has(sub.status)) {
+					await writeBackSubscriptionId(listing.file, sub.id);
+					console.log(`    ↳ linked ${listing.email} → ${sub.id}`);
+				}
+			}
 		} catch (err) {
 			// A transient API failure must never take a paying customer's listing down.
 			failures.push(`${listing.file}: ${err.message}`);

@@ -30,7 +30,11 @@ jobs:
           POLAR_ACCESS_TOKEN: ${{ secrets.POLAR_ACCESS_TOKEN }}
         run: node scripts/sync-listings.mjs
 
+      # always(): a single unresolvable listing (a mistyped email, say) makes the step above
+      # exit non-zero. The run should still be reported as failed, but it must not strand the
+      # removals and id write-backs it did complete, or one typo blocks every future sync.
       - name: Commit removals if any
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

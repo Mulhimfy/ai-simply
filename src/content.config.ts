@@ -53,10 +53,13 @@ const tools = defineCollection({
 			sponsored: z.boolean().default(false),
 			verified: z.boolean().default(false),
 			/**
-			 * Paid listings only. Set to the Polar subscription id that pays for this listing.
-			 * `scripts/sync-listings.mjs` archives the file when that subscription stops being
-			 * active. Editorial tools leave it unset and are never touched by the sync.
+			 * Paid listings: the email the buyer paid with. Set this and nothing else —
+			 * `scripts/sync-listings.mjs` resolves it to a Polar subscription and fills in
+			 * `polarSubscriptionId` on its next run. Editorial tools leave both unset and are
+			 * never touched by the sync.
 			 */
+			listingEmail: z.string().optional(),
+			/** Filled in automatically by the sync from `listingEmail`. Don't hand-edit. */
 			polarSubscriptionId: z.string().optional(),
 			/** Submission reference shown to the buyer at checkout (e.g. AIB-K3F9QZ2). */
 			listingRef: z.string().optional(),

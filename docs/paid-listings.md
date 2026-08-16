@@ -21,20 +21,40 @@ things you have to set up before it can go live.
 
 ## Publishing a paid listing
 
-Create the tool's markdown in `src/content/tools/` as normal, plus two fields:
+Write the tool's markdown in `src/content/tools/` as normal and add one field — the email the
+buyer paid with, which is in the Formspree notification for that submission:
 
 ```yaml
-polarSubscriptionId: 1a2b3c4d-…   # the Polar subscription that pays for this listing
-listingRef: AIB-K3F9QZ2           # the reference from the buyer's submission
+listingEmail: buyer@theircompany.com
 ```
 
-`polarSubscriptionId` is what makes the listing a *paid* one. Tools without it are editorial and
-the sync below will never touch them.
+That is the whole linkage. On its next run the sync resolves that address to a Polar
+subscription and writes the id into the file for you:
+
+```yaml
+listingEmail: buyer@theircompany.com
+polarSubscriptionId: 1a2b3c4d-…   # added automatically, don't hand-edit
+```
+
+From then on lookups use the id, so the listing survives the customer changing their email.
+Matching is case-insensitive, and if one address somehow has several subscriptions the live one
+wins.
+
+Why email and not the `AIB-…` reference: Polar does not persist the `reference_id` we append to
+the checkout URL — it only rides along in the browser address bar — whereas `customer_email` is
+stored on the checkout and carried onto the subscription. The email is the only identifier that
+exists on both sides of the payment.
+
+If no subscription matches the address (usually a typo), the sync leaves the listing published,
+reports it, and fails the run so it lands in your inbox. It will not remove a listing over an
+email it cannot resolve.
+
+Tools with neither `listingEmail` nor `polarSubscriptionId` are editorial and are never touched.
 
 ## Automatic removal when a subscription ends
 
-`scripts/sync-listings.mjs` runs daily via `.github/workflows/sync-listings.yml`. For every tool
-carrying a `polarSubscriptionId` it asks the Polar API about that subscription:
+`scripts/sync-listings.mjs` runs daily via `.github/workflows/sync-listings.yml`. For every paid
+listing it asks the Polar API about the backing subscription:
 
 | Polar status                                  | Result                          |
 | --------------------------------------------- | ------------------------------- |
