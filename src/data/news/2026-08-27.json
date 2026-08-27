@@ -1,0 +1,192 @@
+{
+  "date": "2026-08-27",
+  "fetchedAt": "2026-08-27T18:02:25.384Z",
+  "items": [
+    {
+      "title": "OpenAI, Anthropic, Google, and 100 other companies call for action to defend against rogue AI",
+      "link": "https://techcrunch.com/2026/08/27/openai-anthropic-google-and-100-other-companies-call-for-action-to-defend-against-rogue-ai/",
+      "date": "Thu, 27 Aug 2026 17:43:24 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI Is Developing a ‘Persistent’ AI Agent",
+      "link": "https://www.wired.com/story/openai-is-developing-a-persistent-ai-agent/",
+      "date": "Thu, 27 Aug 2026 16:52:42 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Jensen Huang says Nvidia achieved AGI, again — not that it matters",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/985597/jensen-huang-says-nvidia-achieved-senseless-agi",
+      "date": "2026-08-27T12:15:52-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Google’s AI Mode can now track flight prices, help book hotels, and more",
+      "link": "https://techcrunch.com/2026/08/27/googles-ai-mode-can-now-track-flight-prices-help-book-hotels-and-more/",
+      "date": "Thu, 27 Aug 2026 16:00:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Hugging Face is selling a cute $399 open source duck robot, Microduck",
+      "link": "https://techcrunch.com/2026/08/27/hugging-face-is-selling-a-cute-399-open-source-duck-robot-microduck/",
+      "date": "Thu, 27 Aug 2026 14:56:52 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Orchestration is the new challenge for CX in the age of AI agents",
+      "link": "https://venturebeat.com/orchestration/orchestration-is-the-new-challenge-for-cx-in-the-age-of-ai-agents",
+      "date": "Thu, 27 Aug 2026 14:30:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "AI’s memory crunch is coming for Android apps",
+      "link": "https://techcrunch.com/2026/08/27/ais-memory-crunch-is-coming-for-android-apps/",
+      "date": "Thu, 27 Aug 2026 14:27:04 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Enterprise AI's real risk isn't autonomous agents. It's the complexity between them.",
+      "link": "https://venturebeat.com/ai/enterprise-ais-real-risk-isnt-autonomous-agents-its-the-complexity-between-them",
+      "date": "Thu, 27 Aug 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Claude, Codex, and Hermes installed unowned code inside corporate networks",
+      "link": "https://arstechnica.com/security/2026/08/claude-codex-and-hermes-installed-unowned-code-inside-corporate-networks/",
+      "date": "Thu, 27 Aug 2026 14:00:13 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "OpenAI’s executive exodus has one big winner",
+      "link": "https://www.theverge.com/podcast/985332/openai-greg-brockman-sam-altman-leader-executive-exodus",
+      "date": "2026-08-27T10:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "How much of a problem is AI’s water use?",
+      "link": "https://arstechnica.com/ai/2026/08/how-much-of-a-problem-is-ais-water-use/",
+      "date": "Thu, 27 Aug 2026 13:57:08 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Hugging Face’s new robot is an adorable rollerskating duck",
+      "link": "https://www.theverge.com/gadgets/985549/hugging-face-microduck-robot",
+      "date": "2026-08-27T09:44:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Plaud is launching AI earbuds",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/985500/plaud-one-earbuds-ai-recorder-price-availability",
+      "date": "2026-08-27T09:11:23-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "How OpenAI let a mob of LLM agents game a test and ransack Hugging Face",
+      "link": "https://arstechnica.com/security/2026/08/how-openai-let-a-mob-of-llm-agents-game-a-test-and-ransack-hugging-face/",
+      "date": "Thu, 27 Aug 2026 12:58:59 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The Download: inside OpenAI’s Hugging Face hack, and a new EV takes on the US",
+      "link": "https://www.technologyreview.com/2026/08/27/1143033/the-download-openai-hugging-face-hack-slate-truck-ev/",
+      "date": "Thu, 27 Aug 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "When agents act on their own, governance has to live in the data layer",
+      "link": "https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer",
+      "date": "Thu, 27 Aug 2026 12:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Submit Your Questions: The Great Data Center Backlash",
+      "link": "https://www.wired.com/story/livestream-the-great-data-center-backlash/",
+      "date": "Thu, 27 Aug 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Stop Touching Your Keyboard. Use This AI-Powered Microphone Instead",
+      "link": "https://www.wired.com/story/relay-q-voice-to-text-ai-app/",
+      "date": "Thu, 27 Aug 2026 10:30:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Is Slate Auto’s new electric truck the EV Americans need?",
+      "link": "https://www.technologyreview.com/2026/08/27/1142953/electric-truck-slate-auto/",
+      "date": "Thu, 27 Aug 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The UK Power Grid Has a Phantom Data Center Problem",
+      "link": "https://www.wired.com/story/uk-data-centers-logjam-ofgem-regulations/",
+      "date": "Thu, 27 Aug 2026 06:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "AI agents meant to replace Meta workers made “large-scale, disruptive actions”",
+      "link": "https://arstechnica.com/ai/2026/08/metas-scrapped-plans-to-go-ai-native-included-slashing-teams-by-60-percent/",
+      "date": "Wed, 26 Aug 2026 21:25:27 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The Download: the Kids issue arrives, and Bill Gates reveals his AI fears",
+      "link": "https://www.technologyreview.com/2026/08/26/1143000/the-download-kids-issue-launch-bill-gates-ai-fears/",
+      "date": "Wed, 26 Aug 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "New Platform Peers Inside AI’s Black Box",
+      "link": "https://spectrum.ieee.org/silico-ai-interpretability",
+      "date": "Wed, 26 Aug 2026 12:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Training and Finetuning Multi-Vector Embedding Models with Sentence Transformers",
+      "link": "https://huggingface.co/blog/train-multi-vector-encoder",
+      "date": "Wed, 26 Aug 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Granite 4.2 LLMs: How They're Built",
+      "link": "https://huggingface.co/blog/ibm-granite/granite-4-2",
+      "date": "Tue, 25 Aug 2026 15:14:14 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Quantization-Aware Healing: a compressed, 4-bit model that outperforms its full-precision original",
+      "link": "https://huggingface.co/blog/MultiverseComputingCAI/quantization-aware-healing",
+      "date": "Tue, 25 Aug 2026 11:39:24 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "AI Companion Robots Are Closing the Human Connection in Modern Homes",
+      "link": "https://spectrum.ieee.org/ollobot-ai-companion-robot",
+      "date": "Tue, 25 Aug 2026 10:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Wire It, Run It, Deploy It: AI Workflows in Gradio",
+      "link": "https://huggingface.co/blog/gradio-workflow-guide",
+      "date": "Tue, 25 Aug 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Self-Driving Cars Could Someday Take Requests",
+      "link": "https://spectrum.ieee.org/autonomous-vehicles-motion-planner-llm",
+      "date": "Mon, 24 Aug 2026 15:51:45 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "What It Takes to Be an Adaptable Engineer",
+      "link": "https://spectrum.ieee.org/adaptable-engineer-core-skills",
+      "date": "Mon, 24 Aug 2026 14:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "VentureBeat names Rob Strechay as its first Lead Analyst, expanding its enterprise AI research push",
+      "link": "https://venturebeat.com/ai/venturebeat-names-rob-strechay-as-its-first-lead-analyst-expanding-its-enterprise-ai-research-push",
+      "date": "Wed, 19 Aug 2026 14:18:12 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
