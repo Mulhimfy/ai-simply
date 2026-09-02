@@ -1,0 +1,198 @@
+{
+  "date": "2026-09-02",
+  "fetchedAt": "2026-09-02T11:55:06.405Z",
+  "items": [
+    {
+      "title": "Pangram Has Emerged as the Gold Standard of AI Detection. Should You Trust It?",
+      "link": "https://www.wired.com/story/pangram-has-emerged-as-the-gold-standard-of-ai-detection/",
+      "date": "Wed, 02 Sep 2026 10:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Google needs Hollywood more than the studios need AI",
+      "link": "https://www.theverge.com/tech/987429/google-needs-hollywood-more-than-the-studios-need-ai",
+      "date": "2026-09-01T18:50:29-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "AfterQuery reportedly becomes Y Combinator’s fastest-ever unicorn, now valued at $3.2B",
+      "link": "https://techcrunch.com/2026/09/01/afterquery-reportedly-becomes-y-combinators-fastest-ever-unicorn-now-valued-at-3-2b/",
+      "date": "Tue, 01 Sep 2026 22:08:24 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Anthropic launches Claude Fable 5.1 and says it’s up to 45 percent cheaper for agentic work",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/987830/anthropic-claude-fable-mythos-5-1",
+      "date": "2026-09-01T18:01:36-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "BenchMIRT: What are LLM benchmarks actually measuring?",
+      "link": "https://huggingface.co/blog/allenai/benchmirt",
+      "date": "Tue, 01 Sep 2026 21:39:07 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "OpenAI’s Astra model is on the way — and very good at breaking into computer systems",
+      "link": "https://techcrunch.com/2026/09/01/open-ais-astra-model-is-on-the-way-and-very-good-at-breaking-into-computer-systems/",
+      "date": "Tue, 01 Sep 2026 21:06:24 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Google’s Android update tackles motion sickness, accessibility, and more",
+      "link": "https://techcrunch.com/2026/09/01/googles-android-update-tackles-motion-sickness-accessibility-and-more/",
+      "date": "Tue, 01 Sep 2026 20:53:05 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI delayed its new model’s development after the Hugging Face hack",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/987695/openai-astra-unreleased-model-cybersecurity-delay",
+      "date": "2026-09-01T16:45:49-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "OpenAI Is About to Release Its First AI Model With ‘Critical’ Cyber Abilities",
+      "link": "https://www.wired.com/story/openai-astra-first-ai-model-with-critical-cyber-abilities/",
+      "date": "Tue, 01 Sep 2026 20:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Anthropic’s new Fable release is cheaper, less restrictive",
+      "link": "https://techcrunch.com/2026/09/01/anthropics-new-fable-release-is-cheaper-less-restrictive/",
+      "date": "Tue, 01 Sep 2026 19:39:22 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "How AI plotted an interstellar journey to Alpha Centauri",
+      "link": "https://www.technologyreview.com/2026/09/01/1143247/ai-interstellar-journey-alpha-centauri/",
+      "date": "Tue, 01 Sep 2026 19:10:36 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The rise of AI ‘civilizations’ and the fall of corporate responsibility",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/987566/ai-civilizations-opeai-hugging-face-hack",
+      "date": "2026-09-01T15:02:54-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Sonos Ace Ultra, Beam Ultra, Sonos Fabric, and a New App: Everything Sonos Just Announced",
+      "link": "https://www.wired.com/story/sonos-has-new-devices-a-new-os-and-yes-a-new-app/",
+      "date": "Tue, 01 Sep 2026 14:40:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Cash In on the AI Boom by Renting Out Your Spare Compute",
+      "link": "https://spectrum.ieee.org/ai-inference-distributed-computing",
+      "date": "Tue, 01 Sep 2026 14:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Making the AI-powered case for legacy modernization",
+      "link": "https://www.technologyreview.com/2026/09/01/1142180/making-the-ai-powered-case-for-legacy-modernization/",
+      "date": "Tue, 01 Sep 2026 14:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The Download: engineered microbes for crops, and OpenAI’s culture problem",
+      "link": "https://www.technologyreview.com/2026/09/01/1143199/the-download-engineered-microbes-openai-safety-culture/",
+      "date": "Tue, 01 Sep 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "How engineered microbes could help feed the world’s crops",
+      "link": "https://www.technologyreview.com/2026/09/01/1143195/microbe-fertilizer-switch-bioworks/",
+      "date": "Tue, 01 Sep 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Introducing @huggingface/kernels: 200+ WebGPU Kernels for Local AI",
+      "link": "https://huggingface.co/blog/webgpu-kernels",
+      "date": "Tue, 01 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "“Zlibrary my beloved”: Anthropic staff chats extolling piracy cited in Sony suit",
+      "link": "https://arstechnica.com/tech-policy/2026/08/zlibrary-my-beloved-anthropic-staff-chats-extolling-piracy-cited-in-sony-suit/",
+      "date": "Mon, 31 Aug 2026 18:10:45 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "ChatGPT and Reddit now face EU's toughest online safety rules",
+      "link": "https://arstechnica.com/tech-policy/2026/08/chatgtp-and-reddit-now-face-eus-toughest-online-safety-rules/",
+      "date": "Mon, 31 Aug 2026 13:41:40 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "You Know Who Really Hates AI? Insurance Claims Adjusters",
+      "link": "https://www.wired.com/story/insurance-claims-adjusters-really-hate-ai/",
+      "date": "Mon, 31 Aug 2026 10:30:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Pocket's AI made my game ideas real. Now Meta controls the results.",
+      "link": "https://arstechnica.com/gaming/2026/08/pockets-ai-made-my-game-ideas-real-now-meta-controls-the-results/",
+      "date": "Mon, 31 Aug 2026 10:00:34 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Inside Meta’s push to put robots to work in data centers",
+      "link": "https://arstechnica.com/ai/2026/08/inside-metas-push-to-put-robots-to-work-in-data-centers/",
+      "date": "Sun, 30 Aug 2026 11:03:47 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The Open ASR Leaderboard Adds Its First Global South Language",
+      "link": "https://huggingface.co/blog/open-asr-leaderboard-global-south",
+      "date": "Fri, 28 Aug 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Enterprise AI's real risk isn't autonomous agents. It's the complexity between them.",
+      "link": "https://venturebeat.com/ai/enterprise-ais-real-risk-isnt-autonomous-agents-its-the-complexity-between-them",
+      "date": "Thu, 27 Aug 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "When agents act on their own, governance has to live in the data layer",
+      "link": "https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer",
+      "date": "Thu, 27 Aug 2026 12:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Orchestration is the new challenge for CX in the age of AI agents",
+      "link": "https://venturebeat.com/orchestration/orchestration-is-the-new-challenge-for-cx-in-the-age-of-ai-agents",
+      "date": "Wed, 26 Aug 2026 14:30:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "New Platform Peers Inside AI’s Black Box",
+      "link": "https://spectrum.ieee.org/silico-ai-interpretability",
+      "date": "Wed, 26 Aug 2026 12:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Training and Finetuning Multi-Vector Embedding Models with Sentence Transformers",
+      "link": "https://huggingface.co/blog/train-multi-vector-encoder",
+      "date": "Wed, 26 Aug 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "AI Companion Robots Are Closing the Human Connection in Modern Homes",
+      "link": "https://spectrum.ieee.org/ollobot-ai-companion-robot",
+      "date": "Tue, 25 Aug 2026 10:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Self-Driving Cars Could Someday Take Requests",
+      "link": "https://spectrum.ieee.org/autonomous-vehicles-motion-planner-llm",
+      "date": "Mon, 24 Aug 2026 15:51:45 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "VentureBeat names Rob Strechay as its first Lead Analyst, expanding its enterprise AI research push",
+      "link": "https://venturebeat.com/ai/venturebeat-names-rob-strechay-as-its-first-lead-analyst-expanding-its-enterprise-ai-research-push",
+      "date": "Wed, 19 Aug 2026 14:18:12 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
