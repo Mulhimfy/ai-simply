@@ -1,0 +1,192 @@
+{
+  "date": "2026-09-03",
+  "fetchedAt": "2026-09-03T11:53:21.883Z",
+  "items": [
+    {
+      "title": "This Is Flock’s AI Search Tool for Cops",
+      "link": "https://www.wired.com/story/flock-ai-search-user-interface/",
+      "date": "Thu, 03 Sep 2026 10:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Agriculture relies on fossil fuels. It’s costing us.",
+      "link": "https://www.technologyreview.com/2026/09/03/1143320/fertilizer-prices-fossil-fuels/",
+      "date": "Thu, 03 Sep 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Scaling agentic AI pilots across the enterprise",
+      "link": "https://www.technologyreview.com/2026/09/03/1142868/scaling-agentic-ai-pilots-across-the-enterprise/",
+      "date": "Thu, 03 Sep 2026 09:30:32 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Meta Pushes Its New AI Agent on Employees—but Eases Off on Tokenmaxxing",
+      "link": "https://www.wired.com/story/meta-pushes-its-new-ai-agent-on-employees-but-eases-off-on-tokenmaxxing/",
+      "date": "Thu, 03 Sep 2026 01:32:02 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Fine-tuning a 350M Model for Better Structured Outputs in 100 GRPO Steps",
+      "link": "https://huggingface.co/blog/grpo-with-trl-ifstruct",
+      "date": "Thu, 03 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Give Your Coding Agents a Memory You Own",
+      "link": "https://huggingface.co/blog/funes",
+      "date": "Thu, 03 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Training a coding model to paint watercolours with TRL and OpenEnv",
+      "link": "https://huggingface.co/blog/train-to-paint-with-code",
+      "date": "Thu, 03 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "The Builders Stage brings practical strategies for scaling startups to TechCrunch Disrupt 2026",
+      "link": "https://techcrunch.com/2026/09/02/the-builders-stage-brings-practical-strategies-for-scaling-startups-to-techcrunch-disrupt-2026/",
+      "date": "Wed, 02 Sep 2026 23:01:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Palo Alto Networks paid $500M for Thrive-backed Console, sources say",
+      "link": "https://techcrunch.com/2026/09/02/palo-alto-networks-paid-500m-for-thrive-backed-console-sources-say/",
+      "date": "Wed, 02 Sep 2026 22:44:56 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "TechCrunch Disrupt 2026’s new Real World AI Stage features Nvidia, robots, and extinct animals",
+      "link": "https://techcrunch.com/2026/09/02/techcrunch-disrupt-2026s-new-real-world-ai-stage-features-nvidia-robots-and-extinct-animals/",
+      "date": "Wed, 02 Sep 2026 22:24:09 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI’s new reasoning technique alarms AI safety experts",
+      "link": "https://techcrunch.com/2026/09/02/openais-new-reasoning-technique-alarms-ai-safety-experts/",
+      "date": "Wed, 02 Sep 2026 20:19:14 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Google says its new Gemini 3.8 Flash model ‘works harder’ but might cost more",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/988742/google-gemini-3-8-flash",
+      "date": "2026-09-02T16:11:40-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Trump Administration Sides With OpenAI in New York Times Copyright Lawsuit",
+      "link": "https://www.wired.com/story/trump-administration-sides-with-ai-giants-new-york-times-lawsuit/",
+      "date": "Wed, 02 Sep 2026 18:41:02 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "These Russian Mathematicians Taught AI Models How to Talk to Each Other Without Using Words",
+      "link": "https://www.wired.com/story/russian-startup-mostik-ai-models-communication/",
+      "date": "Wed, 02 Sep 2026 18:20:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Google releases Gemini 3.8 Flash, its third Flash model in six weeks",
+      "link": "https://arstechnica.com/ai/2026/09/google-releases-gemini-3-8-flash-its-third-flash-model-in-six-weeks/",
+      "date": "Wed, 02 Sep 2026 18:13:54 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Trump may be forced to reveal secret rules feds use for AI safety testing",
+      "link": "https://arstechnica.com/tech-policy/2026/09/trump-may-be-forced-to-reveal-secret-rules-feds-use-for-ai-safety-testing/",
+      "date": "Wed, 02 Sep 2026 17:58:33 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Amazon’s AI assistant can now spot fake emails from the company",
+      "link": "https://www.theverge.com/tech/988518/amazon-alexa-for-shopping-verify-emails",
+      "date": "2026-09-02T13:52:56-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Researchers fear safety disaster ahead of OpenAI’s Astra release",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/988334/openai-astra-ai-monitoring-safety",
+      "date": "2026-09-02T12:40:50-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Facilitating AI integration with simplicity at scale",
+      "link": "https://www.technologyreview.com/2026/09/02/1142879/facilitating-ai-integration-with-simplicity-at-scale/",
+      "date": "Wed, 02 Sep 2026 14:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Real-Time Intelligence with IBM Time Series Models on Confluent",
+      "link": "https://huggingface.co/blog/ibm-research/real-time-intelligence",
+      "date": "Wed, 02 Sep 2026 13:49:14 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "AI Efficiency Could Cost Us the Next Generation of Experts",
+      "link": "https://spectrum.ieee.org/ai-engineer-skills",
+      "date": "Wed, 02 Sep 2026 13:00:04 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: AI puzzles and a path to our nearest star system",
+      "link": "https://www.technologyreview.com/2026/09/02/1143283/the-download-ai-puzzles-alpha-centauri-mission/",
+      "date": "Wed, 02 Sep 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Cash In on the AI Boom by Renting Out Your Spare Compute",
+      "link": "https://spectrum.ieee.org/ai-inference-distributed-computing",
+      "date": "Tue, 01 Sep 2026 14:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "“Zlibrary my beloved”: Anthropic staff chats extolling piracy cited in Sony suit",
+      "link": "https://arstechnica.com/tech-policy/2026/08/zlibrary-my-beloved-anthropic-staff-chats-extolling-piracy-cited-in-sony-suit/",
+      "date": "Mon, 31 Aug 2026 18:10:45 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "ChatGPT and Reddit now face EU's toughest online safety rules",
+      "link": "https://arstechnica.com/tech-policy/2026/08/chatgtp-and-reddit-now-face-eus-toughest-online-safety-rules/",
+      "date": "Mon, 31 Aug 2026 13:41:40 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Enterprise AI's real risk isn't autonomous agents. It's the complexity between them.",
+      "link": "https://venturebeat.com/ai/enterprise-ais-real-risk-isnt-autonomous-agents-its-the-complexity-between-them",
+      "date": "Thu, 27 Aug 2026 14:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "When agents act on their own, governance has to live in the data layer",
+      "link": "https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer",
+      "date": "Thu, 27 Aug 2026 12:01:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "Orchestration is the new challenge for CX in the age of AI agents",
+      "link": "https://venturebeat.com/orchestration/orchestration-is-the-new-challenge-for-cx-in-the-age-of-ai-agents",
+      "date": "Wed, 26 Aug 2026 14:30:00 GMT",
+      "source": "VentureBeat"
+    },
+    {
+      "title": "New Platform Peers Inside AI’s Black Box",
+      "link": "https://spectrum.ieee.org/silico-ai-interpretability",
+      "date": "Wed, 26 Aug 2026 12:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "AI Companion Robots Are Closing the Human Connection in Modern Homes",
+      "link": "https://spectrum.ieee.org/ollobot-ai-companion-robot",
+      "date": "Tue, 25 Aug 2026 10:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "VentureBeat names Rob Strechay as its first Lead Analyst, expanding its enterprise AI research push",
+      "link": "https://venturebeat.com/ai/venturebeat-names-rob-strechay-as-its-first-lead-analyst-expanding-its-enterprise-ai-research-push",
+      "date": "Wed, 19 Aug 2026 14:18:12 GMT",
+      "source": "VentureBeat"
+    }
+  ]
+}
