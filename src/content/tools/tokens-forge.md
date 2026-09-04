@@ -2,7 +2,7 @@
 name: Tokens Forge
 description: OpenAI-compatible API gateway for GPT, Claude, and Gemini with token credits, usage receipts, and fallback-aware routing.
 category: ai-coding
-subcategory: AI API Gateway
+subcategory: AI Developer Tools
 url: https://tokens-forge.com
 pricing: freemium
 tags: [api, gateway, multi-model, llm, developers, token-credits, routing]

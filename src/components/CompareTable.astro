@@ -1,0 +1,211 @@
+---
+/**
+ * Two-column comparison table used by /tools/vs/[slug]/.
+ * Desktop: a real <table> with a sticky first column. Mobile (≤720px): the same
+ * rows re-flowed into two stacked cards, one per tool, so nothing scrolls sideways.
+ * Cells that are objectively better (higher rating, cheaper tier, fresher review)
+ * get a soft accent wash — nothing louder than that.
+ */
+import { TOOL_CATEGORIES } from '../consts';
+import ToolLogo from './ToolLogo.astro';
+import Stars from './Stars.astro';
+import Icon from './Icon.astro';
+
+export interface CompareCol {
+	slug: string;
+	name: string;
+	description: string;
+	category: string;
+	subcategory?: string;
+	pricing: 'free' | 'freemium' | 'paid';
+	rating?: number;
+	ratingCount?: number;
+	pros: string[];
+	cons: string[];
+	updated: Date;
+	url: string;
+	affiliateUrl?: string;
+	verified?: boolean;
+}
+interface Props { a: CompareCol; b: CompareCol; class?: string }
+const { a, b, class: className } = Astro.props;
+
+const cols = [a, b];
+const catName = (slug: string) => TOOL_CATEGORIES.find((c) => c.slug === slug)?.name ?? slug;
+const priceLabel = { free: 'Free', freemium: 'Freemium', paid: 'Paid' };
+const priceRank = { free: 0, freemium: 1, paid: 2 };
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+/** 0 | 1 = index of the better column, null = not comparable / tie. */
+const better = {
+	rating: a.rating && b.rating && a.rating !== b.rating ? (a.rating > b.rating ? 0 : 1) : null,
+	pricing: a.pricing !== b.pricing ? (priceRank[a.pricing] < priceRank[b.pricing] ? 0 : 1) : null,
+	updated: Math.abs(a.updated.valueOf() - b.updated.valueOf()) > 864e5 ? (a.updated > b.updated ? 0 : 1) : null,
+};
+
+const rows = [
+	{ key: 'rating', label: 'Rating', icon: 'star' },
+	{ key: 'pricing', label: 'Pricing', icon: 'tag' },
+	{ key: 'category', label: 'Category', icon: 'folder' },
+	{ key: 'best', label: 'Best for', icon: 'sparkles' },
+	{ key: 'pros', label: 'Strengths', icon: 'circle-check' },
+	{ key: 'cons', label: 'Watch-outs', icon: 'minus' },
+	{ key: 'updated', label: 'Last updated', icon: 'clock' },
+	{ key: 'visit', label: 'Visit', icon: 'external-link' },
+] as const;
+type RowKey = (typeof rows)[number]['key'];
+
+const isBetter = (key: RowKey, i: number) => (key in better ? (better as Record<string, number | null>)[key] === i : false);
+---
+{/* ── Desktop: table ─────────────────────────────────────────────────── */}
+<div class:list={['ct-wrap', className]}>
+	<table class="ct">
+		<colgroup><col class="ct__col-label" /><col /><col /></colgroup>
+		<thead>
+			<tr>
+				<th scope="col" class="ct__rowhead ct__corner"><span class="sr-only">Criterion</span></th>
+				{cols.map((t) => (
+					<th scope="col" class="ct__head">
+						<a href={`/tools/${t.slug}/`} class="ct__tool">
+							<ToolLogo slug={t.slug} name={t.name} size={36} />
+							<span class="ct__tool-name">{t.name}{t.verified && <Icon name="badge-check" size={14} class="ct__verified" title="Tested by AI Briefs" />}</span>
+						</a>
+					</th>
+				))}
+			</tr>
+		</thead>
+		<tbody>
+			{rows.map((r) => (
+				<tr>
+					<th scope="row" class="ct__rowhead"><span class="ct__label"><Icon name={r.icon} size={14} /> {r.label}</span></th>
+					{cols.map((t, i) => (
+						<td class:list={['ct__cell', { 'is-better': isBetter(r.key, i) }]}>
+							{isBetter(r.key, i) && <span class="ct__wins">Wins</span>}
+							{r.key === 'rating' && (t.rating ? <Stars rating={t.rating} count={t.ratingCount} size={14} /> : <span class="ct__none">Not yet rated</span>)}
+							{r.key === 'pricing' && <span class:list={['pill', `pill--${t.pricing}`]}>{priceLabel[t.pricing]}</span>}
+							{r.key === 'category' && (
+								<span class="ct__cat">
+									<a href={`/tools/category/${t.category}/`} class="link-u">{catName(t.category)}</a>
+									{t.subcategory && t.subcategory !== catName(t.category) && <span class="ct__sub">{t.subcategory}</span>}
+								</span>
+							)}
+							{r.key === 'best' && (t.pros[0] ? <span>{t.pros[0]}</span> : <span class="ct__none">Not reviewed in depth yet</span>)}
+							{r.key === 'pros' && (t.pros.length ? <ul role="list" class="ct__list ct__list--pro">{t.pros.slice(0, 3).map((p) => <li><Icon name="check" size={14} /><span>{p}</span></li>)}</ul> : <span class="ct__none">—</span>)}
+							{r.key === 'cons' && (t.cons.length ? <ul role="list" class="ct__list ct__list--con">{t.cons.slice(0, 3).map((c) => <li><Icon name="minus" size={14} /><span>{c}</span></li>)}</ul> : <span class="ct__none">—</span>)}
+							{r.key === 'updated' && <time datetime={t.updated.toISOString()} class="tnum">{fmt(t.updated)}</time>}
+							{r.key === 'visit' && (
+								<a href={t.affiliateUrl ?? t.url} target="_blank" rel={`noopener noreferrer${t.affiliateUrl ? ' sponsored' : ''}`} class="btn btn--ghost btn--sm" data-track="visit" data-tool={t.slug}>
+									Visit {t.name} <Icon name="external-link" size={14} />
+								</a>
+							)}
+						</td>
+					))}
+				</tr>
+			))}
+		</tbody>
+	</table>
+</div>
+
+{/* ── Mobile: the same rows, one card per tool ───────────────────────── */}
+<div class:list={['ct-cards', className]}>
+	{cols.map((t, i) => (
+		<article class="ct-card">
+			<a href={`/tools/${t.slug}/`} class="ct-card__head">
+				<ToolLogo slug={t.slug} name={t.name} size={44} />
+				<span class="ct-card__name">{t.name}{t.verified && <Icon name="badge-check" size={14} class="ct__verified" title="Tested by AI Briefs" />}</span>
+				<Icon name="arrow-right" size={16} class="ct-card__go" />
+			</a>
+			<dl class="ct-card__rows">
+				{rows.map((r) => (
+					<div class:list={['ct-card__row', { 'is-better': isBetter(r.key, i) }]}>
+						<dt class="ct__label"><Icon name={r.icon} size={14} /> {r.label}{isBetter(r.key, i) && <span class="ct__wins">Wins</span>}</dt>
+						<dd>
+							{r.key === 'rating' && (t.rating ? <Stars rating={t.rating} count={t.ratingCount} size={14} /> : <span class="ct__none">Not yet rated</span>)}
+							{r.key === 'pricing' && <span class:list={['pill', `pill--${t.pricing}`]}>{priceLabel[t.pricing]}</span>}
+							{r.key === 'category' && (
+								<span class="ct__cat">
+									<a href={`/tools/category/${t.category}/`} class="link-u">{catName(t.category)}</a>
+									{t.subcategory && t.subcategory !== catName(t.category) && <span class="ct__sub">{t.subcategory}</span>}
+								</span>
+							)}
+							{r.key === 'best' && (t.pros[0] ? <span>{t.pros[0]}</span> : <span class="ct__none">Not reviewed in depth yet</span>)}
+							{r.key === 'pros' && (t.pros.length ? <ul role="list" class="ct__list ct__list--pro">{t.pros.slice(0, 3).map((p) => <li><Icon name="check" size={14} /><span>{p}</span></li>)}</ul> : <span class="ct__none">—</span>)}
+							{r.key === 'cons' && (t.cons.length ? <ul role="list" class="ct__list ct__list--con">{t.cons.slice(0, 3).map((c) => <li><Icon name="minus" size={14} /><span>{c}</span></li>)}</ul> : <span class="ct__none">—</span>)}
+							{r.key === 'updated' && <time datetime={t.updated.toISOString()} class="tnum">{fmt(t.updated)}</time>}
+							{r.key === 'visit' && (
+								<a href={t.affiliateUrl ?? t.url} target="_blank" rel={`noopener noreferrer${t.affiliateUrl ? ' sponsored' : ''}`} class="btn btn--ghost btn--sm" data-track="visit" data-tool={t.slug}>
+									Visit {t.name} <Icon name="external-link" size={14} />
+								</a>
+							)}
+						</dd>
+					</div>
+				))}
+			</dl>
+		</article>
+	))}
+</div>
+
+<style>
+	/* shared bits */
+	.ct__label {
+		display: inline-flex; align-items: center; gap: 8px;
+		font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+		color: var(--ink-3); white-space: nowrap;
+	}
+	.ct__label :global(.icon) { color: var(--ink-4); flex-shrink: 0; }
+	.ct__tool-name :global(.ct__verified),
+	.ct-card__name :global(.ct__verified) { color: var(--info); margin-left: 5px; vertical-align: -2px; display: inline; }
+	.ct__none { color: var(--ink-4); font-size: var(--text-sm); }
+	.ct__cat { display: grid; gap: 2px; }
+	.ct__sub { font-size: var(--text-xs); color: var(--ink-3); }
+	.ct__list { display: grid; gap: 8px; }
+	.ct__list li { display: flex; gap: 8px; align-items: flex-start; font-size: var(--text-sm); line-height: 1.45; color: var(--ink-2); }
+	.ct__list li :global(.icon) { flex-shrink: 0; margin-top: 3px; }
+	.ct__list--pro li :global(.icon) { color: var(--good); }
+	.ct__list--con li :global(.icon) { color: var(--warn); }
+	.ct__wins {
+		display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: var(--r-full);
+		font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;
+		background: var(--accent); color: var(--on-accent);
+	}
+
+	/* ── table (desktop) ─────────────────────────────────────────────── */
+	.ct-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); scrollbar-width: thin; }
+	.ct { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+	.ct th, .ct td { text-align: left; vertical-align: top; padding: var(--s-5) var(--s-6); border-bottom: 1px solid var(--line); }
+	.ct tbody tr:last-child th, .ct tbody tr:last-child td { border-bottom: 0; }
+	.ct thead th { background: var(--surface-2); border-bottom: 1px solid var(--line-2); padding-block: var(--s-4); }
+	.ct thead th:first-child { border-top-left-radius: var(--r-lg); }
+	.ct thead th:last-child { border-top-right-radius: var(--r-lg); }
+	.ct__col-label { width: 196px; }
+	/* The row headers must stay real table cells — the label chrome lives on an
+	   inner span, so the sticky column keeps the full row height and background. */
+	.ct__rowhead { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+	.ct tbody .ct__rowhead { padding-top: calc(var(--s-5) + 3px); }
+	.ct thead .ct__corner { background: var(--surface-2); z-index: 2; }
+	.ct__cell { position: relative; font-size: var(--text-base); color: var(--ink); transition: background-color var(--dur-3) var(--ease-out); }
+	.ct__cell.is-better { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+	.ct__cell .ct__wins { position: absolute; top: 10px; right: 12px; }
+	.ct__tool { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); font-weight: 600; font-size: var(--text-md); letter-spacing: -0.015em; transition: color var(--dur-2); }
+	.ct__tool:hover { color: var(--accent-ink); }
+	.ct__tool-name { display: inline-flex; align-items: center; }
+	.ct td:not(:first-child) + td { border-left: 1px solid var(--line); }
+
+	/* ── cards (mobile) ──────────────────────────────────────────────── */
+	.ct-cards { display: none; }
+	.ct-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+	.ct-card__head { display: flex; align-items: center; gap: 12px; padding: var(--s-4) var(--s-5); background: var(--surface-2); border-bottom: 1px solid var(--line-2); color: var(--ink); font-weight: 600; font-size: var(--text-lg); letter-spacing: -0.02em; }
+	.ct-card__name { flex: 1; min-width: 0; display: inline-flex; align-items: center; }
+	.ct-card__head :global(.ct-card__go) { color: var(--ink-3); }
+	.ct-card__rows { display: grid; }
+	.ct-card__row { display: grid; gap: 8px; padding: var(--s-4) var(--s-5); border-bottom: 1px solid var(--line); }
+	.ct-card__row:last-child { border-bottom: 0; }
+	.ct-card__row.is-better { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+	.ct-card__row dt .ct__wins { margin-left: 8px; }
+	.ct-card__row dd { font-size: var(--text-base); }
+
+	@media (max-width: 720px) {
+		.ct-wrap { display: none; }
+		.ct-cards { display: grid; gap: var(--s-5); }
+	}
+</style>

@@ -1,46 +1,104 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Icon from '../components/Icon.astro';
+import { SITE_TITLE } from '../consts';
 
+/** The tool itself runs on Railway and is embedded, not proxied through this site. */
 const BACKEND = 'https://web-production-8f27a.up.railway.app';
+
+const notes = [
+	{ icon: 'refresh-cw', text: 'Lists are scraped and re-validated on demand, so what you see has just been checked.' },
+	{ icon: 'sliders-horizontal', text: 'Filter by protocol (HTTP, SOCKS4, SOCKS5), country and response time.' },
+	{ icon: 'clipboard-check', text: 'Copy the working ones straight out — no account, no sign-up.' },
+];
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-  <BaseHead title="Free Proxy Generator — getaibriefs.com" description="Scrape and validate free HTTP, SOCKS4, and SOCKS5 proxies in real time. Filter by country, type, and speed." />
-  <style>
-    .proxy-wrap {
-      width: 100%;
-      min-height: 80vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 20px;
-      background: #0d0d0d;
-    }
-    iframe {
-      width: 100%;
-      max-width: 780px;
-      height: 900px;
-      border: none;
-      border-radius: 12px;
-    }
-  </style>
-</head>
-<body>
-  <Header />
-  <main>
-    <div class="proxy-wrap">
-      <iframe
-        src={BACKEND}
-        title="Proxy Generator"
-        loading="lazy"
-        allow="clipboard-write"
-      ></iframe>
-    </div>
-  </main>
-  <Footer />
-</body>
-</html>
+<Base
+	title={`Free proxy generator | ${SITE_TITLE}`}
+	description="Scrape and validate free HTTP, SOCKS4 and SOCKS5 proxies in real time. Filter by country, type and speed."
+	noNudge
+>
+	<PageHero
+		crumbs={[{ name: 'Proxy generator' }]}
+		eyebrow="Side tool"
+		title="Free *proxy* generator"
+		lead="A small utility we run separately from the brief: it scrapes public proxy lists, checks which ones actually respond, and hands you the ones that work."
+	>
+		<div class="hero-actions">
+			<a href={BACKEND} target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">
+				Open in a new tab <Icon name="external-link" size={15} />
+			</a>
+		</div>
+	</PageHero>
+
+	<section class="section section--tight" aria-label="Proxy generator">
+		<div class="container">
+			<ul class="notes" role="list">
+				{notes.map((n) => (
+					<li><Icon name={n.icon} size={16} /> {n.text}</li>
+				))}
+			</ul>
+
+			<div class="frame">
+				<div class="frame__bar">
+					<span class="frame__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+					<span class="frame__url mono">web-production-8f27a.up.railway.app</span>
+					<a href={BACKEND} target="_blank" rel="noopener noreferrer" class="frame__open" aria-label="Open the proxy generator in a new tab">
+						<Icon name="external-link" size={15} />
+					</a>
+				</div>
+				<iframe
+					class="frame__frame"
+					src={BACKEND}
+					title="Proxy generator"
+					loading="lazy"
+					allow="clipboard-write"
+				></iframe>
+			</div>
+
+			<p class="fine">
+				<Icon name="info" size={14} />
+				<span>
+					This tool is hosted separately and is not part of the brief. Public proxies are unencrypted and operated
+					by strangers — never send anything private through one. Use it for testing and geo-checks, not for logging in.
+				</span>
+			</p>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.hero-actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+	.notes { display: flex; flex-wrap: wrap; gap: var(--s-3) var(--s-8); margin-bottom: var(--s-6); }
+	.notes li { display: inline-flex; align-items: flex-start; gap: 8px; font-size: var(--text-sm); color: var(--ink-2); max-width: 46ch; line-height: 1.5; }
+	.notes :global(.icon) { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+
+	.frame {
+		max-width: 900px; margin-inline: auto;
+		background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+		overflow: hidden; box-shadow: var(--shadow-lg);
+	}
+	.frame__bar {
+		display: flex; align-items: center; gap: var(--s-4);
+		padding: 10px var(--s-4); border-bottom: 1px solid var(--line); background: var(--surface-2);
+	}
+	.frame__dots { display: inline-flex; gap: 6px; }
+	.frame__dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
+	.frame__url { flex: 1; min-width: 0; font-size: 0.6875rem; color: var(--ink-3); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.frame__open { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-xs); color: var(--ink-3); transition: color var(--dur-2), background-color var(--dur-2); }
+	.frame__open:hover { color: var(--ink); background: var(--surface-3); }
+
+	.frame__frame {
+		display: block; width: 100%; height: clamp(560px, 78vh, 940px);
+		border: 0; background: var(--bg-sunk);
+	}
+
+	.fine {
+		display: flex; align-items: flex-start; gap: 8px;
+		max-width: 900px; margin: var(--s-6) auto 0;
+		font-size: var(--text-xs); color: var(--ink-3); line-height: 1.7;
+	}
+	.fine :global(.icon) { flex-shrink: 0; margin-top: 3px; }
+</style>

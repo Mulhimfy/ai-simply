@@ -1,200 +1,176 @@
 ---
+/**
+ * `/author/<slug>/` — one byline and everything they've written.
+ * MUST PRESERVE: the Organization-typed author schema (the house identity is an
+ * organisation, not a person) and the BreadcrumbList, emitted by <Breadcrumb>.
+ */
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
 import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
 import { SITE_TITLE, SITE_URL, DEFAULT_AUTHOR } from '../../consts';
+import { byNewest, categoryName, countWords } from '../../lib/articles';
 
 export async function getStaticPaths() {
-	return [
-		{ params: { slug: DEFAULT_AUTHOR.slug }, props: { author: DEFAULT_AUTHOR } },
-	];
+	return [{ params: { slug: DEFAULT_AUTHOR.slug }, props: { author: DEFAULT_AUTHOR } }];
 }
 
-const { author } = Astro.props;
-const allPosts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+/* Reading time is measured, not asserted. */
+const readTime = (body?: string) => `${Math.max(1, Math.round(countWords(body ?? '') / 200))} min read`;
 
-const authorPosts = allPosts.filter(p => (p.data.author ?? DEFAULT_AUTHOR.name) === author.name);
-const initials = author.name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+const { author } = Astro.props;
+const posts = byNewest(await getCollection('blog')).filter(
+	(p) => (p.data.author ?? DEFAULT_AUTHOR.name) === author.name
+);
+const [feature, ...rest] = posts;
+
+const topics = [...new Set(posts.map((p) => p.data.category))].map(categoryName).sort();
+const since = posts.length ? posts[posts.length - 1].data.pubDate : null;
+const authorUrl = `${SITE_URL}/author/${author.slug}/`;
 
 const personSchema = {
 	'@context': 'https://schema.org',
 	'@type': 'Organization',
 	name: author.name,
 	description: author.bio,
-	url: `${SITE_URL}/author/${author.slug}/`,
+	url: authorUrl,
 	logo: `${SITE_URL}${author.avatar}`,
-	sameAs: [
-		`https://twitter.com/${author.twitter}`,
-	].filter(Boolean),
+	sameAs: [author.twitter && `https://twitter.com/${author.twitter}`].filter(Boolean),
 };
 
-const breadcrumbSchema = {
+const itemListSchema = {
 	'@context': 'https://schema.org',
-	'@type': 'BreadcrumbList',
-	itemListElement: [
-		{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-		{ '@type': 'ListItem', position: 2, name: 'Authors', item: `${SITE_URL}/author/` },
-		{ '@type': 'ListItem', position: 3, name: author.name, item: `${SITE_URL}/author/${author.slug}/` },
-	],
+	'@type': 'ItemList',
+	name: `Explainers by ${author.name}`,
+	numberOfItems: posts.length,
+	itemListElement: posts.map((p, i) => ({
+		'@type': 'ListItem', position: i + 1, name: p.data.title, url: `${SITE_URL}/blog/${p.id}/`,
+	})),
 };
 ---
+<Base
+	title={`${author.name} — ${author.role} at ${SITE_TITLE}`}
+	description={author.bio}
+	type="website"
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`${author.name} — ${author.role} at ${SITE_TITLE}`}
-		description={author.bio}
-		type="website"
-	/>
-	<script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
-	<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
-</head>
-<body>
-	<Header />
-	<main id="main-content">
-		<section class="author-hero">
-			<div class="container">
-				<nav class="breadcrumbs" aria-label="Breadcrumb">
-					<a href="/">Home</a>
-					<span aria-hidden="true">/</span>
-					<span>{author.name}</span>
-				</nav>
-				<div class="author-hero__inner" itemscope itemtype="https://schema.org/Organization">
-					<img src={author.avatar} alt={author.name} width="96" height="96" class="author-hero__avatar" itemprop="logo" />
-					<div>
-						<h1 itemprop="name">{author.name}</h1>
-						<p class="author-hero__role">{author.role} · {SITE_TITLE}</p>
-						<p class="author-hero__bio" itemprop="description">{author.bio}</p>
-						<div class="author-hero__social">
+	noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+		<script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
+	</Fragment>
+
+	<section class="ap-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Authors', href: '/author/' }, { name: author.name }]} />
+			<div class="ap-hero__in">
+				<div class="ap-hero__copy">
+					<img src={author.avatar} alt="" width="76" height="76" class="ap-hero__avatar" />
+					<div class="ap-hero__id">
+						<span class="eyebrow">{author.role}</span>
+						<h1 class="ap-hero__title">{author.name}</h1>
+						<p class="lead">{author.bio}</p>
+						<div class="row ap-hero__links">
 							{author.twitter && (
-								<a href={`https://twitter.com/${author.twitter}`} target="_blank" rel="noopener me" itemprop="sameAs">@{author.twitter}</a>
+								<a href={`https://twitter.com/${author.twitter}`} target="_blank" rel="noopener me" class="btn btn--ghost btn--sm">
+									<Icon name="twitter" size={15} /> @{author.twitter}
+								</a>
 							)}
+							<a href="/about/" class="link-arrow">About AI Briefs <Icon name="arrow-right" size={16} /></a>
 						</div>
 					</div>
 				</div>
+				<dl class="ap-hero__stats">
+					<div><dt class="mono">Explainers</dt><dd class="tnum">{posts.length}</dd></div>
+					<div><dt class="mono">Topics</dt><dd class="tnum">{topics.length}</dd></div>
+					{since && <div><dt class="mono">Since</dt><dd class="tnum">{since.getFullYear()}</dd></div>}
+				</dl>
+			</div>
+			{topics.length > 0 && (
+				<ul class="ap-topics" role="list" aria-label="Topics written about">
+					{topics.map((t) => <li class="pill pill--outline">{t}</li>)}
+				</ul>
+			)}
+		</div>
+	</section>
+
+	{feature && (
+		<section class="container ap-feature">
+			<span class="meta">Most recent</span>
+			<ArticleCard
+				slug={feature.id}
+				title={feature.data.title}
+				description={feature.data.description}
+				category={feature.data.category}
+				pubDate={feature.data.pubDate}
+				readingTime={readTime(feature.body)}
+				heroImage={feature.data.heroImage}
+				variant="feature"
+				eager
+			/>
+		</section>
+	)}
+
+	{rest.length > 0 && (
+		<section class="container section--tight">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Archive</span>
+					<h2>Everything by <em class="serif">{author.name}</em>.</h2>
+				</div>
+				<a href="/blog/" class="link-arrow">All explainers <Icon name="arrow-right" size={16} /></a>
+			</div>
+			<div class="grid grid--3 ap-grid" data-stagger>
+				{rest.map((p) => (
+					<ArticleCard
+						slug={p.id}
+						title={p.data.title}
+						description={p.data.description}
+						category={p.data.category}
+						pubDate={p.data.pubDate}
+						readingTime={readTime(p.body)}
+						heroImage={p.data.heroImage}
+					/>
+				))}
 			</div>
 		</section>
+	)}
 
-		<section class="author-posts container">
-			<h2>Articles by {author.name} ({authorPosts.length})</h2>
-			<ul class="author-posts__list">
-				{authorPosts.map(post => (
-					<li>
-						<a href={`/blog/${post.id}/`}>
-							<h3>{post.data.title}</h3>
-							<p>{post.data.description}</p>
-							<time datetime={post.data.pubDate.toISOString()}>
-								{post.data.pubDate.toLocaleDateString('en-us', { year: 'numeric', month: 'short', day: 'numeric' })}
-							</time>
-						</a>
-					</li>
-				))}
-			</ul>
+	{posts.length === 0 && (
+		<section class="container ap-empty">
+			<p class="lead">Nothing published under this byline yet.</p>
+			<a href="/blog/" class="btn btn--ghost">Browse the explainers <Icon name="arrow-right" class="icon--arrow" /></a>
 		</section>
+	)}
 
-		<Newsletter />
-	</main>
-	<Footer />
-</body>
-</html>
+	<Newsletter variant="band" />
+</Base>
 
 <style>
-	.author-hero {
-		padding: 3rem 0 2rem;
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
-	}
-	.breadcrumbs {
-		font-size: 0.85rem;
-		color: rgb(var(--gray));
-		margin-bottom: 1rem;
-	}
-	.breadcrumbs a { color: rgb(var(--gray)); text-decoration: none; }
-	.breadcrumbs a:hover { color: var(--primary); }
-	.breadcrumbs span { margin: 0 0.35rem; }
+	.ap-hero { padding: var(--s-8) 0 var(--s-10); }
+	.ap-hero__in { display: grid; gap: var(--s-8); margin-top: var(--s-6); align-items: end; }
+	.ap-hero__copy { display: flex; gap: var(--s-6); align-items: flex-start; }
+	.ap-hero__avatar { width: 76px; height: 76px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); flex-shrink: 0; }
+	.ap-hero__id { display: grid; gap: var(--s-4); justify-items: start; min-width: 0; }
+	.ap-hero__title { font-size: var(--text-4xl); }
+	.ap-hero__links { gap: var(--s-5); }
+	.ap-hero__stats { display: grid; grid-auto-flow: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+	.ap-hero__stats > div { background: var(--surface); padding: var(--s-5); display: grid; gap: var(--s-1); min-width: 116px; }
+	.ap-hero__stats dd { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+	.ap-topics { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-8); padding-top: var(--s-6); border-top: 1px solid var(--line); }
+	.ap-topics li { text-transform: none; letter-spacing: 0.01em; color: var(--ink-3); }
 
-	.author-hero__inner {
-		display: flex;
-		gap: 1.5rem;
-		align-items: flex-start;
-		max-width: 800px;
-	}
-	.author-hero__avatar {
-		flex-shrink: 0;
-		width: 96px; height: 96px;
-		border-radius: 50%;
-		display: block;
-	}
-	.author-hero h1 {
-		font-size: 2rem;
-		margin: 0 0 0.25rem;
-	}
-	.author-hero__role {
-		color: rgb(var(--gray));
-		font-size: 0.95rem;
-		margin-bottom: 1rem;
-	}
-	.author-hero__bio {
-		font-size: 1rem;
-		line-height: 1.65;
-		margin-bottom: 1rem;
-	}
-	.author-hero__social {
-		display: flex;
-		gap: 1rem;
-		font-size: 0.9rem;
-	}
-	.author-hero__social a {
-		color: var(--primary);
-		text-decoration: none;
-		font-weight: 600;
-	}
-	.author-hero__social a:hover { text-decoration: underline; }
+	.ap-feature { display: grid; gap: var(--s-5); }
+	.ap-grid { row-gap: var(--s-10); }
+	.ap-empty { display: grid; gap: var(--s-5); justify-items: start; padding-block: var(--s-16); }
 
-	.author-posts {
-		max-width: 800px;
-		padding: 2.5rem 0 3rem;
-	}
-	.author-posts h2 {
-		font-size: 1.4rem;
-		margin-bottom: 1.5rem;
-	}
-	.author-posts__list {
-		list-style: none;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-	.author-posts__list a {
-		display: block;
-		padding: 1.1rem 1.25rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		text-decoration: none;
-		color: inherit;
-		transition: border-color 0.15s;
-	}
-	.author-posts__list a:hover {
-		border-color: var(--primary);
-	}
-	.author-posts__list h3 {
-		font-size: 1.05rem;
-		margin: 0 0 0.35rem;
-		color: rgb(var(--black));
-	}
-	.author-posts__list p {
-		font-size: 0.9rem;
-		color: rgb(var(--gray));
-		margin: 0 0 0.5rem;
-	}
-	.author-posts__list time {
-		font-size: 0.8rem;
-		color: rgb(var(--gray));
+	@media (min-width: 900px) { .ap-hero__in { grid-template-columns: minmax(0, 1fr) auto; } }
+	@media (max-width: 640px) {
+		.ap-hero__title { font-size: var(--text-3xl); }
+		.ap-hero__copy { flex-direction: column; gap: var(--s-4); }
+		.ap-hero__stats { grid-auto-flow: column; }
+		.ap-hero__stats > div { min-width: 0; padding: var(--s-4); }
+		.ap-hero__stats dd { font-size: var(--text-2xl); }
 	}
 </style>

@@ -10,16 +10,28 @@
     "fetch-og": "node scripts/fetch-og-images.mjs",
     "inject-shots": "node scripts/inject-screenshots.mjs",
     "check-links": "node scripts/check-links.mjs",
-    "sync-listings": "node scripts/sync-listings.mjs"
+    "sync-listings": "node scripts/sync-listings.mjs",
+    "verify": "node scripts/lint-scoped-icons.mjs && node scripts/verify-contracts.mjs",
+    "fetch-logos": "node scripts/fetch-logos.mjs",
+    "write-brief": "node scripts/write-brief.mjs",
+    "logo-tiles": "node scripts/logo-tiles.mjs",
+    "lint": "node scripts/lint-scoped-icons.mjs",
+    "journey": "node scripts/journey-test.mjs",
+    "link-brief": "node scripts/link-brief.mjs",
+    "a11y": "node scripts/a11y-audit.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/rss": "^4.0.15",
     "@astrojs/sitemap": "^3.7.0",
+    "@resvg/resvg-js": "^2.6.2",
     "astro": "^5.17.1",
+    "lucide-static": "^1.40.0",
+    "satori": "^0.33.4",
     "sharp": "^0.34.3"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
     "playwright": "^1.59.1"
   }
 }

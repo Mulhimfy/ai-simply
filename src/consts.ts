@@ -1,5 +1,6 @@
 export const SITE_TITLE = 'AI Briefs';
-export const SITE_DESCRIPTION = 'Discover the best AI tools. Browse 200+ AI tools across 21 categories — free, freemium, and paid.';
+export const SITE_DESCRIPTION = 'The daily AI brief: what changed today, why it matters to you, and what to do about it. Three minutes, every morning, in plain English.';
+export const SITE_TAGLINE = 'Know what matters in AI. In three minutes. Every day.';
 export const SITE_URL = 'https://getaibriefs.com';
 export const SITE_AUTHOR = 'AI Briefs';
 
@@ -7,7 +8,7 @@ export const DEFAULT_AUTHOR = {
 	name: 'AI Briefs',
 	slug: 'ai-briefs',
 	role: 'Editorial Team',
-	bio: 'AI Briefs is an independent publication that tests AI tools hands-on and explains them in plain English — so readers can get the gist without the hype.',
+	bio: 'AI Briefs reads the AI news so you do not have to. Every day we publish a three-minute brief on what changed and why it matters, and we test the tools we recommend by hand.',
 	avatar: '/favicon.svg',
 	twitter: 'getaibriefs',
 };
@@ -266,4 +267,39 @@ export const PRICING_BADGE: Record<string, { bg: string; text: string; label: st
 	free:     { bg: '#E0F5EE', text: '#00875A', label: 'Free' },
 	freemium: { bg: '#EEF3FF', text: '#3B5BDB', label: 'Freemium' },
 	paid:     { bg: '#FFF4E6', text: '#E67700', label: 'Paid' },
+};
+
+/** Lucide icon name per tool category (replaces emoji iconography). */
+export const CATEGORY_ICONS: Record<string, string> = {
+	'ai-productivity': 'zap',
+	'ai-writing': 'pen-line',
+	'ai-video': 'clapperboard',
+	'ai-image': 'image',
+	'ai-art': 'palette',
+	'ai-voice': 'mic',
+	'ai-chatbot': 'message-square',
+	'ai-vision': 'scan-eye',
+	'ai-marketing': 'megaphone',
+	'ai-coding': 'code-2',
+	'ai-learning': 'graduation-cap',
+	'ai-social': 'share-2',
+	'ai-business': 'briefcase',
+	'ai-research': 'flask-conical',
+	'ai-insights': 'bar-chart-3',
+	'ai-life': 'sparkles',
+	'ai-health': 'heart-pulse',
+	'ai-legal': 'scale',
+	'ai-design': 'pen-tool',
+	'ai-detection': 'search-check',
+	'others': 'boxes',
+};
+
+/** Blog category display names + lucide icons. */
+export const BLOG_CATEGORIES: Record<string, { name: string; icon: string; blurb: string }> = {
+	'ai-explained':   { name: 'AI Explained',   icon: 'lightbulb',   blurb: 'Concepts in plain English.' },
+	'future-of-work': { name: 'Future of Work', icon: 'briefcase',   blurb: 'How AI changes jobs and careers.' },
+	'how-ai-works':   { name: 'How AI Works',   icon: 'cpu',         blurb: 'Under the hood, without the math.' },
+	'ai-news':        { name: 'AI News',        icon: 'newspaper',   blurb: 'What happened and why it matters.' },
+	'comparisons':    { name: 'Comparisons',    icon: 'git-compare', blurb: 'Head-to-head, honestly.' },
+	'guides':         { name: 'Guides',         icon: 'compass',     blurb: 'Step-by-step, tested by us.' },
 };

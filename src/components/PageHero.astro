@@ -1,0 +1,72 @@
+---
+/**
+ * Standard page header for the static/utility pages.
+ * eyebrow + h1 (with a `*word*` serif-italic accent) + lead + optional breadcrumb.
+ * Extra content (buttons, meta rows) goes in the default slot; a right-hand
+ * column (price card, stat) goes in the "aside" slot.
+ */
+import Breadcrumb from './Breadcrumb.astro';
+
+interface Crumb { name?: string; label?: string; href?: string }
+interface Props {
+	title: string;
+	eyebrow?: string;
+	lead?: string;
+	crumbs?: Crumb[];
+	align?: 'left' | 'center';
+	/** thin bottom hairline under the hero */
+	rule?: boolean;
+	class?: string;
+}
+const { title, eyebrow, lead, crumbs, align = 'left', rule = true, class: className } = Astro.props;
+const html = title.replace(/\*(.+?)\*/g, '<em class="serif">$1</em>');
+const hasAside = Astro.slots.has('aside');
+---
+<header class:list={['phero', `phero--${align}`, { 'phero--rule': rule, 'phero--split': hasAside }, className]}>
+	<div class="phero__glow glow" aria-hidden="true"></div>
+	<div class="container phero__inner">
+		<div class="phero__main">
+			{crumbs && <Breadcrumb items={crumbs} class="phero__crumbs" />}
+			{eyebrow && <span class="eyebrow">{eyebrow}</span>}
+			<h1 class="phero__title" set:html={html} />
+			{lead && <p class="lead phero__lead">{lead}</p>}
+			<slot />
+		</div>
+		{hasAside && <div class="phero__aside"><slot name="aside" /></div>}
+	</div>
+</header>
+
+<style>
+	.phero {
+		position: relative;
+		padding-block: clamp(2.5rem, 2rem + 3.5vw, 5rem) clamp(2rem, 1.6rem + 2.6vw, 3.5rem);
+		overflow: clip;
+		isolation: isolate;
+	}
+	.phero--rule { border-bottom: 1px solid var(--line); }
+	.phero__glow {
+		top: -280px; left: 50%; translate: -50% 0;
+		width: min(760px, 90vw); aspect-ratio: 1.6;
+		opacity: 0.5; z-index: -1;
+	}
+	.phero__inner { display: grid; gap: var(--s-4); }
+	.phero__main { display: grid; gap: var(--s-4); min-width: 0; }
+	:global(.phero__crumbs) { margin-bottom: var(--s-2); }
+	.phero__title { max-width: 20ch; }
+	.phero__lead { margin-top: calc(var(--s-1) * -1); }
+
+	.phero--center { text-align: center; }
+	.phero--center .phero__main { justify-items: center; }
+	.phero--center .phero__title { max-width: 24ch; }
+	.phero--center .phero__lead { margin-inline: auto; }
+	.phero--center :global(.phero__crumbs) { justify-self: center; }
+
+	.phero--split .phero__inner {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+		gap: var(--s-10);
+		align-items: end;
+	}
+	@media (max-width: 900px) {
+		.phero--split .phero__inner { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); align-items: start; }
+	}
+</style>

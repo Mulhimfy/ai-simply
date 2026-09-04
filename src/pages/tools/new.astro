@@ -1,182 +1,173 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE } from '../../consts';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
+import { SITE_TITLE } from '../../consts';
+import { cardProps, type Tool } from '../../lib/tools';
 
-const tools = (await getCollection('tools'))
-	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 60);
+const LIMIT = 60;
+const all = (await getCollection('tools')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const tools = all.slice(0, LIMIT);
 
-function timeAgo(date: Date) {
-	const days = Math.floor((Date.now() - date.valueOf()) / 86400000);
-	if (days === 0) return 'Today';
-	if (days === 1) return 'Yesterday';
-	if (days < 7) return `${days} days ago`;
-	if (days < 30) return `${Math.floor(days / 7)}w ago`;
-	return `${Math.floor(days / 30)}mo ago`;
+// Buckets like Product Hunt: this week / this month / then one per calendar month.
+// Computed at build time from `pubDate` (the site rebuilds daily).
+const DAY = 864e5;
+const now = Date.now();
+const monthLabel = (d: Date) => d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const bucketOf = (d: Date) => {
+	const age = now - d.valueOf();
+	if (age < 7 * DAY) return { key: 'week', label: 'This week' };
+	if (age < 30 * DAY) return { key: 'month', label: 'This month' };
+	return { key: `m-${d.getUTCFullYear()}-${d.getUTCMonth()}`, label: monthLabel(d) };
+};
+type Day = { iso: string; day: string; mon: string; tools: Tool[] };
+type Bucket = { key: string; label: string; days: Day[]; count: number };
+const buckets: Bucket[] = [];
+for (const t of tools) {
+	const d = t.data.pubDate;
+	const b = bucketOf(d);
+	let bucket = buckets.find((x) => x.key === b.key);
+	if (!bucket) { bucket = { ...b, days: [], count: 0 }; buckets.push(bucket); }
+	const iso = d.toISOString().slice(0, 10);
+	let day = bucket.days.find((x) => x.iso === iso);
+	if (!day) {
+		day = { iso, day: String(d.getUTCDate()).padStart(2, '0'), mon: d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }), tools: [] };
+		bucket.days.push(day);
+	}
+	day.tools.push(t);
+	bucket.count++;
 }
+
+const last30 = all.filter((t) => now - t.data.pubDate.valueOf() < 30 * DAY).length;
+const latest = tools[0]?.data.pubDate;
+const latestIso = latest?.toISOString();
+const latestLabel = latest?.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const quiet = last30 === 0;
 ---
+<Base
+	title={`New in the toolbox — the latest AI tools we've added | ${SITE_TITLE}`}
+	description="The most recent additions to the toolbox, newest first. Each one was tried by a person before it was listed."
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`New AI Tools (2026) — Latest Additions | ${SITE_TITLE}`}
-		description="Discover the newest AI tools added to our directory. Updated daily with the latest AI apps, generators, and productivity tools."
-	/>
-</head>
-<body>
-<Header />
+	noNudge>
+	<section class="new-hero">
+		<div class="container container--narrow">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: 'New' }]} />
+			<div class="new-hero__in">
+				<span class="eyebrow">Toolbox · recently added</span>
+				<h1 class="new-hero__title">New in the <em class="serif">toolbox</em>.</h1>
+				<p class="lead">The last {tools.length} additions, newest first. Each one was tried by a person before it was listed.</p>
+				<div class="new-hero__meta">
+					<span class="new-hero__stat"><b class="tnum">{last30}</b> in the last 30 days</span>
+					<span class="new-hero__stat"><b class="tnum">{all.length}</b> tools in total</span>
+					{latestIso && <span class="new-hero__stat">Latest <time data-relative datetime={latestIso}>{latestLabel}</time></span>}
+				</div>
+			</div>
+		</div>
+	</section>
 
-<div class="page-header">
-	<div class="container">
-		<div class="header-badge">Updated Daily</div>
-		<h1>New AI Tools</h1>
-		<p>The latest AI tools added to our directory — sorted by newest first.</p>
+	<div class="container container--narrow new-feed" data-new-feed>
+		{quiet && (
+			<div class="new-quiet card card--sunk">
+				<Icon name="clock" size={18} />
+				<p>Nothing landed in the last 30 days — the latest batch went live {latestLabel}. New listings appear here the day they're approved.</p>
+			</div>
+		)}
+
+		{buckets.map((b) => (
+			<section class="nb" aria-labelledby={`nb-${b.key}`}>
+				<header class="nb__head">
+					<h2 class="nb__title" id={`nb-${b.key}`}>{b.label}</h2>
+					<span class="mono nb__count">{b.count} {b.count === 1 ? 'tool' : 'tools'}</span>
+				</header>
+				<ol class="nb__days" role="list">
+					{b.days.map((d) => (
+						<li class="nb__day">
+							<div class="nb__rail">
+								<time class="nb__date" datetime={d.iso}><b>{d.day}</b><span>{d.mon}</span></time>
+							</div>
+							<div class="nb__list" data-stagger>
+								{d.tools.map((t) => <ToolCard {...cardProps(t)} variant="row" />)}
+							</div>
+						</li>
+					))}
+				</ol>
+			</section>
+		))}
+
+		<div class="new-foot">
+			<p class="muted">That's the last {tools.length}. Older tools live in the full toolbox.</p>
+			<a href="/tools/?sort=newest" class="btn btn--ghost">Browse all {all.length} tools <Icon name="arrow-right" class="icon--arrow" /></a>
+		</div>
 	</div>
-</div>
 
-<main class="container new-body">
-	<div class="tools-grid">
-		{tools.map(tool => {
-			const cat = TOOL_CATEGORIES.find(c => c.slug === tool.data.category);
-			const domain = new URL(tool.data.url).hostname;
-			const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-			const badge = PRICING_BADGE[tool.data.pricing];
-			const ago = timeAgo(tool.data.pubDate);
-			return (
-				<a href={`/tools/${tool.id}/`} class="tool-card">
-					<div class="tool-card__top">
-						<div class="tool-logo">
-							<img src={favicon} alt={tool.data.name} width="36" height="36" loading="lazy"
-								class="js-favicon" />
-							<span class="tool-logo-fb" style="display:none">{cat?.emoji ?? '🤖'}</span>
-						</div>
-						<div class="tool-meta">
-							<h3>{tool.data.name}</h3>
-							<span class="cat-tag">{cat?.emoji} {cat?.name}</span>
-						</div>
-						<span class="pricing-pill" style={`background:${badge.bg};color:${badge.text}`}>{badge.label}</span>
-					</div>
-					<p class="tool-desc">{tool.data.description}</p>
-					<div class="tool-footer">
-						<span class="added-date">Added {ago}</span>
-						{tool.data.rating && <span class="tool-rating">★ {tool.data.rating.toFixed(1)}</span>}
-					</div>
-				</a>
-			);
-		})}
-	</div>
-</main>
-
-<Footer />
-</body>
-</html>
+	<Newsletter variant="band" heading="New listings, in the *brief*." text="The additions worth your time go out with the daily brief — what changed in AI, why it matters, and what to do about it. Free, and one click to leave." />
+</Base>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 3rem 0 2rem;
-	text-align: center;
-}
-.header-badge {
-	display: inline-block;
-	background: var(--primary);
-	color: #fff;
-	font-size: 0.7rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	padding: 0.25rem 0.75rem;
-	border-radius: 99px;
-	margin-bottom: 0.75rem;
-}
-.page-header h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 0.5rem; }
-.page-header p { color: rgb(var(--gray)); max-width: 480px; margin: 0 auto; }
+	.new-hero { padding: var(--s-8) 0 var(--s-6); }
+	.new-hero__in { display: grid; gap: var(--s-4); justify-items: start; margin-top: var(--s-6); }
+	.new-hero__title { font-size: var(--text-5xl); max-width: 16ch; text-wrap: balance; }
+	.new-hero__meta { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); font-size: var(--text-sm); color: var(--ink-3); }
+	.new-hero__stat b { color: var(--ink); font-weight: 600; }
+	.new-hero__stat time { color: var(--ink); }
 
-.new-body { padding: 2.5rem 0 4rem; }
+	.new-feed { padding-bottom: var(--s-16); }
+	.new-quiet { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-4) var(--s-5); color: var(--ink-2); font-size: var(--text-sm); margin-bottom: var(--s-8); }
+	.new-quiet :global(.icon) { flex-shrink: 0; color: var(--ink-3); margin-top: 2px; }
 
-.tools-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.1rem;
-}
+	.nb + .nb { margin-top: var(--s-12); }
+	.nb__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); padding-bottom: var(--s-3); border-bottom: 1px solid var(--line); margin-bottom: var(--s-4); position: sticky; top: var(--header-h, 64px); background: var(--bg); z-index: 5; }
+	.nb__title { font-size: var(--text-xl); }
+	.nb__count { text-transform: none; letter-spacing: 0; }
+	.nb__days { display: grid; gap: var(--s-2); }
+	.nb__day { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--s-4); }
+	.nb__rail { position: relative; }
+	.nb__rail::after { content: ''; position: absolute; left: 50%; top: 56px; bottom: -8px; width: 1px; background: var(--line); }
+	.nb__day:last-child .nb__rail::after { display: none; }
+	.nb__date { position: sticky; top: calc(var(--header-h, 64px) + 56px); display: grid; justify-items: center; gap: 1px; width: 64px; padding: var(--s-2) 0; font-family: var(--font-mono); text-transform: uppercase; color: var(--ink-3); font-size: 0.6875rem; letter-spacing: 0.08em; }
+	.nb__date b { font-size: var(--text-xl); font-weight: 500; letter-spacing: -0.02em; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+	.nb__list { display: grid; gap: var(--s-2); }
+	.nb__list > :global(.tc--row) { background: var(--surface); }
 
-.tool-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0.6rem;
-	padding: 1.1rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	color: inherit;
-	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-.tool-card:hover {
-	transform: translateY(-2px);
-	border-color: rgba(0,200,150,0.35);
-	box-shadow: 0 4px 16px rgba(0,200,150,0.1);
-}
+	/* "New since your last visit" divider (inserted client-side) */
+	.new-feed :global(.new-divider) { display: flex; align-items: center; gap: var(--s-3); margin: var(--s-2) 0; color: var(--accent-ink); font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; }
+	.new-feed :global(.new-divider)::before, .new-feed :global(.new-divider)::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); }
+	.new-feed :global(.new-divider)::after { background: linear-gradient(90deg, transparent, var(--accent)); }
 
-.tool-card__top {
-	display: flex;
-	align-items: center;
-	gap: 0.7rem;
-}
+	.new-foot { display: grid; justify-items: center; gap: var(--s-4); margin-top: var(--s-12); text-align: center; }
 
-.tool-logo {
-	width: 44px; height: 44px;
-	background: var(--primary-light);
-	border-radius: var(--radius);
-	display: flex; align-items: center; justify-content: center;
-	flex-shrink: 0; overflow: hidden;
-}
-.tool-logo img { width: 32px; height: 32px; object-fit: contain; }
-.tool-logo-fb { font-size: 1.4rem; display: flex; align-items: center; justify-content: center; }
-
-.tool-meta { flex: 1; min-width: 0; }
-.tool-meta h3 { font-size: 0.95rem; margin: 0 0 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tool-card:hover h3 { color: var(--primary); }
-.cat-tag { font-size: 0.72rem; color: rgb(var(--gray)); }
-
-.pricing-pill {
-	font-size: 0.68rem; font-weight: 700;
-	padding: 0.2rem 0.5rem;
-	border-radius: 99px;
-	flex-shrink: 0;
-}
-
-.tool-desc {
-	font-size: 0.83rem;
-	color: rgb(var(--gray));
-	margin: 0;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	line-height: 1.5;
-}
-
-.tool-footer {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-top: auto;
-}
-.added-date { font-size: 0.75rem; color: rgb(var(--gray)); }
-.tool-rating { font-size: 0.78rem; font-weight: 700; color: #f59e0b; }
+	@media (max-width: 640px) {
+		.new-hero__title { font-size: var(--text-4xl); }
+		.nb__day { grid-template-columns: 44px minmax(0, 1fr); gap: var(--s-3); }
+		.nb__date { width: 44px; }
+		.nb__date b { font-size: var(--text-lg); }
+		.nb__head { top: var(--header-h, 64px); }
+	}
 </style>
 
-<script data-astro-rerun>
-document.querySelectorAll('.js-favicon').forEach(img => {
-	img.addEventListener('error', () => {
-		img.style.display = 'none';
-		const fb = img.nextElementSibling;
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-});
+<script>
+	// "New since your last visit": remember when you were last here, then mark the
+	// boundary between tools published since then and the rest.
+	const KEY = 'aib-last-visit';
+	function mark() {
+		const feed = document.querySelector<HTMLElement>('[data-new-feed]');
+		if (!feed || feed.querySelector('.new-divider')) return;
+		let prev: string | null = null;
+		try { prev = localStorage.getItem(KEY); localStorage.setItem(KEY, new Date().toISOString()); } catch {}
+		if (!prev) return;
+		const cards = Array.from(feed.querySelectorAll<HTMLElement>('.tc[data-date]'));
+		const fresh = cards.filter((c) => (c.dataset.date || '') > prev!);
+		if (!fresh.length || fresh.length === cards.length) return;
+		const boundary = cards[fresh.length];
+		const div = document.createElement('div');
+		div.className = 'new-divider';
+		div.setAttribute('role', 'separator');
+		div.innerHTML = `<span>↑ New since your last visit · ${fresh.length}</span>`;
+		boundary.before(div);
+	}
+	mark();
+	document.addEventListener('astro:page-load', mark);
 </script>

@@ -1,0 +1,123 @@
+{
+  "date": "2026-08-30",
+  "title": "The record labels sue Anthropic, a court calls Trump's blacklist illegal, and AI agents get hands",
+  "intro": "A day of consequences. Two of the three biggest music companies went to court over training data, a judge told the White House it cannot punish a lab for its politics, and a new hardware standard quietly gave agents a way to touch the physical world.",
+  "items": [
+    {
+      "headline": "Sony Music and Warner Chappell sue Anthropic over training data",
+      "why": "The labels allege a deliberate campaign to use copyrighted songs without licence. Music is the most tightly controlled catalogue in media, so this is the case most likely to set the price of training data for everyone else.",
+      "action": "If you publish anything, this is the year to check what your platform's terms say about training. The defaults are changing under you.",
+      "angle": "policy",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Sony Music, Warner sue Anthropic, alleging a “brazen campaign” of intellectual property theft",
+          "link": "https://techcrunch.com/2026/08/29/sony-music-warner-sue-anthropic-alleging-a-brazen-campaign-of-intellectual-property-theft/",
+          "source": "TechCrunch",
+          "date": "Sat, 29 Aug 2026 18:41:59 +0000"
+        },
+        {
+          "title": "Sony Music and Warner Chappell are suing Anthropic",
+          "link": "https://www.theverge.com/ai-artificial-intelligence/986438/sony-music-warner-chappell-anthropic-lawsuit-copyright",
+          "source": "The Verge",
+          "date": "2026-08-29T14:19:53-04:00"
+        }
+      ]
+    },
+    {
+      "headline": "A federal judge rules the blacklisting of Anthropic was illegal",
+      "why": "The administration cut a company out of federal work over its perceived politics, and a court said that is not allowed. It is an early answer to a question that will keep coming: how much leverage does a government get over the labs it also regulates?",
+      "action": "Nothing to do. Worth watching whether procurement rules change rather than the ruling being appealed.",
+      "angle": "policy",
+      "tools": [
+        "claude"
+      ],
+      "sources": [
+        {
+          "title": "Trump blacklisting of \"woke\" Anthropic deemed illegal by federal judge",
+          "link": "https://arstechnica.com/tech-policy/2026/08/trump-blacklisting-of-woke-anthropic-deemed-illegal-by-federal-judge/",
+          "source": "Ars Technica",
+          "date": "Fri, 28 Aug 2026 18:07:55 +0000"
+        },
+        {
+          "title": "Anthropic was illegally blacklisted by the Trump administration, court rules",
+          "link": "https://www.theverge.com/ai-artificial-intelligence/985947/anthropic-supply-chain-risk-lawsuit-judge-ruling",
+          "source": "The Verge",
+          "date": "2026-08-27T23:14:06-04:00"
+        }
+      ]
+    },
+    {
+      "headline": "A new hardware standard lets AI agents control physical devices",
+      "why": "Until now an agent could book a flight but not open a door. A common protocol for machines is the step that turns software agents into something that acts in a room, with all the safety questions that implies.",
+      "action": "If you build automations, read the spec before the vendors define the defaults for you.",
+      "angle": "builders",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Anthropic's new hardware standard lets AI agents control the physical world",
+          "link": "https://arstechnica.com/ai/2026/08/anthropics-new-hardware-standard-lets-ai-agents-control-the-physical-world/",
+          "source": "Ars Technica",
+          "date": "Thu, 27 Aug 2026 22:15:43 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "Meta limits nonconsensual recording on its AI glasses",
+      "why": "The obvious problem with camera glasses was always the people who did not agree to be filmed. Meta added a limit, which concedes the criticism was right and sets a bar competitors will be measured against.",
+      "action": "If you own a pair, check the recording indicator setting. If you do not, this is the feature to ask about before buying.",
+      "angle": "everyday",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Meta makes AI glasses slightly less creepy with limit on nonconsensual recording",
+          "link": "https://arstechnica.com/tech-policy/2026/08/meta-tweaks-ai-glasses-to-block-some-creepy-recordings-but-privacy-risks-remain/",
+          "source": "Ars Technica",
+          "date": "Fri, 28 Aug 2026 15:42:24 +0000"
+        },
+        {
+          "title": "Why the Hottest New Wearables Want to Be Ignored",
+          "link": "https://www.wired.com/story/why-the-hottest-new-wearables-want-to-be-ignored/",
+          "source": "Wired",
+          "date": "Sun, 30 Aug 2026 10:30:00 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "The money is moving past the GPU",
+      "why": "Nvidia's edge is increasingly the networking and software around the chip, and a neocloud just borrowed a billion dollars to buy more of them. The build-out is now a debt story, which is a different kind of risk to an equity one.",
+      "action": "If you are pricing AI infrastructure, assume compute costs stay volatile rather than falling smoothly.",
+      "angle": "money",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Nvidia’s AI advantage is moving beyond the GPU",
+          "link": "https://techcrunch.com/2026/08/29/nvidias-ai-advantage-is-moving-beyond-the-gpu/",
+          "source": "TechCrunch",
+          "date": "Sat, 29 Aug 2026 13:00:00 +0000"
+        },
+        {
+          "title": "Neocloud Lambda secures $1B in debt to buy more chips",
+          "link": "https://techcrunch.com/2026/08/28/neocloud-lambda-secures-1b-in-debt-to-buy-more-chips/",
+          "source": "TechCrunch",
+          "date": "Fri, 28 Aug 2026 20:24:11 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "Musicians are turning detective to hunt AI grifters",
+      "why": "Fake artists, cloned voices and stolen catalogues are now common enough that working musicians police it themselves. It is the clearest picture of what happens when detection is left to the people being harmed.",
+      "action": "Artists: register your work and set up name alerts. It is unglamorous and it is currently the only defence.",
+      "angle": "creators",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Musicians-turned-detectives are hunting for AI grifters",
+          "link": "https://www.theverge.com/entertainment/985866/h4rris-nihil-young-edm-suno-ai",
+          "source": "The Verge",
+          "date": "2026-08-29T08:00:00-04:00"
+        }
+      ]
+    }
+  ]
+}

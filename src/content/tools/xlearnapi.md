@@ -2,7 +2,7 @@
 name: XlearnAPI
 description: OpenAI-compatible API gateway that routes GPT, Claude, Gemini, DeepSeek, Qwen, Grok, and image, video, and music models through one BaseURL.
 category: ai-coding
-subcategory: AI API Gateway
+subcategory: AI Developer Tools
 url: https://xlearn.space/
 pricing: paid
 tags: [api-gateway, llm-api, openai-compatible, claude-api, deepseek, developers, automation]

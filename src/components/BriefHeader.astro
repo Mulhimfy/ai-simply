@@ -1,0 +1,310 @@
+---
+/**
+ * The masthead of one brief. Shared by the home page ("Today's brief") and /news/<date>/,
+ * so it must stay generic — pass everything in.
+ *
+ * Props
+ *   brief        Brief    the day (editorial or automatic)
+ *   variant?     'home' | 'day'   default 'home'. 'home' adds the product promise strapline and
+ *                                 renders the headline at display size; 'day' is the archive page.
+ *   lead?        string   overrides the eyebrow label ("Today's brief" / "Latest brief" / "Brief")
+ *   shareUrl?    string   ABSOLUTE url for the share bar (defaults to the current page)
+ *   shareText?   string   share copy (defaults to "The 3-minute AI brief for <date>: <title>")
+ *   showAngles?  boolean  default true — the "Tune for you" chip row
+ *   showStreak?  boolean  default true — the localStorage reading-streak chip
+ *   class?       string
+ *
+ * Automatic briefs have no editorial lede. Instead of faking one we say plainly how the day was
+ * assembled — the page still reads as a finished thing.
+ */
+import type { Brief } from '../lib/brief';
+import { angleCounts, briefAngles, dateParts, shareText as defaultShareText } from '../lib/news';
+import AngleChips from './AngleChips.astro';
+import Icon from './Icon.astro';
+import ShareBar from './ShareBar.astro';
+
+interface Props {
+	brief: Brief;
+	variant?: 'home' | 'day';
+	lead?: string;
+	shareUrl?: string;
+	shareText?: string;
+	showAngles?: boolean;
+	showStreak?: boolean;
+	class?: string;
+}
+const {
+	brief,
+	variant = 'home',
+	lead = variant === 'home' ? "Today's brief" : 'Brief',
+	shareUrl,
+	shareText = defaultShareText(brief),
+	showAngles = true,
+	showStreak = true,
+	class: className,
+} = Astro.props;
+
+const d = dateParts(brief.date);
+const url = shareUrl ?? new URL(`/news/${brief.date}/`, Astro.site ?? 'https://getaibriefs.com').toString();
+const angles = briefAngles(brief);
+const counts = angleCounts(brief);
+const isAuto = brief.kind === 'auto';
+---
+
+<header class:list={['bh', `bh--${variant}`, { 'bh--auto': isAuto }, className]}>
+	{variant === 'home' && (
+		<p class="bh__promise" data-reveal>
+			Know what matters. In <em class="serif">3 minutes</em>. Every day.
+		</p>
+	)}
+
+	<div class="bh__rail" data-reveal style="--i:1">
+		<span class="eyebrow bh__eyebrow">{lead}</span>
+		<span class="bh__sep" aria-hidden="true"></span>
+		<time class="bh__meta" datetime={brief.date}>{d.weekdayMonthDay}</time>
+		<span class="bh__sep" aria-hidden="true"></span>
+		<span class="bh__meta tnum">{brief.readingMinutes} min read</span>
+		<span class="bh__sep" aria-hidden="true"></span>
+		<span class="bh__meta tnum">
+			{brief.storyCount} {brief.storyCount === 1 ? 'story' : 'stories'} from {brief.sourceCount}{' '}
+			{brief.sourceCount === 1 ? 'source' : 'sources'}
+		</span>
+		{showStreak && (
+			<>
+				<span class="bh__sep" data-streak-sep hidden aria-hidden="true"></span>
+				<span class="bh__meta bh__streak" data-streak hidden>
+					<Icon name="flame" size={13} />
+					<span data-streak-label></span>
+				</span>
+			</>
+		)}
+	</div>
+
+	<h1 class="bh__title" data-reveal style="--i:2">{brief.title}</h1>
+
+	{brief.intro && <p class="lead bh__intro" data-reveal style="--i:3">{brief.intro}</p>}
+
+	{isAuto && (
+		<p class="bh__note" data-reveal style="--i:3">
+			<Icon name="bot" size={14} />
+			<span>
+				No editor's note for this day — the brief below was assembled automatically from the{' '}
+				{brief.storyCount} stories our {brief.sourceCount} sources published, clustered by how many
+				outlets ran each one.
+			</span>
+		</p>
+	)}
+
+	{showAngles && angles.length > 1 && (
+		<div class="bh__tune" data-reveal style="--i:4">
+			<AngleChips angles={angles} counts={counts} />
+		</div>
+	)}
+
+	<div class="bh__actions" data-reveal style="--i:5">
+		<ShareBar
+			title={brief.title}
+			url={url}
+			text={shareText}
+			label={variant === 'home' ? 'Send today’s brief' : 'Send this brief'}
+			class="bh__share"
+		/>
+	</div>
+</header>
+
+<script>
+	/* Reading streak — localStorage['aib-news-days'] is an array of ISO days the reader showed up.
+	   A streak survives one missed day (gap of 2), which keeps the ritual forgiving. */
+	const KEY = 'aib-news-days';
+	const DAY = 86400000;
+
+	function today(): string {
+		const n = new Date();
+		return new Date(n.getTime() - n.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+	}
+
+	function readDays(): string[] {
+		try {
+			const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+			return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x)) : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function streakOf(days: string[]): number {
+		const sorted = [...new Set(days)].sort().reverse();
+		if (!sorted.length) return 0;
+		let n = 1;
+		let prev = Date.parse(sorted[0] + 'T00:00:00Z');
+		for (let i = 1; i < sorted.length; i++) {
+			const t = Date.parse(sorted[i] + 'T00:00:00Z');
+			const gap = Math.round((prev - t) / DAY);
+			if (gap <= 2) {
+				n++;
+				prev = t;
+			} else break;
+		}
+		return n;
+	}
+
+	function paint() {
+		const chips = document.querySelectorAll<HTMLElement>('[data-streak]');
+		if (!chips.length) return;
+		const days = [...new Set([...readDays(), today()])].sort().slice(-400);
+		try {
+			localStorage.setItem(KEY, JSON.stringify(days));
+		} catch {}
+		const n = streakOf(days);
+		/* A streak is a reward, not a call to action: show nothing until there is one,
+		   rather than a "Start a streak" pill that looks tappable and does nothing. */
+		chips.forEach((chip) => {
+			const label = chip.querySelector('[data-streak-label]');
+			if (label) label.textContent = `${n}-day streak`;
+			chip.title = `You have read the brief ${n} days running`;
+			chip.hidden = n < 2;
+		});
+		document.querySelectorAll<HTMLElement>('[data-streak-sep]').forEach((s) => {
+			s.hidden = n < 2;
+		});
+	}
+
+	paint();
+	document.addEventListener('astro:page-load', paint);
+</script>
+
+<style>
+	.bh {
+		display: grid;
+		gap: var(--s-4);
+	}
+
+	.bh__promise {
+		font-size: var(--text-md);
+		color: var(--ink-3);
+		letter-spacing: -0.01em;
+	}
+	.bh__promise .serif {
+		color: var(--ink);
+	}
+
+	.bh__rail {
+		display: flex;
+		align-items: center;
+		gap: var(--s-3);
+		flex-wrap: wrap;
+		margin-top: var(--s-2);
+	}
+	.bh__eyebrow {
+		margin: 0;
+	}
+	.bh__meta {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		white-space: nowrap;
+	}
+	.bh__sep {
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background: var(--ink-4);
+		flex-shrink: 0;
+	}
+
+	.bh__title {
+		font-size: clamp(2rem, 1.35rem + 2.7vw, 3.5rem);
+		font-weight: 600;
+		letter-spacing: -0.035em;
+		line-height: 1.03;
+		text-wrap: balance;
+		max-width: 20ch;
+	}
+	.bh--auto .bh__title {
+		font-size: clamp(1.625rem, 1.2rem + 1.8vw, 2.5rem);
+		line-height: 1.12;
+		letter-spacing: -0.028em;
+		max-width: 26ch;
+	}
+	.bh--day .bh__title {
+		font-size: clamp(1.875rem, 1.3rem + 2.2vw, 3rem);
+	}
+
+	.bh__intro {
+		font-size: var(--text-lg);
+		color: var(--ink-2);
+		max-width: 62ch;
+		text-wrap: pretty;
+	}
+
+	.bh__note {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-3);
+		padding: var(--s-4) var(--s-5);
+		border: 1px solid var(--line);
+		border-left: 2px solid var(--line-strong);
+		border-radius: var(--r-md);
+		background: var(--surface-2);
+		font-size: var(--text-sm);
+		line-height: 1.55;
+		color: var(--ink-3);
+		max-width: 62ch;
+		text-wrap: pretty;
+	}
+	.bh__note :global(svg) {
+		flex-shrink: 0;
+		margin-top: 2px;
+		color: var(--ink-4);
+	}
+
+	.bh__tune {
+		margin-top: var(--s-2);
+		padding-top: var(--s-5);
+		border-top: 1px solid var(--line);
+	}
+
+	.bh__actions {
+		display: flex;
+		align-items: center;
+		gap: var(--s-4);
+		flex-wrap: wrap;
+		margin-top: var(--s-1);
+	}
+
+	/* The streak lives in the mono meta rail: a quiet status mark, never a control. */
+	.bh__streak {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		color: var(--accent-ink);
+	}
+	.bh__streak :global(svg) {
+		color: var(--accent);
+	}
+
+	@media (max-width: 640px) {
+		.bh__title {
+			max-width: none;
+		}
+		.bh__actions {
+			gap: var(--s-2);
+		}
+		/* "Send today's brief" is the growth loop — never hide the label on the device
+		   people actually share from. Let the row wrap and give it 44px targets. */
+		.bh__actions :global(.share__label) {
+			flex: 1 0 100%;
+			margin: 0 0 2px;
+		}
+		.bh__actions :global(.share__btn) {
+			height: 44px;
+			padding-inline: 14px;
+		}
+		.bh__actions :global(.share__net) {
+			width: 44px;
+			padding: 0;
+		}
+	}
+</style>

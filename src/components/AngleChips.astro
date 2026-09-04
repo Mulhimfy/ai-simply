@@ -1,0 +1,207 @@
+---
+/**
+ * Angle chips — "tune the brief for you". No login, no server.
+ *
+ * Props
+ *   angles?   Angle[]                        which angles to offer (default: every angle, canonical order)
+ *   counts?   Partial<Record<Angle,number>>  item count per angle; omit to hide the counts
+ *   label?    string                         leading mono label (default "Tune for you")
+ *   compact?  boolean                        smaller chips, no label (hero rails, /news/)
+ *   class?    string
+ *
+ * State is localStorage['aib-angles'] — a JSON array of angle ids. Every instance on the page stays
+ * in sync and broadcasts `aib:angles-change` (detail: string[]) on `document`, which BriefItems
+ * listens for. Selecting angles only ever RE-ORDERS a brief; nothing is hidden.
+ */
+import { ANGLES, type Angle } from '../lib/brief';
+import Icon from './Icon.astro';
+
+interface Props {
+	angles?: Angle[];
+	counts?: Partial<Record<Angle, number>>;
+	label?: string;
+	compact?: boolean;
+	class?: string;
+}
+const {
+	angles = Object.keys(ANGLES) as Angle[],
+	counts,
+	label = 'Tune for you',
+	compact = false,
+	class: className,
+} = Astro.props;
+---
+
+<div class:list={['ac', { 'ac--compact': compact }, className]} data-angle-chips>
+	{!compact && (
+		<span class="ac__label">
+			<Icon name="sliders-horizontal" size={13} />
+			{label}
+		</span>
+	)}
+	<div class="ac__chips" role="group" aria-label="Pick the angles you care about">
+		{angles.map((a) => (
+			<button type="button" class="chip ac__chip" data-angle={a} aria-pressed="false" title={ANGLES[a].blurb}>
+				<Icon name={ANGLES[a].icon} size={14} />
+				<span>{ANGLES[a].name}</span>
+				{counts?.[a] ? <span class="chip__count tnum">{counts[a]}</span> : null}
+			</button>
+		))}
+	</div>
+	<button type="button" class="ac__clear" data-angles-clear hidden>Clear</button>
+</div>
+
+<script>
+	// One document-level controller for every AngleChips instance on the page.
+	const KEY = 'aib-angles';
+
+	function read(): string[] {
+		try {
+			const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+			return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+		} catch {
+			return [];
+		}
+	}
+	function write(v: string[]) {
+		try {
+			localStorage.setItem(KEY, JSON.stringify(v));
+		} catch {}
+	}
+	function paint() {
+		const set = new Set(read());
+		document.querySelectorAll<HTMLButtonElement>('[data-angle-chips] [data-angle]').forEach((b) => {
+			b.setAttribute('aria-pressed', String(set.has(b.dataset.angle || '')));
+		});
+		document.querySelectorAll<HTMLElement>('[data-angles-clear]').forEach((b) => {
+			b.toggleAttribute('hidden', set.size === 0);
+		});
+	}
+	function emit() {
+		document.dispatchEvent(new CustomEvent('aib:angles-change', { detail: read() }));
+	}
+
+	function bind() {
+		paint();
+		if ((document as any).__anglesBound) return;
+		(document as any).__anglesBound = true;
+
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+			const chip = target.closest<HTMLButtonElement>('[data-angle-chips] [data-angle]');
+			if (chip) {
+				const id = chip.dataset.angle || '';
+				const next = new Set(read());
+				next.has(id) ? next.delete(id) : next.add(id);
+				write([...next]);
+				paint();
+				emit();
+				return;
+			}
+			if (target.closest('[data-angles-clear]')) {
+				write([]);
+				paint();
+				emit();
+			}
+		});
+		// Another tab changed the selection.
+		window.addEventListener('storage', (e) => {
+			if (e.key === KEY) {
+				paint();
+				emit();
+			}
+		});
+		document.addEventListener('astro:page-load', paint);
+	}
+	bind();
+</script>
+
+<style>
+	.ac {
+		display: flex;
+		align-items: center;
+		gap: var(--s-3);
+		flex-wrap: wrap;
+	}
+	.ac__label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		white-space: nowrap;
+	}
+	.ac__chips {
+		display: flex;
+		gap: 6px;
+		flex-wrap: wrap;
+	}
+	.ac__chip {
+		gap: 6px;
+		height: 34px;
+	}
+	.ac__chip :global(svg) {
+		opacity: 0.75;
+		transition: opacity var(--dur-2);
+	}
+	.ac__chip[aria-pressed='true'] :global(svg) {
+		opacity: 1;
+	}
+	.ac__clear {
+		display: inline-flex;
+		align-items: center;
+		min-height: 34px;
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--ink-3);
+		text-decoration: underline;
+		text-decoration-color: var(--line-2);
+		text-underline-offset: 0.25em;
+		padding: 4px 6px;
+		transition: color var(--dur-2);
+	}
+	.ac__clear:hover {
+		color: var(--ink);
+	}
+	.ac--compact .ac__chip {
+		height: 30px;
+		padding-inline: 10px;
+		font-size: var(--text-xs);
+	}
+	@media (max-width: 640px) {
+		.ac {
+			gap: var(--s-2);
+		}
+		.ac__chips {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			scrollbar-width: none;
+			padding-bottom: 2px;
+			margin-inline: calc(var(--gutter) * -1);
+			padding-inline: var(--gutter);
+			scroll-snap-type: x proximity;
+			/* The row is deliberately wider than the screen; fade the trailing edge so it
+			   reads as "there is more", instead of a chip sliced by the viewport. */
+			mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent 100%);
+			-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent 100%);
+		}
+		.ac__chips::-webkit-scrollbar {
+			display: none;
+		}
+		/* 44px targets on touch (AAA 2.13.71) — thumbs, not cursors. */
+		.ac__chip,
+		.ac--compact .ac__chip {
+			flex: 0 0 auto;
+			scroll-snap-align: start;
+			height: 44px;
+			padding-inline: 14px;
+		}
+		.ac__clear {
+			min-height: 44px;
+			padding-inline: 8px;
+		}
+	}
+</style>

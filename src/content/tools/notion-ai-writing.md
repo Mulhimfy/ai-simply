@@ -2,7 +2,7 @@
 name: Notion AI
 description: Notion's built-in AI writing assistant — draft, summarize, and edit inside the same docs, wikis, and notes where your work already lives.
 category: ai-writing
-subcategory: AI Writing Assistant
+subcategory: AI Writing Assistants
 url: https://www.notion.so/product/ai
 pricing: freemium
 tags: [writing, notes, summarize, docs, productivity]

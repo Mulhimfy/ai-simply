@@ -1,0 +1,890 @@
+{
+  "ada-health": {
+    "source": "site",
+    "width": 120
+  },
+  "adcreative-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "adobe-express": {
+    "source": "google",
+    "width": 128
+  },
+  "adobe-firefly": {
+    "source": "site",
+    "width": 192
+  },
+  "adobe-podcast": {
+    "source": "site",
+    "width": 171
+  },
+  "ahrefs": {
+    "source": "site",
+    "width": 192
+  },
+  "aider": {
+    "source": "none",
+    "width": 0
+  },
+  "albert-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "alphascope": {
+    "source": "site",
+    "width": 180
+  },
+  "amplitude": {
+    "source": "site",
+    "width": 180
+  },
+  "anki-ai": {
+    "source": "site",
+    "width": 299
+  },
+  "anyword": {
+    "source": "site",
+    "width": 256
+  },
+  "artbreeder": {
+    "source": "site",
+    "width": 256
+  },
+  "asana-ai": {
+    "source": "google",
+    "width": 48
+  },
+  "aws-rekognition": {
+    "source": "site",
+    "width": 114
+  },
+  "babbel": {
+    "source": "site",
+    "width": 180
+  },
+  "beautiful-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "bing-image-creator": {
+    "source": "site",
+    "width": 181
+  },
+  "bolt": {
+    "source": "site",
+    "width": 180
+  },
+  "brainscape": {
+    "source": "site",
+    "width": 180
+  },
+  "brilliant": {
+    "source": "site",
+    "width": 57
+  },
+  "buffer": {
+    "source": "site",
+    "width": 180
+  },
+  "calm": {
+    "source": "site",
+    "width": 256
+  },
+  "canva-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "canva-ai-image": {
+    "source": "google",
+    "width": 128
+  },
+  "capcut-ai": {
+    "source": "google",
+    "width": 64
+  },
+  "casetext": {
+    "source": "google",
+    "width": 48
+  },
+  "character-ai": {
+    "source": "site",
+    "width": 512
+  },
+  "charlii-ai": {
+    "source": "google",
+    "width": 48
+  },
+  "chatgpt": {
+    "source": "site",
+    "width": 180
+  },
+  "civitai": {
+    "source": "google",
+    "width": 48
+  },
+  "clarifai": {
+    "source": "google",
+    "width": 128
+  },
+  "claude": {
+    "source": "site",
+    "width": 180
+  },
+  "clickup-ai": {
+    "source": "site",
+    "width": 192
+  },
+  "clockwise": {
+    "source": "google",
+    "width": 128
+  },
+  "codeium": {
+    "source": "ddg",
+    "width": 48
+  },
+  "connected-papers": {
+    "source": "google",
+    "width": 128
+  },
+  "consensus": {
+    "source": "site",
+    "width": 384
+  },
+  "copy-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "copyleaks": {
+    "source": "site",
+    "width": 256
+  },
+  "coursera-ai": {
+    "source": "site",
+    "width": 57
+  },
+  "cursor": {
+    "source": "site",
+    "width": 180
+  },
+  "dall-e-3": {
+    "source": "site",
+    "width": 180
+  },
+  "deepseek": {
+    "source": "google",
+    "width": 128
+  },
+  "descript": {
+    "source": "site",
+    "width": 180
+  },
+  "descript-video": {
+    "source": "site",
+    "width": 180
+  },
+  "devin-ai": {
+    "source": "ddg",
+    "width": 48
+  },
+  "domo": {
+    "source": "site",
+    "width": 256
+  },
+  "donotpay": {
+    "source": "site",
+    "width": 48
+  },
+  "dreamstudio": {
+    "source": "site",
+    "width": 226
+  },
+  "duolingo": {
+    "source": "site",
+    "width": 180
+  },
+  "eatthismuch": {
+    "source": "site",
+    "width": 48
+  },
+  "elevenlabs": {
+    "source": "site",
+    "width": 180
+  },
+  "elicit": {
+    "source": "site",
+    "width": 180
+  },
+  "evernote-ai": {
+    "source": "google",
+    "width": 32
+  },
+  "faceless-reels": {
+    "source": "site",
+    "width": 180
+  },
+  "fathom-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "feedhive": {
+    "source": "site",
+    "width": 256
+  },
+  "figma-ai": {
+    "source": "site",
+    "width": 76
+  },
+  "fireflies-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "flick-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "flux-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "frase": {
+    "source": "site",
+    "width": 180
+  },
+  "gamma-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "gemini": {
+    "source": "google",
+    "width": 128
+  },
+  "gencraft": {
+    "source": "google",
+    "width": 32
+  },
+  "getimg-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "github-copilot": {
+    "source": "site",
+    "width": 171
+  },
+  "google-cloud-vision": {
+    "source": "site",
+    "width": 192
+  },
+  "google-lens": {
+    "source": "site",
+    "width": 180
+  },
+  "google-maps-ai": {
+    "source": "google",
+    "width": 96
+  },
+  "gptzero": {
+    "source": "google",
+    "width": 48
+  },
+  "grammarly": {
+    "source": "site",
+    "width": 32
+  },
+  "grok": {
+    "source": "google",
+    "width": 128
+  },
+  "harvey": {
+    "source": "site",
+    "width": 1024
+  },
+  "headspace-ai": {
+    "source": "site",
+    "width": 57
+  },
+  "hemingway": {
+    "source": "google",
+    "width": 64
+  },
+  "heygen": {
+    "source": "google",
+    "width": 48
+  },
+  "hive-moderation": {
+    "source": "site",
+    "width": 180
+  },
+  "hootsuite": {
+    "source": "site",
+    "width": 180
+  },
+  "houzz": {
+    "source": "google",
+    "width": 128
+  },
+  "hubspot-ai": {
+    "source": "site",
+    "width": 288
+  },
+  "hubspot-marketing": {
+    "source": "site",
+    "width": 288
+  },
+  "hugging-face": {
+    "source": "site",
+    "width": 256
+  },
+  "hypotenuse-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "ideogram": {
+    "source": "google",
+    "width": 128
+  },
+  "ideogram-image": {
+    "source": "google",
+    "width": 128
+  },
+  "insertchat": {
+    "source": "site",
+    "width": 460
+  },
+  "instantly-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "intercom": {
+    "source": "site",
+    "width": 32
+  },
+  "interior-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "invideo-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "iris-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "ironclad": {
+    "source": "site",
+    "width": 33
+  },
+  "jasper": {
+    "source": "site",
+    "width": 256
+  },
+  "jasper-marketing": {
+    "source": "site",
+    "width": 256
+  },
+  "jellypod": {
+    "source": "site",
+    "width": 180
+  },
+  "julius-ai": {
+    "source": "site",
+    "width": 196
+  },
+  "k-health": {
+    "source": "none",
+    "width": 0
+  },
+  "khanmigo": {
+    "source": "google",
+    "width": 128
+  },
+  "khroma": {
+    "source": "none",
+    "width": 0
+  },
+  "klaviyo": {
+    "source": "site",
+    "width": 48
+  },
+  "kling-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "krea-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "landing-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "languagetool": {
+    "source": "site",
+    "width": 57
+  },
+  "later": {
+    "source": "google",
+    "width": 48
+  },
+  "lavender-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "lawgeex": {
+    "source": "none",
+    "width": 0
+  },
+  "legalzoom-ai": {
+    "source": "google",
+    "width": 48
+  },
+  "leonardo-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "linear-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "lmsys": {
+    "source": "google",
+    "width": 128
+  },
+  "looka": {
+    "source": "google",
+    "width": 128
+  },
+  "looker": {
+    "source": "site",
+    "width": 192
+  },
+  "lovo-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "lovspark-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "luma-dream-machine": {
+    "source": "google",
+    "width": 48
+  },
+  "mailchimp-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "mem-ai": {
+    "source": "site",
+    "width": 57
+  },
+  "microsoft-azure-vision": {
+    "source": "google",
+    "width": 128
+  },
+  "microsoft-copilot": {
+    "source": "site",
+    "width": 640
+  },
+  "midjourney": {
+    "source": "google",
+    "width": 128
+  },
+  "mistral": {
+    "source": "google",
+    "width": 128
+  },
+  "mixpanel": {
+    "source": "site",
+    "width": 180
+  },
+  "monday-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "motion": {
+    "source": "site",
+    "width": 672
+  },
+  "murf": {
+    "source": "site",
+    "width": 256
+  },
+  "myfitnesspal": {
+    "source": "site",
+    "width": 180
+  },
+  "nightcafe": {
+    "source": "google",
+    "width": 128
+  },
+  "noom": {
+    "source": "site",
+    "width": 180
+  },
+  "noom-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "notion-ai": {
+    "source": "site",
+    "width": 512
+  },
+  "notion-ai-business": {
+    "source": "site",
+    "width": 512
+  },
+  "notion-ai-writing": {
+    "source": "site",
+    "width": 512
+  },
+  "obsidian-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "ollama": {
+    "source": "site",
+    "width": 180
+  },
+  "openrouter": {
+    "source": "site",
+    "width": 180
+  },
+  "originality-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "otter-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "patsnap": {
+    "source": "site",
+    "width": 32
+  },
+  "perplexity": {
+    "source": "site",
+    "width": 180
+  },
+  "perplexity-research": {
+    "source": "site",
+    "width": 180
+  },
+  "persado": {
+    "source": "google",
+    "width": 32
+  },
+  "photomath": {
+    "source": "site",
+    "width": 180
+  },
+  "pi-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "picpurify": {
+    "source": "none",
+    "width": 0
+  },
+  "pika-labs": {
+    "source": "google",
+    "width": 48
+  },
+  "pimsleur": {
+    "source": "google",
+    "width": 32
+  },
+  "planner5d": {
+    "source": "google",
+    "width": 64
+  },
+  "play-ht": {
+    "source": "google",
+    "width": 48
+  },
+  "playground-ai": {
+    "source": "google",
+    "width": 48
+  },
+  "podcastle": {
+    "source": "site",
+    "width": 1365
+  },
+  "poe": {
+    "source": "site",
+    "width": 180
+  },
+  "polymer": {
+    "source": "site",
+    "width": 256
+  },
+  "power-bi-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "prowritingaid": {
+    "source": "site",
+    "width": 57
+  },
+  "quillbot": {
+    "source": "site",
+    "width": 180
+  },
+  "quizlet-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "recapo-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "reclaim-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "reflect-notes": {
+    "source": "site",
+    "width": 180
+  },
+  "replicate": {
+    "source": "site",
+    "width": 512
+  },
+  "replit": {
+    "source": "site",
+    "width": 192
+  },
+  "researchrabbit": {
+    "source": "site",
+    "width": 180
+  },
+  "resemble-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "roboflow": {
+    "source": "site",
+    "width": 256
+  },
+  "roomgpt": {
+    "source": "google",
+    "width": 48
+  },
+  "runway": {
+    "source": "site",
+    "width": 320
+  },
+  "rytr": {
+    "source": "google",
+    "width": 48
+  },
+  "salesforce-einstein": {
+    "source": "google",
+    "width": 32
+  },
+  "sapling": {
+    "source": "site",
+    "width": 128
+  },
+  "scale-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "scholarai": {
+    "source": "google",
+    "width": 100
+  },
+  "scite-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "seaart": {
+    "source": "site",
+    "width": 100
+  },
+  "semantic-scholar": {
+    "source": "site",
+    "width": 57
+  },
+  "semrush": {
+    "source": "site",
+    "width": 180
+  },
+  "slack-ai": {
+    "source": "site",
+    "width": 35
+  },
+  "slidesai": {
+    "source": "google",
+    "width": 48
+  },
+  "socratic": {
+    "source": "site",
+    "width": 180
+  },
+  "sora": {
+    "source": "site",
+    "width": 256
+  },
+  "speechify": {
+    "source": "site",
+    "width": 180
+  },
+  "spellbook": {
+    "source": "site",
+    "width": 256
+  },
+  "sprout-social": {
+    "source": "site",
+    "width": 180
+  },
+  "stable-diffusion": {
+    "source": "google",
+    "width": 100
+  },
+  "sudowrite": {
+    "source": "site",
+    "width": 512
+  },
+  "superhuman": {
+    "source": "site",
+    "width": 256
+  },
+  "surfer-seo": {
+    "source": "site",
+    "width": 256
+  },
+  "synthesia": {
+    "source": "site",
+    "width": 256
+  },
+  "synthesis": {
+    "source": "site",
+    "width": 256
+  },
+  "tableau-ai": {
+    "source": "google",
+    "width": 32
+  },
+  "tabnine": {
+    "source": "site",
+    "width": 180
+  },
+  "taplio": {
+    "source": "site",
+    "width": 256
+  },
+  "taskade": {
+    "source": "site",
+    "width": 180
+  },
+  "thinkbetai": {
+    "source": "site",
+    "width": 180
+  },
+  "together-ai": {
+    "source": "site",
+    "width": 256
+  },
+  "tokens-forge": {
+    "source": "site",
+    "width": 341
+  },
+  "tome-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "tripadvisor-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "turnitin-ai": {
+    "source": "site",
+    "width": 192
+  },
+  "tweet-hunter": {
+    "source": "site",
+    "width": 256
+  },
+  "uizard": {
+    "source": "site",
+    "width": 180
+  },
+  "undermind": {
+    "source": "site",
+    "width": 1418
+  },
+  "v0": {
+    "source": "site",
+    "width": 180
+  },
+  "viso-suite": {
+    "source": "google",
+    "width": 128
+  },
+  "wanderlog": {
+    "source": "google",
+    "width": 128
+  },
+  "weydub": {
+    "source": "site",
+    "width": 64
+  },
+  "whisper-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "windsurf": {
+    "source": "ddg",
+    "width": 48
+  },
+  "winston-ai": {
+    "source": "site",
+    "width": 180
+  },
+  "woebot": {
+    "source": "site",
+    "width": 180
+  },
+  "wolfram-alpha": {
+    "source": "google",
+    "width": 64
+  },
+  "wordtune": {
+    "source": "site",
+    "width": 256
+  },
+  "writesonic": {
+    "source": "site",
+    "width": 180
+  },
+  "wysa": {
+    "source": "google",
+    "width": 51
+  },
+  "xlearnapi": {
+    "source": "site",
+    "width": 2731
+  },
+  "youper": {
+    "source": "site",
+    "width": 256
+  },
+  "yummly": {
+    "source": "google",
+    "width": 128
+  },
+  "zapier-ai": {
+    "source": "google",
+    "width": 128
+  },
+  "zendesk-ai": {
+    "source": "site",
+    "width": 152
+  },
+  "zerogpt": {
+    "source": "site",
+    "width": 180
+  }
+}

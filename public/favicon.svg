@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-    <rect width="64" height="64" rx="14" fill="#34d399"/>
-    <text x="32" y="34" text-anchor="middle" dominant-baseline="central" font-size="40" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif">&#129302;</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="AI Briefs">
+  <rect width="32" height="32" rx="9" fill="#161512"/>
+  <path d="M8.8 24.2 L16 8.6 L23.2 24.2" fill="none" stroke="#f8f7f4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M11.02 19.4 H20.98" fill="none" stroke="#f8f7f4" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="24.8" cy="7.2" r="3.5" fill="#e8471f"/>
 </svg>

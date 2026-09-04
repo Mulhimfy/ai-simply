@@ -1,320 +1,233 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import Base from '../../layouts/Base.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE } from '../../consts';
+import ToolCard from '../../components/ToolCard.astro';
+import ToolLogo from '../../components/ToolLogo.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
+import { SITE_TITLE } from '../../consts';
+import { cardProps, plural } from '../../lib/tools';
 
 const allTools = await getCollection('tools');
 
-function getTools(filter: (t: typeof allTools[0]) => boolean, limit = 6) {
+function getTools(filter: (t: (typeof allTools)[0]) => boolean, limit = 6) {
 	return allTools.filter(filter).slice(0, limit);
 }
 
+// The curated collections. Same ids and predicates as before; the titles and blurbs are
+// plain reference copy (no "best/top", no hype), the emoji became Lucide icons, and
+// `href` points at the wider list where one exists.
 const collections = [
 	{
 		id: 'best-free',
-		title: 'Best Free AI Tools',
-		emoji: '🆓',
-		description: 'Powerful AI tools that cost nothing to get started — no credit card required.',
-		tools: getTools(t => t.data.pricing === 'free' && (t.data.rating ?? 0) >= 4),
+		title: 'Free to use',
+		icon: 'gift',
+		description: 'Rated 4 or better and free to use — no card, no trial clock.',
+		tools: getTools((t) => t.data.pricing === 'free' && (t.data.rating ?? 0) >= 4),
+		href: '/tools/?pricing=free',
 	},
 	{
 		id: 'top-chatbots',
-		title: 'Top AI Chatbots',
-		emoji: '💬',
-		description: 'The best conversational AI assistants for research, writing, and everyday tasks.',
-		tools: getTools(t => t.data.category === 'ai-chatbot'),
+		title: 'Chatbots and assistants',
+		icon: 'message-circle',
+		description: 'Conversational assistants for research, writing and everyday questions.',
+		tools: getTools((t) => t.data.category === 'ai-chatbot'),
+		href: '/tools/category/ai-chatbot/',
 	},
 	{
 		id: 'ai-image-generators',
-		title: 'Best AI Image Generators',
-		emoji: '🖼️',
-		description: 'Turn text into stunning visuals in seconds with these image generation tools.',
-		tools: getTools(t => t.data.category === 'ai-image' || t.data.category === 'ai-art'),
+		title: 'Image generators',
+		icon: 'image',
+		description: 'Text-to-image tools, from quick drafts to work you can actually ship.',
+		tools: getTools((t) => t.data.category === 'ai-image' || t.data.category === 'ai-art'),
+		href: '/tools/category/ai-image/',
 	},
 	{
 		id: 'ai-writing',
-		title: 'Best AI Writing Tools',
-		emoji: '✍️',
-		description: 'Write faster and better with AI — from blog posts to marketing copy.',
-		tools: getTools(t => t.data.category === 'ai-writing'),
+		title: 'Writing tools',
+		icon: 'pen-line',
+		description: 'Drafting, editing and rewriting — blog posts, emails, marketing copy.',
+		tools: getTools((t) => t.data.category === 'ai-writing'),
+		href: '/tools/category/ai-writing/',
 	},
 	{
 		id: 'ai-coding',
-		title: 'Best AI Coding Assistants',
-		emoji: '💻',
-		description: 'Supercharge your development workflow with AI code generation and review.',
-		tools: getTools(t => t.data.category === 'ai-coding'),
+		title: 'Coding assistants',
+		icon: 'code-2',
+		description: 'Completion, review and refactoring, mostly inside your editor.',
+		tools: getTools((t) => t.data.category === 'ai-coding'),
+		href: '/tools/category/ai-coding/',
 	},
 	{
 		id: 'ai-video',
-		title: 'Best AI Video Tools',
-		emoji: '🎬',
-		description: 'Create, edit, and enhance video content with AI in a fraction of the time.',
-		tools: getTools(t => t.data.category === 'ai-video'),
+		title: 'Video tools',
+		icon: 'clapperboard',
+		description: 'Generate, edit and clean up video without a production crew.',
+		tools: getTools((t) => t.data.category === 'ai-video'),
+		href: '/tools/category/ai-video/',
 	},
 	{
 		id: 'ai-productivity',
-		title: 'Best AI Productivity Tools',
-		emoji: '⚡',
-		description: 'AI tools that automate busywork, manage tasks, and help you do more in less time.',
-		tools: getTools(t => t.data.category === 'ai-productivity'),
+		title: 'Productivity tools',
+		icon: 'zap',
+		description: 'Automate busywork, manage tasks and keep notes in order.',
+		tools: getTools((t) => t.data.category === 'ai-productivity'),
+		href: '/tools/category/ai-productivity/',
 	},
 	{
 		id: 'ai-voice',
-		title: 'Best AI Voice & Audio Tools',
-		emoji: '🎤',
-		description: 'Text to speech, voice cloning, transcription, and audio enhancement with AI.',
-		tools: getTools(t => t.data.category === 'ai-voice'),
+		title: 'Voice and audio',
+		icon: 'mic',
+		description: 'Text to speech, voice cloning, transcription and audio clean-up.',
+		tools: getTools((t) => t.data.category === 'ai-voice'),
+		href: '/tools/category/ai-voice/',
 	},
 	{
 		id: 'chatgpt-alternatives',
-		title: 'ChatGPT Alternatives',
-		emoji: '🔄',
-		description: "Powerful AI chatbots and assistants that rival or surpass ChatGPT in specific areas.",
-		tools: getTools(t => t.data.category === 'ai-chatbot' && t.data.name !== 'ChatGPT'),
+		title: 'ChatGPT alternatives',
+		icon: 'refresh-cw',
+		description: 'Assistants worth a look if ChatGPT is not the right fit for the job.',
+		tools: getTools((t) => t.data.category === 'ai-chatbot' && t.data.name !== 'ChatGPT'),
+		href: '/tools/category/ai-chatbot/',
 	},
 	{
 		id: 'freemium-picks',
-		title: 'Best Freemium AI Tools',
-		emoji: '⭐',
-		description: 'Start free, upgrade when you need more — the best freemium AI tools with generous free tiers.',
-		tools: getTools(t => t.data.pricing === 'freemium' && (t.data.rating ?? 0) >= 4),
+		title: 'Freemium picks',
+		icon: 'star',
+		description: 'Rated 4 or better, with a free tier that is genuinely usable before you pay.',
+		tools: getTools((t) => t.data.pricing === 'freemium' && (t.data.rating ?? 0) >= 4),
+		href: '/tools/?pricing=freemium',
 	},
-];
+].filter((c) => c.tools.length > 0);
+
+const totalTools = new Set(collections.flatMap((c) => c.tools.map((t) => t.id))).size;
+// bento spans: wide tiles at positions 0 and 5 (2+1+1 · 1+1+2 · 1+1+1+1)
+const wide = new Set([0, 5]);
 ---
+<Base
+	title={`Collections — short lists of AI tools for common jobs | ${SITE_TITLE}`}
+	description="Hand-picked slices of the toolbox: writing, coding, images, video, voice and more — six tools at most per list, so you can actually choose."
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`AI Tool Collections — Curated Lists | ${SITE_TITLE}`}
-		description="Hand-picked collections of the best AI tools. Curated lists for writing, coding, image generation, productivity, and more."
-	/>
-</head>
-<body>
-<Header />
+	noNudge>
+	<section class="col-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: 'Collections' }]} />
+			<div class="col-hero__in">
+				<span class="eyebrow">Toolbox · {collections.length} collections · {totalTools} tools</span>
+				<h1 class="col-hero__title">Short lists for <em class="serif">common</em> jobs.</h1>
+				<p class="lead">Each collection is a hand-picked slice of the toolbox — six tools at most, so you can actually choose. Pick a stack, then jump to its list below.</p>
+			</div>
+		</div>
+	</section>
 
-<section class="page-header">
-	<div class="container">
-		<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'AI Tools', href: '/tools/' }, { label: 'Collections' }]} />
-		<h1>AI Tool Collections</h1>
-		<p>Hand-picked lists of the best AI tools for specific use cases — updated regularly by our editorial team.</p>
-	</div>
-</section>
-
-<main class="container collections-body">
-
-	<!-- Quick jump -->
-	<nav class="quick-nav" aria-label="Jump to collection">
-		{collections.map(c => (
-			<a href={`#${c.id}`} class="quick-chip">{c.emoji} {c.title}</a>
-		))}
+	<nav class="container col-bento" aria-label="Collections">
+		<div class="col-bento__grid" data-stagger>
+			{collections.map((c, i) => (
+				<a href={`#${c.id}`} class:list={['col-tile card card--hover', { 'col-tile--wide': wide.has(i) }]}>
+					<span class="col-tile__icon"><Icon name={c.icon} size={20} /></span>
+					<span class="col-tile__body">
+						<span class="col-tile__name">{c.title}</span>
+						<span class="col-tile__desc">{c.description}</span>
+					</span>
+					<span class="col-tile__foot">
+						<span class="col-tile__logos" aria-hidden="true">
+							{c.tools.slice(0, 3).map((t) => <ToolLogo slug={t.id} name={t.data.name} size={28} />)}
+						</span>
+						<span class="mono col-tile__count">{plural(c.tools.length)}</span>
+						<Icon name="arrow-down" size={16} class="col-tile__arrow" />
+					</span>
+				</a>
+			))}
+		</div>
 	</nav>
 
-	<!-- Collections -->
-	{collections.map(col => (
-		<section class="collection" id={col.id}>
-			<div class="col-header">
-				<div class="col-title-wrap">
-					<span class="col-emoji">{col.emoji}</span>
-					<div>
-						<h2>{col.title}</h2>
-						<p>{col.description}</p>
+	<div class="container col-sections">
+		{collections.map((c) => (
+			<section id={c.id} class="col-sec" aria-labelledby={`h-${c.id}`}>
+				<header class="col-sec__head">
+					<span class="col-sec__icon"><Icon name={c.icon} size={20} /></span>
+					<div class="col-sec__title">
+						<h2 id={`h-${c.id}`}>{c.title}</h2>
+						<p class="muted">{c.description}</p>
 					</div>
+					<div class="col-sec__meta">
+						<span class="mono">{plural(c.tools.length)}</span>
+						{c.href && <a href={c.href} class="link-arrow">See the full list <Icon name="arrow-right" size={16} /></a>}
+					</div>
+				</header>
+				<div class="col-sec__grid" data-stagger>
+					{c.tools.map((t) => <ToolCard {...cardProps(t)} variant="row" />)}
 				</div>
-				<a href={`/tools/category/${TOOL_CATEGORIES.find(c =>
-					col.tools[0]?.data.category === c.slug
-				)?.slug ?? ''}/`} class="see-all-link">See all →</a>
-			</div>
+				<a href="#top" class="col-sec__up mono" data-scroll-top><Icon name="arrow-up" size={12} /> All collections</a>
+			</section>
+		))}
+	</div>
 
-			{col.tools.length > 0 ? (
-				<div class="tools-row">
-					{col.tools.map(tool => {
-						const cat = TOOL_CATEGORIES.find(c => c.slug === tool.data.category);
-						const domain = new URL(tool.data.url).hostname;
-						const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-						const badge = PRICING_BADGE[tool.data.pricing];
-						return (
-							<a href={`/tools/${tool.id}/`} class="tool-card">
-								<div class="tool-top">
-									<div class="tool-logo">
-										<img src={favicon} alt={tool.data.name} width="32" height="32" loading="lazy"
-											class="js-favicon" />
-										<span class="tool-logo-fb" style="display:none">{cat?.emoji ?? '🤖'}</span>
-									</div>
-									<div class="tool-meta">
-										<h3>{tool.data.name}</h3>
-										<span class="pricing-pill" style={`background:${badge.bg};color:${badge.text}`}>{badge.label}</span>
-									</div>
-									{tool.data.rating && <span class="tool-rating">★ {tool.data.rating.toFixed(1)}</span>}
-								</div>
-								<p class="tool-desc">{tool.data.description}</p>
-							</a>
-						);
-					})}
-				</div>
-			) : (
-				<p class="empty-msg">Coming soon — we're adding tools to this collection.</p>
-			)}
-		</section>
-	))}
-</main>
-
-<Footer />
-</body>
-</html>
+	<Newsletter variant="band" heading="Build a better *stack*." text="What changed in AI, why it matters, and the tools worth trying — in the brief, three minutes a day. Free, and one click to leave." />
+</Base>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 3rem 0 2rem;
-}
-.page-header h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0.5rem 0 0.5rem; }
-.page-header p { color: rgb(var(--gray)); max-width: 520px; }
+	.col-hero { padding: var(--s-8) 0 var(--s-8); }
+	.col-hero__in { display: grid; gap: var(--s-4); justify-items: start; margin-top: var(--s-6); max-width: 72ch; }
+	.col-hero__title { font-size: var(--text-5xl); max-width: 14ch; text-wrap: balance; }
 
-.collections-body { padding: 2.5rem 0 5rem; }
+	.col-bento { padding-bottom: var(--s-16); }
+	.col-bento__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); }
+	.col-tile { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5); color: inherit; min-height: 196px; }
+	.col-tile--wide { grid-column: span 2; }
+	.col-tile__icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2); transition: color var(--dur-2), background-color var(--dur-2); }
+	.col-tile:hover .col-tile__icon { color: var(--accent); background: var(--accent-soft); }
+	.col-tile__body { display: grid; gap: var(--s-1); flex: 1; }
+	.col-tile__name { font-weight: 600; font-size: var(--text-md); letter-spacing: -0.015em; line-height: 1.25; }
+	.col-tile__desc { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+	.col-tile--wide .col-tile__desc { -webkit-line-clamp: 3; line-clamp: 3; }
+	.col-tile__foot { display: flex; align-items: center; gap: var(--s-3); margin-top: auto; }
+	.col-tile__logos { display: flex; }
+	.col-tile__logos > :global(.logo-mark) { box-shadow: 0 0 0 2px var(--surface); }
+	.col-tile__logos > :global(.logo-mark + .logo-mark) { margin-left: -8px; }
+	.col-tile__count { text-transform: none; letter-spacing: 0; }
+	.col-tile__foot :global(.col-tile__arrow) { margin-left: auto; color: var(--ink-4); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.col-tile:hover :global(.col-tile__arrow) { transform: translateY(3px); color: var(--ink); }
 
-/* Quick nav */
-.quick-nav {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	margin-bottom: 3rem;
-}
-.quick-chip {
-	padding: 0.35rem 0.85rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: 99px;
-	font-size: 0.8rem;
-	font-weight: 500;
-	color: rgb(var(--gray-dark));
-	transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.quick-chip:hover {
-	background: var(--primary-light);
-	border-color: rgba(0,200,150,0.4);
-	color: var(--primary);
-}
+	.col-sections { display: grid; gap: var(--s-16); padding-bottom: var(--s-16); }
+	.col-sec { scroll-margin-top: calc(var(--header-h, 64px) + var(--s-6)); position: relative; }
+	.col-sec__head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s-4) var(--s-5); align-items: start; padding-bottom: var(--s-5); margin-bottom: var(--s-5); border-bottom: 1px solid var(--line); }
+	.col-sec__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-sm); background: var(--surface-2); color: var(--accent); }
+	.col-sec__title { display: grid; gap: var(--s-1); }
+	.col-sec__title h2 { font-size: var(--text-2xl); }
+	.col-sec__title p { max-width: 60ch; }
+	.col-sec__meta { display: grid; gap: var(--s-2); justify-items: end; padding-top: var(--s-2); }
+	.col-sec__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+	.col-sec__up { display: inline-flex; align-items: center; gap: var(--s-1); margin-top: var(--s-4); text-transform: none; letter-spacing: 0; transition: color var(--dur-2); }
+	.col-sec__up:hover { color: var(--ink); }
 
-/* Collection section */
-.collection {
-	margin-bottom: 3.5rem;
-	scroll-margin-top: 80px;
-}
-
-.col-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 1rem;
-	margin-bottom: 1.25rem;
-}
-
-.col-title-wrap {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.85rem;
-}
-.col-emoji { font-size: 1.75rem; flex-shrink: 0; margin-top: 0.1rem; }
-.col-title-wrap h2 { font-size: 1.2rem; margin: 0 0 0.3rem; }
-.col-title-wrap p { font-size: 0.87rem; color: rgb(var(--gray)); margin: 0; }
-
-.see-all-link {
-	font-size: 0.82rem;
-	font-weight: 700;
-	color: var(--primary);
-	white-space: nowrap;
-	flex-shrink: 0;
-	margin-top: 0.25rem;
-}
-.see-all-link:hover { text-decoration: underline; }
-
-/* Tool cards row */
-.tools-row {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-	gap: 0.85rem;
-}
-
-.tool-card {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	padding: 1rem 1.1rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	color: inherit;
-	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-.tool-card:hover {
-	transform: translateY(-2px);
-	border-color: rgba(0,200,150,0.35);
-	box-shadow: 0 4px 14px rgba(0,200,150,0.1);
-}
-
-.tool-top {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-}
-.tool-logo {
-	width: 40px; height: 40px;
-	background: var(--primary-light);
-	border-radius: 8px;
-	display: flex; align-items: center; justify-content: center;
-	flex-shrink: 0; overflow: hidden;
-}
-.tool-logo img { width: 28px; height: 28px; object-fit: contain; }
-.tool-logo-fb { font-size: 1.2rem; }
-
-.tool-meta { flex: 1; min-width: 0; }
-.tool-meta h3 { font-size: 0.9rem; margin: 0 0 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tool-card:hover h3 { color: var(--primary); }
-
-.pricing-pill {
-	font-size: 0.65rem; font-weight: 700;
-	padding: 0.15rem 0.45rem;
-	border-radius: 99px;
-}
-
-.tool-rating {
-	font-size: 0.75rem;
-	font-weight: 700;
-	color: #f59e0b;
-	flex-shrink: 0;
-}
-
-.tool-desc {
-	font-size: 0.8rem;
-	color: rgb(var(--gray));
-	margin: 0;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	line-height: 1.5;
-}
-
-.empty-msg {
-	font-size: 0.87rem;
-	color: rgb(var(--gray));
-	font-style: italic;
-	padding: 1rem 0;
-}
+	@media (max-width: 1024px) {
+		.col-bento__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.col-tile { min-height: 0; }
+		.col-sec__grid { grid-template-columns: 1fr; }
+	}
+	@media (max-width: 640px) {
+		.col-hero__title { font-size: var(--text-4xl); }
+		.col-bento__grid { grid-template-columns: 1fr; }
+		.col-tile--wide { grid-column: auto; }
+		.col-sec__head { grid-template-columns: auto minmax(0, 1fr); }
+		.col-sec__meta { grid-column: 1 / -1; justify-items: start; grid-auto-flow: column; align-items: center; gap: var(--s-4); }
+	}
 </style>
 
-<script data-astro-rerun>
-document.querySelectorAll('.js-favicon').forEach(img => {
-	img.addEventListener('error', () => {
-		img.style.display = 'none';
-		const fb = img.nextElementSibling;
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-});
+<script>
+	// "All collections" links scroll back to the bento without polluting the URL hash.
+	function bind() {
+		document.querySelectorAll<HTMLAnchorElement>('[data-scroll-top]').forEach((a) => {
+			if (a.dataset.bound) return; a.dataset.bound = '1';
+			a.addEventListener('click', (e) => {
+				e.preventDefault();
+				document.querySelector('.col-bento')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+				history.replaceState(history.state, '', location.pathname + location.search);
+			});
+		});
+	}
+	bind();
+	document.addEventListener('astro:page-load', bind);
 </script>

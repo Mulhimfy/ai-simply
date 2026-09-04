@@ -1,0 +1,126 @@
+{
+  "date": "2026-09-02",
+  "title": "OpenAI’s hacker-grade model, Anthropic cuts agent prices, and the EU tightens the leash on ChatGPT",
+  "intro": "A day about power and price: the two biggest labs shipped in opposite directions, Europe drew a harder line, and a detection startup became the de facto referee for what counts as human writing.",
+  "items": [
+    {
+      "headline": "OpenAI is about to ship its first model with ‘critical’ cyber abilities",
+      "why": "Astra is the first frontier model OpenAI itself rates as dangerous at breaking into computer systems, and its release slipped after the Hugging Face hack. Expect tighter access rules and a new round of ‘who gets the strong models’ arguments.",
+      "action": "If you run anything on the internet, this is a good week to turn on two-factor login and patch what you’ve been putting off.",
+      "angle": "policy",
+      "tools": [],
+      "sources": [
+        {
+          "title": "OpenAI Is About to Release Its First AI Model With ‘Critical’ Cyber Abilities",
+          "link": "https://www.wired.com/story/openai-astra-first-ai-model-with-critical-cyber-abilities/",
+          "source": "Wired",
+          "date": "Tue, 01 Sep 2026 20:00:00 +0000"
+        },
+        {
+          "title": "OpenAI’s Astra model is on the way — and very good at breaking into computer systems",
+          "link": "https://techcrunch.com/2026/09/01/open-ais-astra-model-is-on-the-way-and-very-good-at-breaking-into-computer-systems/",
+          "source": "TechCrunch",
+          "date": "Tue, 01 Sep 2026 21:06:24 +0000"
+        },
+        {
+          "title": "OpenAI delayed its new model’s development after the Hugging Face hack",
+          "link": "https://www.theverge.com/ai-artificial-intelligence/987695/openai-astra-unreleased-model-cybersecurity-delay",
+          "source": "The Verge",
+          "date": "2026-09-01T16:45:49-04:00"
+        }
+      ]
+    },
+    {
+      "headline": "Anthropic launches Claude Fable 5.1, up to 45 percent cheaper for agents",
+      "why": "The price of letting an AI do multi-step work just dropped by almost half. That changes the maths for every ‘AI assistant that actually does things’ product, and puts pressure on rivals to match.",
+      "action": "If you pay for an AI agent tool, check whether its price follows within a month. If you build one, re-run your cost model.",
+      "angle": "builders",
+      "tools": [
+        "claude"
+      ],
+      "sources": [
+        {
+          "title": "Anthropic launches Claude Fable 5.1 and says it’s up to 45 percent cheaper for agentic work",
+          "link": "https://www.theverge.com/ai-artificial-intelligence/987830/anthropic-claude-fable-mythos-5-1",
+          "source": "The Verge",
+          "date": "2026-09-01T18:01:36-04:00"
+        },
+        {
+          "title": "Anthropic’s new Fable release is cheaper, less restrictive",
+          "link": "https://techcrunch.com/2026/09/01/anthropics-new-fable-release-is-cheaper-less-restrictive/",
+          "source": "TechCrunch",
+          "date": "Tue, 01 Sep 2026 19:39:22 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "ChatGPT and Reddit now fall under the EU’s toughest online safety rules",
+      "why": "Being designated a ‘very large platform’ means audits, risk reports and fines of up to 6 percent of global revenue. It is the first time a chatbot is regulated like a social network, and other governments copy Brussels.",
+      "action": "Nothing to do today. Watch for new ‘why am I seeing this’ explanations and stricter age checks inside ChatGPT over the next few months.",
+      "angle": "policy",
+      "tools": [
+        "chatgpt"
+      ],
+      "sources": [
+        {
+          "title": "ChatGPT and Reddit now face EU's toughest online safety rules",
+          "link": "https://arstechnica.com/tech-policy/2026/08/chatgtp-and-reddit-now-face-eus-toughest-online-safety-rules/",
+          "source": "Ars Technica",
+          "date": "Mon, 31 Aug 2026 13:41:40 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "Pangram has become the referee for ‘did a human write this?’",
+      "why": "Schools, publishers and employers are quietly standardising on one detector. Detectors are still wrong often enough to matter, so a single gatekeeper is a big deal for anyone whose work gets checked.",
+      "action": "If you write for a living or study, keep drafts and version history. It is the only reliable defence against a false positive.",
+      "angle": "work",
+      "tools": [
+        "gptzero",
+        "originality-ai"
+      ],
+      "sources": [
+        {
+          "title": "Pangram Has Emerged as the Gold Standard of AI Detection. Should You Trust It?",
+          "link": "https://www.wired.com/story/pangram-has-emerged-as-the-gold-standard-of-ai-detection/",
+          "source": "Wired",
+          "date": "Wed, 02 Sep 2026 10:00:00 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "Google needs Hollywood more than the studios need AI",
+      "why": "Video models are only as valuable as the catalogues they can train on and the screens they can reach. The studios know it, which is why the licensing talks are slow and the leverage is theirs.",
+      "action": "Creators: expect the ‘official’ video tools to get more restrictive about styles and likenesses, and the open ones to get better.",
+      "angle": "creators",
+      "tools": [
+        "runway"
+      ],
+      "sources": [
+        {
+          "title": "Google needs Hollywood more than the studios need AI",
+          "link": "https://www.theverge.com/tech/987429/google-needs-hollywood-more-than-the-studios-need-ai",
+          "source": "The Verge",
+          "date": "2026-09-01T18:50:29-04:00"
+        }
+      ]
+    },
+    {
+      "headline": "AfterQuery becomes Y Combinator’s fastest unicorn at $3.2B",
+      "why": "The money is moving from model makers to the companies that sell training data and evaluations. That is where the next wave of AI jobs is, not in prompt writing.",
+      "action": "If you have domain expertise, the data-labelling and evaluation market now pays for it.",
+      "angle": "money",
+      "tools": [
+        "scale-ai"
+      ],
+      "sources": [
+        {
+          "title": "AfterQuery reportedly becomes Y Combinator’s fastest-ever unicorn, now valued at $3.2B",
+          "link": "https://techcrunch.com/2026/09/01/afterquery-reportedly-becomes-y-combinators-fastest-ever-unicorn-now-valued-at-3-2b/",
+          "source": "TechCrunch",
+          "date": "Tue, 01 Sep 2026 22:08:24 +0000"
+        }
+      ]
+    }
+  ]
+}

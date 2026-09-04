@@ -1,605 +1,507 @@
 ---
-import { Image } from 'astro:assets';
-import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import Newsletter from '../components/Newsletter.astro';
-import ShareButtons from '../components/ShareButtons.astro';
-import { SITE_TITLE, SITE_URL, DEFAULT_AUTHOR } from '../consts';
-
-const authorSameAs = [
-	DEFAULT_AUTHOR.twitter && `https://twitter.com/${DEFAULT_AUTHOR.twitter}`,
-].filter(Boolean);
-
-type Props = CollectionEntry<'blog'>['data'] & { body?: string };
-
-const {
-	title, description, pubDate, updatedDate, heroImage, category, readingTime, tags, faqs, body,
-	author, authorBio, authorTwitter, authorAvatar,
-} = Astro.props;
-
-const authorName = author ?? DEFAULT_AUTHOR.name;
-const authorBioText = authorBio ?? DEFAULT_AUTHOR.bio;
-const authorAvatarSrc = authorAvatar ?? DEFAULT_AUTHOR.avatar;
-const authorTwitterHandle = authorTwitter ?? DEFAULT_AUTHOR.twitter;
-const authorPageUrl = `${SITE_URL}/author/${DEFAULT_AUTHOR.slug}/`;
-const authorInitials = authorName.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-
-function countWords(text: string): number {
-	return text
-		.replace(/```[\s\S]*?```/g, '')
-		.replace(/`[^`]+`/g, '')
-		.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-		.replace(/[#*_~>|]/g, '')
-		.trim()
-		.split(/\s+/)
-		.filter(w => w.length > 0).length;
-}
-
-const wordCount = body ? countWords(body) : undefined;
-const categoryLabel = category?.replace(/-/g, ' ');
-
-const articleSchema = {
-	"@context": "https://schema.org",
-	"@type": "BlogPosting",
-	"headline": title,
-	"description": description,
-	"inLanguage": "en-US",
-	"datePublished": pubDate.toISOString(),
-	...(updatedDate && { "dateModified": updatedDate.toISOString() }),
-	...(wordCount && { "wordCount": wordCount }),
-	...(categoryLabel && { "articleSection": categoryLabel }),
-	...(tags && tags.length > 0 && { "keywords": tags.join(", ") }),
-	"author": {
-		"@type": "Organization",
-		"name": authorName,
-		"url": authorPageUrl,
-		"logo": `${SITE_URL}${authorAvatarSrc}`,
-		...(authorSameAs.length && { "sameAs": authorSameAs }),
-	},
-	"publisher": {
-		"@type": "Organization",
-		"name": SITE_TITLE,
-		"url": SITE_URL,
-	},
-	"mainEntityOfPage": {
-		"@type": "WebPage",
-		"@id": Astro.url.href,
-	},
-	...(heroImage && { "image": {
-		"@type": "ImageObject",
-		"url": new URL(heroImage.src, Astro.url).href,
-		"contentUrl": new URL(heroImage.src, Astro.url).href,
-		"width": heroImage.width,
-		"height": heroImage.height,
-		"name": title,
-		"description": description,
-	}}),
-};
-
-const breadcrumbSchema = {
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{ "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
-		{ "@type": "ListItem", "position": 2, "name": "Articles", "item": `${SITE_URL}/blog/` },
-		{ "@type": "ListItem", "position": 3, "name": title, "item": Astro.url.href },
-	],
-};
-
 /**
- * "Best AI X (Ranked & Reviewed)" posts are numbered lists — `## 1. ChatGPT — …`.
- * Lifting that ranking into ItemList makes the post eligible for Google's
- * list/carousel treatment, and points each entry at our own tool page.
- * Returns null for prose articles, which have no numbered headings.
+ * The explainer — one long-form reading experience.
+ *
+ * Explainers are the depth behind the daily brief, so the page is built for reading:
+ * a sticky contents rail with scroll-spy, a reading-progress hairline, the newsletter
+ * card at the halfway mark, the tools the piece actually talks about, and a share
+ * block written for sending to a friend.
+ *
+ * The route file passes only `post` and the rendered `headings`; everything derived
+ * (related explainers, tools mentioned, the brief this belongs to) happens here.
+ *
+ * MUST PRESERVE: BlogPosting JSON-LD (with wordCount from the raw markdown),
+ * BreadcrumbList (emitted by <Breadcrumb>), the conditional ItemList for numbered
+ * listicles, the conditional FAQPage (emitted by <Faq>), and the reading progress bar.
  */
-function buildItemList(markdown: string) {
-	const lines = markdown.split(/\r?\n/);
-	const items: { position: number; name: string; url?: string }[] = [];
+import { Image } from 'astro:assets';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from './Base.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import ArticleToc from '../components/ArticleToc.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import ToolCard from '../components/ToolCard.astro';
+import Newsletter from '../components/Newsletter.astro';
+import ShareBar from '../components/ShareBar.astro';
+import Faq from '../components/Faq.astro';
+import Icon from '../components/Icon.astro';
+import { SITE_TITLE, SITE_URL, DEFAULT_AUTHOR, BLOG_CATEGORIES } from '../consts';
+import { ogUrl } from '../og/url';
+import {
+	buildItemList, countWords, categoryName,
+	toolsMentioned, briefMatch, relatedExplainers, prevNext,
+} from '../lib/articles';
 
-	lines.forEach((line, index) => {
-		const heading = line.match(/^##\s+(\d+)\.\s+(.+?)\s*$/);
-		if (!heading) return;
+interface Heading { depth: number; slug: string; text: string }
+interface Props { post: CollectionEntry<'blog'>; headings?: Heading[] }
 
-		// Strip the "— Best for X" tagline; keep the product name itself.
-		const name = heading[2].split(/\s+[—–-]\s+/)[0].trim();
-		if (!name) return;
+const { post, headings = [] } = Astro.props;
+const d = post.data;
+const slug = post.id;
+const pageUrl = `${SITE_URL}/blog/${slug}/`;
 
-		// First tool link appearing under this heading, before the next one.
-		let url: string | undefined;
-		for (let i = index + 1; i < lines.length; i++) {
-			if (/^##\s/.test(lines[i])) break;
-			const link = lines[i].match(/\]\((\/tools\/[a-z0-9-]+\/)\)/);
-			if (link) { url = new URL(link[1], SITE_URL).href; break; }
+const [allPosts, allTools] = await Promise.all([getCollection('blog'), getCollection('tools')]);
+
+const catLabel = categoryName(d.category);
+const catIcon = BLOG_CATEGORIES[d.category]?.icon ?? 'file-text';
+/* Reading time is measured, not asserted: 200 words a minute over the real body. */
+const wordCount = post.body ? countWords(post.body) : undefined;
+const reading = `${Math.max(1, Math.round((wordCount ?? 1000) / 200))} min read`;
+
+const authorName = d.author ?? DEFAULT_AUTHOR.name;
+const isHouseAuthor = authorName === DEFAULT_AUTHOR.name;
+const authorBio = d.authorBio ?? DEFAULT_AUTHOR.bio;
+const authorAvatar = d.authorAvatar ?? DEFAULT_AUTHOR.avatar;
+const authorTwitter = d.authorTwitter ?? DEFAULT_AUTHOR.twitter;
+/* Only the house identity has a page; a guest byline links nowhere rather than to the wrong author. */
+const authorHref = isHouseAuthor ? `/author/${DEFAULT_AUTHOR.slug}/` : undefined;
+const authorSameAs = [authorTwitter && `https://twitter.com/${authorTwitter}`].filter(Boolean) as string[];
+
+const fmt = (date: Date) => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+/* ── the body, split so the newsletter lands mid-read ─────────────────────
+   Rendering the slot to a string lets us (a) place the newsletter server-side
+   instead of injecting it with innerHTML after paint, and (b) run the
+   "tools mentioned" matcher over the real HTML rather than raw markdown. */
+const rendered = await Astro.slots.render('default');
+const h2At = [...rendered.matchAll(/<h2[\s>]/g)].map((m) => m.index ?? 0);
+const breakAt = h2At.length >= 4 ? h2At[Math.floor(h2At.length / 2)] : -1;
+const bodyTop = (breakAt > 0 ? rendered.slice(0, breakAt) : rendered).replace(/^(\s*)<p>/, '$1<p class="dropcap">');
+const bodyRest = breakAt > 0 ? rendered.slice(breakAt) : '';
+
+const mentioned = toolsMentioned(rendered, allTools, 6);
+const brief = briefMatch(post, import.meta.glob('../data/briefs/*.json', { eager: true }));
+const related = relatedExplainers(post, allPosts, 3);
+const { prev, next } = prevNext(post, allPosts);
+
+/* ── schema ──────────────────────────────────────────────────────────── */
+const articleSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'BlogPosting',
+	headline: d.title,
+	description: d.description,
+	inLanguage: 'en-US',
+	datePublished: d.pubDate.toISOString(),
+	...(d.updatedDate && { dateModified: d.updatedDate.toISOString() }),
+	...(wordCount && { wordCount }),
+	...(catLabel && { articleSection: catLabel }),
+	...(d.tags.length > 0 && { keywords: d.tags.join(', ') }),
+	author: {
+		'@type': 'Organization',
+		name: authorName,
+		url: `${SITE_URL}/author/${DEFAULT_AUTHOR.slug}/`,
+		logo: `${SITE_URL}${authorAvatar}`,
+		...(authorSameAs.length && { sameAs: authorSameAs }),
+	},
+	publisher: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+	mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
+	...(d.heroImage
+		? {
+			image: {
+				'@type': 'ImageObject',
+				url: new URL(d.heroImage.src, Astro.url).href,
+				contentUrl: new URL(d.heroImage.src, Astro.url).href,
+				width: d.heroImage.width,
+				height: d.heroImage.height,
+				name: d.title,
+				description: d.description,
+			},
 		}
+		: { image: `${SITE_URL}${ogUrl('blog', slug)}` }),
+};
 
-		items.push({ position: Number(heading[1]), name, url });
-	});
-
-	if (items.length < 2) return null;
-
-	return {
-		"@context": "https://schema.org",
-		"@type": "ItemList",
-		"name": title,
-		"description": description,
-		"itemListOrder": "https://schema.org/ItemListOrderDescending",
-		"numberOfItems": items.length,
-		"itemListElement": items
-			.sort((a, b) => a.position - b.position)
-			.map(item => ({
-				"@type": "ListItem",
-				"position": item.position,
-				"name": item.name,
-				...(item.url && { "url": item.url }),
-			})),
-	};
-}
-
-const itemListSchema = body ? buildItemList(body) : null;
-
-const faqSchema = faqs && faqs.length > 0 ? {
-	"@context": "https://schema.org",
-	"@type": "FAQPage",
-	"mainEntity": faqs.map(faq => ({
-		"@type": "Question",
-		"name": faq.question,
-		"acceptedAnswer": {
-			"@type": "Answer",
-			"text": faq.answer,
-		},
-	})),
-} : null;
+const itemListSchema = post.body
+	? buildItemList(post.body, { title: d.title, description: d.description, siteUrl: SITE_URL })
+	: null;
 ---
+<Base
+	title={d.title}
+	description={d.description}
+	image={d.heroImage ?? ogUrl('blog', slug)}
+	type="article"
+	publishDate={d.pubDate}
+	updatedDate={d.updatedDate}
+	category={d.category}
+	noNudge
+>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+		{itemListSchema && <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />}
+	</Fragment>
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={title}
-		description={description}
-		image={heroImage}
-		type="article"
-		publishDate={pubDate}
-		updatedDate={updatedDate}
-		category={category}
-	/>
-	<script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
-	<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
-	{itemListSchema && <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />}
-	{faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />}
-</head>
-<body>
-	<Header />
-	<div class="reading-progress" id="reading-progress"></div>
-	<main id="main-content">
-		<article itemscope itemtype="https://schema.org/Article">
-			<header class="article-header">
-				<div class="container">
-					<nav class="breadcrumbs" aria-label="Breadcrumb">
-						<a href="/">Home</a>
-						<span aria-hidden="true">/</span>
-						<a href="/blog/">Articles</a>
-						<span aria-hidden="true">/</span>
-						<span>{title}</span>
-					</nav>
-					{categoryLabel && <a href={`/blog/category/${category}/`} class="badge">{categoryLabel}</a>}
-					<h1 itemprop="headline">{title}</h1>
-					<p class="article-header__desc" itemprop="description">{description}</p>
-					<div class="article-header__meta">
-						<a href={`/author/${DEFAULT_AUTHOR.slug}/`} class="article-byline" rel="author" itemprop="author" itemscope itemtype="https://schema.org/Organization">
-							<img src={authorAvatarSrc} alt={authorName} width="26" height="26" class="article-byline__avatar" itemprop="logo" />
-							<span class="article-byline__by">By <span itemprop="name">{authorName}</span></span>
-						</a>
-						<time datetime={pubDate.toISOString()} itemprop="datePublished">
-							{pubDate.toLocaleDateString('en-us', { year: 'numeric', month: 'short', day: 'numeric' })}
-						</time>
-						{updatedDate && (
-							<span class="article-header__updated">
-								Updated: <time datetime={updatedDate.toISOString()} itemprop="dateModified">
-									{updatedDate.toLocaleDateString('en-us', { year: 'numeric', month: 'short', day: 'numeric' })}
-								</time>
+	<div class="rp" aria-hidden="true"><span class="rp__bar" data-progress></span></div>
+
+	<article class="post" data-article>
+		<header class="post__head">
+			<div class="container post__wrap">
+				<Breadcrumb items={[{ name: 'Explainers', href: '/blog/' }, { name: d.title }]} />
+				<div class="post__kicker">
+					<a href={`/blog/${d.category}/`.replace('/blog/', '/blog/category/')} class="post__cat">
+						<Icon name={catIcon} size={13} /> {catLabel}
+					</a>
+					<span class="post__sep" aria-hidden="true">·</span>
+					<span>{reading}</span>
+					<span class="post__sep" aria-hidden="true">·</span>
+					<time datetime={d.pubDate.toISOString()}>{fmt(d.pubDate)}</time>
+				</div>
+				<h1 class="post__title">{d.title}</h1>
+				<p class="post__lead">{d.description}</p>
+				<div class="post__byline">
+					<div class="post__author-row">
+						<img src={authorAvatar} alt="" width="40" height="40" class="post__avatar" />
+						<div class="post__author-id">
+							{authorHref
+								? <a href={authorHref} rel="author" class="post__author-name">{authorName}</a>
+								: <span class="post__author-name">{authorName}</span>}
+							<span class="post__author-role">
+								{DEFAULT_AUTHOR.role}
+								{d.updatedDate && <> · Updated <time datetime={d.updatedDate.toISOString()}>{fmt(d.updatedDate)}</time></>}
 							</span>
-						)}
-						{readingTime && <span>{readingTime}</span>}
+						</div>
 					</div>
-					<ShareButtons url={`${SITE_URL}${Astro.url.pathname}`} title={`${title} — ${SITE_TITLE}`} />
+					<div class="post__share-top"><ShareBar title={d.title} url={pageUrl} text={`${d.title} — ${SITE_TITLE}`} compact /></div>
 				</div>
-			</header>
-
-			{heroImage && (
-				<div class="article-hero container">
-					<Image
-						width={960}
-						height={480}
-						src={heroImage}
-						alt={title}
-						loading="eager"
-						itemprop="image"
-					/>
-				</div>
-			)}
-
-			<div class="article-body container" itemprop="articleBody">
-				<slot />
 			</div>
+		</header>
 
-			<!-- FAQ Section -->
-			{faqs && faqs.length > 0 && (
-				<div class="faq-wrapper container">
-					<section class="faq-section">
-						<h2>Frequently Asked Questions</h2>
-						{faqs.map(faq => (
-							<div class="faq-item">
-								<h3>{faq.question}</h3>
-								<p>{faq.answer}</p>
-							</div>
-						))}
+		{d.heroImage && (
+			<figure class="post__hero">
+				<div class="container post__wrap">
+					<Image src={d.heroImage} alt={d.title} widths={[720, 1080, 1440]} sizes="(max-width: 1100px) 100vw, 1060px" loading="eager" fetchpriority="high" />
+				</div>
+			</figure>
+		)}
+
+		<div class="container post__wrap post__grid">
+			<aside class="post__rail">
+				<div class="post__rail-in">
+					<ArticleToc headings={headings} variant="rail" />
+					<div class="post__rail-share">
+						<p class="meta">Share</p>
+						<ShareBar title={d.title} url={pageUrl} text={`${d.title} — ${SITE_TITLE}`} compact />
+					</div>
+				</div>
+			</aside>
+
+			<div class="post__main">
+				<div class="post__toc-mobile"><ArticleToc headings={headings} variant="disclosure" /></div>
+
+				{brief && (
+					<aside class="frombrief">
+						<span class="eyebrow">From the brief · {new Date(`${brief.date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+						<p class="frombrief__headline">{brief.headline}</p>
+						<a href={brief.href} class="link-arrow">Read that day's brief <Icon name="arrow-right" size={16} /></a>
+					</aside>
+				)}
+
+				<div class="prose" set:html={bodyTop} />
+
+				{bodyRest && (
+					<Newsletter
+						variant="card"
+						id="mid-newsletter"
+						heading="Know what matters. In 3 *minutes*."
+						text="This explainer is the depth. The brief is the daily habit — what changed in AI today, why it matters to you, and what to do about it."
+					/>
+				)}
+				{bodyRest && <div class="prose" set:html={bodyRest} />}
+
+				{d.tags.length > 0 && (
+					<ul class="post__tags" role="list" aria-label="Topics">
+						{d.tags.map((tag) => <li class="pill pill--outline">{tag}</li>)}
+					</ul>
+				)}
+
+				{d.faqs && d.faqs.length > 0 && <div class="post__faq"><Faq faqs={d.faqs} title="Questions people ask" /></div>}
+
+				{mentioned.length > 0 && (
+					<section class="post__tools" aria-labelledby="tools-mentioned">
+						<div class="post__tools-head">
+							<h2 id="tools-mentioned">Tools mentioned</h2>
+							<a href="/tools/" class="link-arrow">The toolbox <Icon name="arrow-right" size={16} /></a>
+						</div>
+						<div class="post__tools-grid">
+							{mentioned.map((t) => (
+								<ToolCard
+									slug={t.id}
+									name={t.data.name}
+									description={t.data.description}
+									category={t.data.category}
+									subcategory={t.data.subcategory}
+									pricing={t.data.pricing}
+									variant="mini"
+								/>
+							))}
+						</div>
 					</section>
-				</div>
-			)}
+				)}
 
-			{tags && tags.length > 0 && (
-				<div class="article-tags container">
-					<strong>Tags:</strong>
-					{tags.map((tag) => (
-						<span class="tag">{tag}</span>
-					))}
-				</div>
-			)}
-		</article>
+				<section class="post__send card card--ink">
+					<div class="post__send-copy">
+						<h2 class="post__send-title">Send this to someone who's <em class="serif">confused</em> about AI.</h2>
+						<p class="post__send-text">It takes one tap, and they get the version without the hype.</p>
+					</div>
+					<ShareBar title={d.title} url={pageUrl} text={`${d.title} — ${SITE_TITLE}`} label="Send it" />
+				</section>
 
-		<!-- Author bio -->
-		<div class="author-bio container">
-			<div class="author-bio__inner" itemscope itemtype="https://schema.org/Organization">
-				<img src={authorAvatarSrc} alt={authorName} width="48" height="48" class="author-bio__avatar" itemprop="logo" />
-				<div class="author-bio__content">
-					<p class="author-bio__name">
-						Written by <a href={`/author/${DEFAULT_AUTHOR.slug}/`} itemprop="url"><span itemprop="name">{authorName}</span></a>
-						<span class="author-bio__role">— {DEFAULT_AUTHOR.role}</span>
-					</p>
-					<p class="author-bio__desc" itemprop="description">{authorBioText}</p>
-					{authorTwitterHandle && (
-						<p class="author-bio__social">
-							<a href={`https://twitter.com/${authorTwitterHandle}`} target="_blank" rel="noopener me" itemprop="sameAs">@{authorTwitterHandle}</a>
+				<aside class="post__author card card--pad">
+					<img src={authorAvatar} alt="" width="52" height="52" class="post__author-avatar" />
+					<div>
+						<p class="post__author-line">
+							Written by {authorHref ? <a href={authorHref} class="link-u">{authorName}</a> : authorName}
+							<span class="muted"> — {DEFAULT_AUTHOR.role}</span>
 						</p>
-					)}
-				</div>
+						<p class="post__author-bio">{authorBio}</p>
+						<div class="row post__author-links">
+							{authorHref && <a href={authorHref} class="link-arrow">More explainers <Icon name="arrow-right" size={16} /></a>}
+							{authorTwitter && <a href={`https://twitter.com/${authorTwitter}`} target="_blank" rel="noopener me" class="link-u post__author-social">@{authorTwitter}</a>}
+						</div>
+					</div>
+				</aside>
 			</div>
 		</div>
+	</article>
 
-		<!-- Bottom newsletter CTA -->
-		<Newsletter />
-	</main>
-	<Footer />
-</body>
-</html>
+	{(prev || next) && (
+		<nav class="container post__wrap post__pn" aria-label="More explainers">
+			{prev ? (
+				<a href={`/blog/${prev.id}/`} class="post__pn-item">
+					<span class="meta"><Icon name="arrow-left" size={13} /> Previous</span>
+					<span class="post__pn-title">{prev.data.title}</span>
+				</a>
+			) : <span />}
+			{next && (
+				<a href={`/blog/${next.id}/`} class="post__pn-item post__pn-item--next">
+					<span class="meta">Next <Icon name="arrow-right" size={13} /></span>
+					<span class="post__pn-title">{next.data.title}</span>
+				</a>
+			)}
+		</nav>
+	)}
+
+	{related.length > 0 && (
+		<section class="container section--tight">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Keep reading</span>
+					<h2>More of the <em class="serif">depth</em>.</h2>
+				</div>
+				<a href="/blog/" class="link-arrow">All explainers <Icon name="arrow-right" size={16} /></a>
+			</div>
+			<div class="grid grid--3" data-stagger>
+				{related.map((p) => (
+					<ArticleCard
+						slug={p.id}
+						title={p.data.title}
+						description={p.data.description}
+						category={p.data.category}
+						pubDate={p.data.pubDate}
+						readingTime={p.data.readingTime}
+						heroImage={p.data.heroImage}
+					/>
+				))}
+			</div>
+		</section>
+	)}
+
+	<Newsletter
+		variant="band"
+		id="newsletter"
+		heading="The brief, in your *inbox*."
+		text="What changed in AI, why it matters to you, and what to do about it. Three minutes a day — the same voice you just read."
+	/>
+</Base>
+
+<script>
+	/* Reading progress: how far through the article you are, not the document. */
+	function bindProgress() {
+		const bar = document.querySelector<HTMLElement>('[data-progress]');
+		const article = document.querySelector<HTMLElement>('[data-article]');
+		if (!bar || !article) return;
+		let ticking = false;
+		const update = () => {
+			ticking = false;
+			const r = article.getBoundingClientRect();
+			const span = r.height - window.innerHeight;
+			const done = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : r.top <= 0 ? 1 : 0;
+			bar.style.transform = `scaleX(${done})`;
+		};
+		const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+		addEventListener('scroll', onScroll, { passive: true });
+		addEventListener('resize', onScroll, { passive: true });
+		update();
+	}
+	bindProgress();
+	document.addEventListener('astro:page-load', bindProgress);
+</script>
 
 <style>
-	.article-header {
-		padding: 2.5rem 0 2rem;
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
+	/* ── reading progress ─────────────────────────────────────────────── */
+	.rp {
+		position: fixed; inset: 0 0 auto 0; height: 2px; z-index: calc(var(--z-header) + 1);
+		pointer-events: none; background: transparent;
+	}
+	.rp__bar {
+		display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: 0 50%;
+		background: var(--accent);
 	}
 
-	.breadcrumbs {
-		font-size: 0.85rem;
-		color: rgb(var(--gray));
-		margin-bottom: 1rem;
+	/* ── shell ────────────────────────────────────────────────────────── */
+	/* One reading axis: the rail hangs in the margin, everything else — kicker,
+	   headline, cover, body, prev/next — sits on the column the prose sits on. */
+	.post__wrap {
+		max-width: 1060px;
+		--rail: 216px;
+		--rail-gap: var(--s-12);
+		--rail-offset: calc(var(--gutter) + var(--rail) + var(--rail-gap));
+	}
+	.post__head { padding: var(--s-8) 0 var(--s-6); }
+	.post__head .post__wrap { display: grid; gap: var(--s-5); }
+
+	.post__kicker {
+		display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+		font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+	}
+	.post__cat { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-ink); transition: color var(--dur-2); }
+	.post__cat:hover { color: var(--accent); }
+	.post__sep { color: var(--ink-4); }
+	.post__title { font-size: var(--text-4xl); max-width: 19ch; text-wrap: balance; }
+	.post__lead { font-size: var(--text-lg); line-height: 1.55; color: var(--ink-2); max-width: 62ch; text-wrap: pretty; }
+
+	.post__byline {
+		display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); flex-wrap: wrap;
+		padding-top: var(--s-5); border-top: 1px solid var(--line);
+	}
+	.post__author-row { display: flex; align-items: center; gap: var(--s-3); }
+	.post__avatar { width: 40px; height: 40px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface-2); }
+	.post__author-id { display: grid; gap: 1px; }
+	.post__author-name { font-size: var(--text-sm); font-weight: 600; color: var(--ink); transition: color var(--dur-2); }
+	a.post__author-name:hover { color: var(--accent-ink); }
+	.post__author-role { font-size: var(--text-xs); color: var(--ink-3); }
+
+	/* ── hero ─────────────────────────────────────────────────────────── */
+	.post__hero { margin-top: var(--s-2); }
+	.post__hero :global(img) {
+		width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+		border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--surface-2);
 	}
 
-	.breadcrumbs a { color: rgb(var(--gray)); }
-	.breadcrumbs a:hover { color: var(--primary); }
-	.breadcrumbs span { margin: 0 0.35rem; }
+	/* ── two-column reading grid ──────────────────────────────────────── */
+	.post__grid { display: grid; gap: var(--s-8); padding-top: var(--s-10); padding-bottom: var(--s-12); align-items: start; }
+	.post__rail { display: none; }
+	.post__main { min-width: 0; display: grid; gap: var(--s-10); }
+	.post__main > :global(.prose) { max-width: none; }
 
-	.article-header h1 {
-		font-size: 2.2rem;
-		max-width: 750px;
-		margin: 0.75rem 0 0.5rem;
-		line-height: 1.2;
-	}
-
-	.article-header__desc {
-		color: rgb(var(--gray));
-		font-size: 1.05rem;
-		max-width: 650px;
-		margin-bottom: 1rem;
-	}
-
-	.article-header__meta {
-		font-size: 0.85rem;
-		color: rgb(var(--gray));
-		display: flex;
-		gap: 1.25rem;
-		flex-wrap: wrap;
-		align-items: center;
+	@media (min-width: 1080px) {
+		.post__grid { grid-template-columns: var(--rail) minmax(0, 1fr); gap: var(--rail-gap); }
+		.post__head .post__wrap,
+		.post__hero .post__wrap,
+		.post__pn { padding-left: var(--rail-offset); }
+		.post__rail { display: block; }
+		.post__rail-in { position: sticky; top: calc(64px + var(--s-8)); display: grid; gap: var(--s-6); }
+		.post__rail-share { display: grid; gap: var(--s-3); padding-top: var(--s-5); border-top: 1px solid var(--line); }
+		.post__toc-mobile { display: none; }
+		.post__share-top { display: none; }
 	}
 
-	.article-byline {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		text-decoration: none;
-		color: rgb(var(--black));
-		font-weight: 600;
-	}
-	.article-byline:hover { color: var(--primary); }
-	.article-byline__avatar {
-		width: 26px; height: 26px;
-		border-radius: 50%;
-		display: inline-block;
-	}
-	.article-byline__by { font-size: 0.85rem; }
-
-	.article-header__updated {
-		font-style: italic;
+	/* Wide screens: a mirror of the rail on the right, so the column of text is
+	   centred on the page rather than pushed off it. */
+	@media (min-width: 1220px) {
+		.post__wrap { max-width: var(--max-w); }
+		.post__grid { grid-template-columns: var(--rail) minmax(0, 1fr) var(--rail); }
+		.post__head .post__wrap,
+		.post__hero .post__wrap,
+		.post__pn { padding-right: var(--rail-offset); }
 	}
 
-	.article-hero {
-		margin-top: 2rem;
+	/* ── prose extras that ship inside the markdown ───────────────────── */
+	.post__main :global(.prose aside.methodology) {
+		background: var(--surface-2); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+		border-radius: 0 var(--r-md) var(--r-md) 0; padding: var(--s-5) var(--s-6); font-size: var(--text-sm);
 	}
+	.post__main :global(.prose aside.methodology h2) {
+		font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase;
+		color: var(--accent-ink); margin: 0 0 var(--s-2);
+	}
+	.post__main :global(.prose aside.methodology p) { margin: 0; color: var(--ink-2); line-height: 1.6; }
+	.post__main :global(.prose aside.methodology p + p) { margin-top: var(--s-2); }
+	.post__main :global(.prose img.best-of-shot) { width: 100%; }
 
-	.article-hero img {
-		width: 100%;
-		max-width: 960px;
-		border-radius: var(--radius);
+	/* ── from the brief ───────────────────────────────────────────────── */
+	.frombrief {
+		display: grid; gap: var(--s-3); justify-items: start;
+		padding: var(--s-5) var(--s-6); background: var(--surface-2); border-radius: var(--r-lg);
+		border: 1px solid var(--line); border-left: 3px solid var(--accent);
 	}
+	.frombrief__headline { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.015em; line-height: 1.35; color: var(--ink); }
 
-	.article-body {
-		max-width: 750px;
-		padding-top: 2rem;
-		padding-bottom: 2rem;
-	}
+	.post__toc-mobile:empty { display: none; }
 
-	.article-body :global(h2) {
-		margin-top: 2.5rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid var(--border);
-	}
+	/* ── tags ─────────────────────────────────────────────────────────── */
+	.post__tags { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+	.post__tags li { text-transform: none; letter-spacing: 0.01em; color: var(--ink-3); }
 
-	.article-body :global(h3) {
-		margin-top: 1.5rem;
-	}
+	.post__faq { padding-top: var(--s-2); border-top: 1px solid var(--line); }
 
-	.article-body :global(p) {
-		margin-bottom: 1.25em;
-	}
+	/* ── tools mentioned ──────────────────────────────────────────────── */
+	.post__tools { display: grid; gap: var(--s-5); padding-top: var(--s-8); border-top: 1px solid var(--line); }
+	.post__tools-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); }
+	.post__tools-head h2 { font-size: var(--text-xl); }
+	.post__tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: var(--s-3); }
 
-	.article-body :global(img.best-of-shot),
-	.article-body :global(img) {
-		max-width: 100%;
-		height: auto;
-		border-radius: var(--radius);
-		border: 1px solid var(--border);
-		margin: 1.25rem 0 1.5rem;
-		display: block;
+	/* ── send-to-a-friend ─────────────────────────────────────────────── */
+	.post__send {
+		display: grid; gap: var(--s-5); padding: clamp(1.5rem, 4vw, 2.25rem);
+		position: relative; overflow: hidden;
 	}
+	.post__send::after {
+		content: ''; position: absolute; right: -70px; top: -70px; width: 240px; height: 240px; border-radius: 50%;
+		background: radial-gradient(closest-side, rgba(var(--accent-rgb), 0.35), transparent 70%); pointer-events: none;
+	}
+	.post__send-copy { display: grid; gap: var(--s-2); position: relative; z-index: 1; }
+	.post__send-title { font-size: var(--text-2xl); max-width: 20ch; }
+	/* The card inverts with the theme, so its secondary text has to invert too —
+	   --ink-3 on the light card only reaches 3:1. */
+	.post__send-text { color: rgba(255, 255, 255, 0.72); font-size: var(--text-sm); }
+	:root[data-theme='dark'] .post__send-text { color: rgba(0, 0, 0, 0.66); }
+	.post__send :global(.share) { position: relative; z-index: 1; }
 
-	.article-body :global(aside.methodology) {
-		background: var(--bg-alt);
-		border-left: 3px solid var(--primary);
-		padding: 1rem 1.25rem;
-		border-radius: 0 var(--radius) var(--radius) 0;
-		margin: 0 0 2rem;
-		font-size: 0.92rem;
-	}
-	.article-body :global(aside.methodology h2) {
-		font-size: 0.92rem;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		margin: 0 0 0.5rem;
-		padding: 0;
-		border: 0;
-		color: var(--primary);
-	}
-	.article-body :global(aside.methodology p) {
-		margin: 0;
-		color: rgb(var(--gray));
-	}
+	/* ── author card ──────────────────────────────────────────────────── */
+	.post__author { display: flex; gap: var(--s-5); align-items: flex-start; }
+	.post__author-avatar { width: 52px; height: 52px; border-radius: var(--r-sm); border: 1px solid var(--line); flex-shrink: 0; background: var(--surface-2); }
+	.post__author-line { font-size: var(--text-sm); font-weight: 600; }
+	.post__author-bio { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.6; margin-top: var(--s-2); max-width: 62ch; }
+	.post__author-links { margin-top: var(--s-3); gap: var(--s-5); }
+	.post__author-social { font-size: var(--text-sm); color: var(--ink-3); }
 
-	.faq-wrapper {
-		max-width: 750px;
-		padding-bottom: 1rem;
+	/* ── prev / next ──────────────────────────────────────────────────── */
+	.post__pn { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); padding-bottom: var(--s-12); }
+	.post__pn-item {
+		display: grid; gap: var(--s-2); padding: var(--s-5) var(--s-6);
+		border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+		transition: transform var(--dur-3) var(--ease-out), border-color var(--dur-3), box-shadow var(--dur-3) var(--ease-out);
 	}
+	.post__pn-item:hover { transform: translateY(-2px); border-color: var(--line-2); box-shadow: var(--shadow-md); }
+	.post__pn-item .meta { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+	.post__pn-item .meta :global(.icon) { flex-shrink: 0; }
+	.post__pn-item--next { text-align: right; }
+	.post__pn-item--next .meta { justify-self: end; }
+	.post__pn-title { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; color: var(--ink); }
+	.post__pn-item:hover .post__pn-title { color: var(--accent-ink); }
 
-	.article-tags {
-		max-width: 750px;
-		padding-bottom: 2rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		font-size: 0.85rem;
-	}
-
-	.tag {
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		padding: 0.2rem 0.6rem;
-		border-radius: 50px;
-		font-size: 0.8rem;
-		color: rgb(var(--gray));
-	}
-
-	/* Table of Contents */
-	.toc {
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 1.25rem 1.5rem;
-		margin-bottom: 2rem;
-		font-size: 0.92rem;
-	}
-
-	.toc__title {
-		font-weight: 700;
-		font-size: 0.85rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: rgb(var(--gray));
-		margin-bottom: 0.75rem;
-	}
-
-	.toc ol {
-		margin: 0;
-		padding-left: 1.25rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
-
-	.toc a {
-		color: rgb(var(--black));
-		text-decoration: none;
-	}
-
-	.toc a:hover {
-		color: var(--primary);
-	}
-
-	/* Author bio */
-	.author-bio {
-		max-width: 750px;
-		padding-bottom: 2.5rem;
-	}
-
-	.author-bio__inner {
-		display: flex;
-		gap: 1rem;
-		align-items: flex-start;
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 1.25rem 1.5rem;
-	}
-
-	.author-bio__avatar {
-		flex-shrink: 0;
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		display: block;
-	}
-
-	.author-bio__name {
-		font-weight: 700;
-		font-size: 0.95rem;
-		margin-bottom: 0.35rem !important;
-	}
-	.author-bio__name a { color: var(--primary); text-decoration: none; }
-	.author-bio__name a:hover { text-decoration: underline; }
-	.author-bio__role {
-		font-weight: 400;
-		color: rgb(var(--gray));
-		font-size: 0.85rem;
-	}
-
-	.author-bio__desc {
-		font-size: 0.9rem;
-		color: rgb(var(--gray));
-		margin-bottom: 0.4rem !important;
-	}
-
-	.author-bio__social {
-		font-size: 0.85rem;
-		margin-bottom: 0 !important;
-	}
-	.author-bio__social a { color: var(--primary); text-decoration: none; }
-	.author-bio__social a:hover { text-decoration: underline; }
-
-	.mid-article-nl {
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 2rem 1.5rem;
-		margin: 2.5rem 0;
-		text-align: center;
-	}
-
-	.mid-article-nl h3 {
-		color: rgb(var(--black));
-		margin-bottom: 0.5rem;
-		font-size: 1.2rem;
-	}
-
-	.mid-article-nl p {
-		font-size: 0.95rem;
-		color: rgb(var(--gray));
-		margin-bottom: 1rem;
-	}
-
-	@media (min-width: 768px) {
-		.article-header h1 { font-size: 2.6rem; }
-	}
-
-	/* Reading progress bar */
-	.reading-progress {
-		position: fixed; top: 0; left: 0; height: 3px;
-		background: var(--primary);
-		width: 0%; z-index: 9999;
-		transition: width 0.1s linear;
+	@media (max-width: 720px) {
+		.post__head { padding-top: var(--s-6); }
+		.post__title { font-size: var(--text-3xl); max-width: none; }
+		.post__lead { font-size: var(--text-base); }
+		.post__grid { padding-top: var(--s-8); gap: var(--s-8); }
+		.post__main { gap: var(--s-8); }
+		/* the title is the whole crumb here — truncate it rather than run it off the screen */
+		.post__head :global(.crumbs__current) {
+			display: block; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.post__pn { grid-template-columns: minmax(0, 1fr); }
+		.post__pn-item--next { text-align: left; }
+		.post__pn-item--next .meta { justify-self: start; }
+		.post__author { flex-direction: column; gap: var(--s-4); }
 	}
 </style>
-
-<script data-astro-rerun>
-	// Reading progress bar
-	const progressBar = document.getElementById('reading-progress');
-	if (progressBar) {
-		window.addEventListener('scroll', () => {
-			const scrollTop = window.scrollY;
-			const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-			const pct = docHeight > 0 ? Math.min((scrollTop / docHeight) * 100, 100) : 0;
-			progressBar.style.width = pct + '%';
-		});
-	}
-
-	document.addEventListener('DOMContentLoaded', () => {
-		const body = document.querySelector('.article-body');
-		if (!body) return;
-
-		const headings = body.querySelectorAll('h2');
-		if (headings.length === 0) return;
-
-		// Table of Contents — inject before first H2 if 3+ headings
-		if (headings.length >= 3) {
-			const toc = document.createElement('nav');
-			toc.className = 'toc';
-			toc.setAttribute('aria-label', 'Table of contents');
-			const tocTitle = document.createElement('p');
-			tocTitle.className = 'toc__title';
-			tocTitle.textContent = 'In this article';
-			const ol = document.createElement('ol');
-			headings.forEach(h => {
-				if (!h.id) return;
-				const li = document.createElement('li');
-				const a = document.createElement('a');
-				a.href = `#${h.id}`;
-				a.textContent = h.textContent || '';
-				li.appendChild(a);
-				ol.appendChild(li);
-			});
-			toc.appendChild(tocTitle);
-			toc.appendChild(ol);
-			headings[0].parentNode.insertBefore(toc, headings[0]);
-		}
-
-		// Mid-article newsletter
-		const midIndex = Math.floor(headings.length / 2);
-		const midHeading = headings[midIndex];
-
-		const nl = document.createElement('aside');
-		nl.className = 'mid-article-nl';
-		nl.setAttribute('aria-label', 'Newsletter signup');
-		nl.innerHTML = `
-			<h3>Get more in my newsletter</h3>
-			<p>The stories worth your time. Stay ahead without the noise.</p>
-			<form class="nl-form" action="https://subscribe-forms.beehiiv.com/fda3e0ad-bcc8-4e4d-8f5b-123db9391be9" method="POST" target="_blank" rel="noopener">
-				<input type="email" name="email" required placeholder="you@example.com" aria-label="Email address" class="nl-form__input" />
-				<button type="submit" class="nl-form__btn">Subscribe</button>
-			</form>
-		`;
-
-		midHeading.parentNode.insertBefore(nl, midHeading);
-	});
-</script>

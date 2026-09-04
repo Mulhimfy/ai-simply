@@ -1,0 +1,148 @@
+---
+/**
+ * Article table of contents. Two shapes from one component:
+ *   variant="rail"       — the sticky desktop rail: numbered sections, scroll-spy,
+ *                          a progress meter that fills as you read.
+ *   variant="disclosure"  — a collapsed "Jump to a section" <details> for narrow screens.
+ *
+ * Pass the `headings` array from `render(entry)`; ids are already on the rendered
+ * markdown headings, so the anchors work with no extra work.
+ */
+import Icon from './Icon.astro';
+
+interface Heading { depth: number; slug: string; text: string }
+interface Props {
+	headings: Heading[];
+	title?: string;
+	variant?: 'rail' | 'disclosure';
+	minDepth?: number;
+	maxDepth?: number;
+	class?: string;
+}
+const { headings, title = 'In this explainer', variant = 'rail', minDepth = 2, maxDepth = 2, class: className } = Astro.props;
+const items = headings.filter((h) => h.depth >= minDepth && h.depth <= maxDepth && h.slug);
+---
+{items.length >= 2 && (variant === 'rail' ? (
+	<nav class:list={['atoc', className]} data-atoc aria-label={title}>
+		<p class="atoc__title meta">{title}</p>
+		<ol role="list" class="atoc__list">
+			{items.map((h, i) => (
+				<li class="atoc__item">
+					<a href={`#${h.slug}`} class="atoc__link">
+						<span class="atoc__num tnum">{String(i + 1).padStart(2, '0')}</span>
+						<span class="atoc__text">{h.text}</span>
+					</a>
+				</li>
+			))}
+		</ol>
+		<a href="#main" class="atoc__top"><Icon name="arrow-up" size={13} /> Back to top</a>
+	</nav>
+) : (
+	<details class:list={['atoc-d', className]} data-atoc>
+		<summary class="atoc-d__sum">
+			<Icon name="list" size={15} />
+			<span>{title}</span>
+			<span class="atoc-d__count tnum">{items.length}</span>
+			<Icon name="chevron-down" size={15} class="atoc-d__caret" />
+		</summary>
+		<ol role="list" class="atoc-d__list">
+			{items.map((h, i) => (
+				<li>
+					<a href={`#${h.slug}`} class="atoc__link">
+						<span class="atoc__num tnum">{String(i + 1).padStart(2, '0')}</span>
+						<span class="atoc__text">{h.text}</span>
+					</a>
+				</li>
+			))}
+		</ol>
+	</details>
+))}
+
+<script>
+	/* Scroll-spy: the last heading whose top passed the reading line is the active one. */
+	function bindArticleToc() {
+		document.querySelectorAll<HTMLElement>('[data-atoc]:not([data-bound])').forEach((nav) => {
+			nav.dataset.bound = '1';
+			const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a.atoc__link'));
+			const targets = links
+				.map((a) => document.getElementById(decodeURIComponent(a.getAttribute('href')!.slice(1))))
+				.filter((el): el is HTMLElement => !!el);
+			if (!targets.length) return;
+
+			// Collapse the mobile disclosure once the reader jumps somewhere.
+			if (nav.tagName === 'DETAILS') links.forEach((a) => a.addEventListener('click', () => ((nav as HTMLDetailsElement).open = false)));
+
+			let ticking = false;
+			const update = () => {
+				ticking = false;
+				const header = document.querySelector<HTMLElement>('.site-header');
+				const line = (header?.offsetHeight ?? 64) + 120;
+				let idx = -1;
+				targets.forEach((t, i) => { if (t.getBoundingClientRect().top <= line) idx = i; });
+				if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) idx = targets.length - 1;
+				links.forEach((a, i) => {
+					const on = i === idx;
+					a.classList.toggle('is-active', on);
+					a.classList.toggle('is-done', i < idx);
+					if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+				});
+				nav.style.setProperty('--atoc-progress', `${idx < 0 ? 0 : ((idx + 1) / targets.length) * 100}%`);
+			};
+			const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+			addEventListener('scroll', onScroll, { passive: true });
+			addEventListener('resize', onScroll, { passive: true });
+			update();
+		});
+	}
+	bindArticleToc();
+	document.addEventListener('astro:page-load', bindArticleToc);
+</script>
+
+<style>
+	/* ── sticky rail ─────────────────────────────────────────────────── */
+	.atoc { font-size: var(--text-sm); display: grid; gap: var(--s-3); }
+	.atoc__title { margin: 0; }
+	.atoc__list { display: grid; position: relative; padding-left: 1px; }
+	/* the unread track + the read-so-far fill */
+	.atoc__list::before,
+	.atoc__list::after { content: ''; position: absolute; left: 0; top: 0; width: 2px; border-radius: 2px; }
+	.atoc__list::before { bottom: 0; background: var(--line); }
+	.atoc__list::after { height: var(--atoc-progress, 0%); background: var(--accent); transition: height var(--dur-3) var(--ease-out); }
+
+	.atoc__link {
+		position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--s-2);
+		align-items: baseline; padding: 7px 0 7px 14px; color: var(--ink-3); line-height: 1.35;
+		transition: color var(--dur-2) var(--ease-out);
+		text-wrap: pretty;
+	}
+	.atoc__num { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; color: var(--ink-4); transition: color var(--dur-2); }
+	.atoc__link:hover { color: var(--ink); }
+	.atoc__link.is-done { color: var(--ink-3); }
+	.atoc__link.is-active { color: var(--ink); font-weight: 600; }
+	.atoc__link.is-active .atoc__num { color: var(--accent-ink); }
+	.atoc__top {
+		display: inline-flex; align-items: center; gap: 6px; margin-top: var(--s-2);
+		font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); transition: color var(--dur-2);
+	}
+	.atoc__top:hover { color: var(--ink); }
+
+	/* ── mobile disclosure ───────────────────────────────────────────── */
+	.atoc-d {
+		border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+		overflow: hidden;
+	}
+	.atoc-d__sum {
+		display: flex; align-items: center; gap: var(--s-3); padding: var(--s-4);
+		cursor: pointer; list-style: none; font-size: var(--text-sm); font-weight: 600; color: var(--ink);
+	}
+	.atoc-d__sum::-webkit-details-marker { display: none; }
+	.atoc-d__count {
+		margin-left: auto; font-family: var(--font-mono); font-size: 0.6875rem; color: var(--ink-3);
+		background: var(--surface-2); border-radius: var(--r-full); padding: 2px 8px;
+	}
+	:global(.atoc-d__caret) { color: var(--ink-3); transition: transform var(--dur-2) var(--ease-out); }
+	.atoc-d[open] :global(.atoc-d__caret) { transform: rotate(180deg); }
+	.atoc-d__list { display: grid; padding: 0 var(--s-4) var(--s-4); border-top: 1px solid var(--line); padding-top: var(--s-2); }
+	/* touch list, not a dense rail: 44px minimum per row */
+	.atoc-d__list .atoc__link { padding: 13px 0; }
+</style>

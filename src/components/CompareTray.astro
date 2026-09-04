@@ -1,0 +1,109 @@
+---
+/**
+ * Compare tray. Any <button data-compare="slug" data-compare-name="Name"> adds a tool (max 3).
+ * Persists in localStorage['aib-compare']; slides up from the bottom; "Compare" opens the
+ * static /tools/vs/a-vs-b/ page when it exists (checked against /search-index.json `vs`),
+ * otherwise /tools/vs/?a=&b= which the vs index handles client-side.
+ */
+import Icon from './Icon.astro';
+---
+<div class="tray" id="compare-tray" hidden aria-live="polite" transition:persist="compare-tray">
+	<div class="tray__inner">
+		<span class="tray__label"><Icon name="git-compare" size={16} /> Compare</span>
+		<ul role="list" class="tray__items" id="compare-items"></ul>
+		<div class="tray__actions">
+			<button type="button" class="btn btn--ghost btn--sm" data-compare-clear>Clear</button>
+			<button type="button" class="btn btn--accent btn--sm" data-compare-go disabled>Compare <Icon name="arrow-right" class="icon--arrow" /></button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const KEY = 'aib-compare';
+	type Item = { slug: string; name: string; logo?: string | null };
+	let vsIndex: Set<string> | null = null;
+	let idxPromise: Promise<any> | null = null;
+	function read(): Item[] { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } }
+	function write(items: Item[]) { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch {} paint(); }
+	function loadIndex() {
+		if (!idxPromise) idxPromise = fetch('/search-index.json').then((r) => r.json()).then((j) => { vsIndex = new Set(j.vs || []); return j; });
+		return idxPromise;
+	}
+	function paint() {
+		const tray = document.getElementById('compare-tray'); const list = document.getElementById('compare-items'); if (!tray || !list) return;
+		const items = read();
+		document.querySelectorAll<HTMLElement>('[data-compare]').forEach((b) => {
+			const on = items.some((i) => i.slug === b.dataset.compare);
+			b.setAttribute('aria-pressed', String(on));
+			const lbl = b.querySelector('[data-compare-label]'); if (lbl) lbl.textContent = on ? 'In compare' : 'Compare';
+		});
+		list.innerHTML = items.map((i) => `<li class="tray__item">${i.logo ? `<img src="${i.logo}" alt="" width="20" height="20">` : `<span class="tray__letter">${(i.name || i.slug)[0]}</span>`}<span>${i.name}</span><button type="button" class="tray__x" data-compare-remove="${i.slug}" aria-label="Remove ${i.name}">×</button></li>`).join('')
+			+ (items.length < 2 ? `<li class="tray__hint">Add ${2 - items.length} more tool${items.length === 1 ? '' : 's'} to compare</li>` : '');
+		const go = tray.querySelector<HTMLButtonElement>('[data-compare-go]'); if (go) go.disabled = items.length < 2;
+		const show = items.length > 0;
+		if (show) { tray.hidden = false; requestAnimationFrame(() => tray.classList.add('is-in')); }
+		else { tray.classList.remove('is-in'); setTimeout(() => { if (!read().length) tray.hidden = true; }, 300); }
+	}
+	function go() {
+		const items = read(); if (items.length < 2) return;
+		loadIndex().then(() => {
+			const [a, b] = items;
+			const s1 = `${a.slug}-vs-${b.slug}`, s2 = `${b.slug}-vs-${a.slug}`;
+			if (vsIndex?.has(s1)) location.href = `/tools/vs/${s1}/`;
+			else if (vsIndex?.has(s2)) location.href = `/tools/vs/${s2}/`;
+			else location.href = `/tools/vs/?a=${encodeURIComponent(a.slug)}&b=${encodeURIComponent(b.slug)}${items[2] ? `&c=${encodeURIComponent(items[2].slug)}` : ''}`;
+		});
+	}
+	function bind() {
+		if ((document as any).__trayBound) { paint(); return; }
+		(document as any).__trayBound = true;
+		document.addEventListener('click', (e) => {
+			const t = e.target as HTMLElement;
+			const add = t.closest<HTMLElement>('[data-compare]');
+			if (add) {
+				e.preventDefault();
+				const slug = add.dataset.compare!; let items = read();
+				if (items.some((i) => i.slug === slug)) { items = items.filter((i) => i.slug !== slug); write(items); (window as any).__aib?.toast('Removed from compare'); return; }
+				if (items.length >= 3) { (window as any).__aib?.toast('You can compare up to 3 tools'); return; }
+				items.push({ slug, name: add.dataset.compareName || slug, logo: add.dataset.compareLogo || null });
+				write(items); (window as any).__aib?.toast(items.length >= 2 ? 'Ready to compare' : 'Added — pick one more to compare');
+				loadIndex();
+				return;
+			}
+			const rm = t.closest<HTMLElement>('[data-compare-remove]');
+			if (rm) { write(read().filter((i) => i.slug !== rm.dataset.compareRemove)); return; }
+			if (t.closest('[data-compare-clear]')) { write([]); return; }
+			if (t.closest('[data-compare-go]')) { go(); return; }
+		});
+		document.addEventListener('astro:page-load', paint);
+		paint();
+	}
+	bind();
+</script>
+
+<style>
+	.tray {
+		position: fixed; left: 50%; bottom: 20px; z-index: var(--z-toast); transform: translate(-50%, 20px); opacity: 0;
+		transition: transform var(--dur-4) var(--ease-spring), opacity var(--dur-3) var(--ease-out);
+		width: min(720px, calc(100vw - 32px));
+	}
+	.tray.is-in { transform: translate(-50%, 0); opacity: 1; }
+	.tray__inner {
+		display: flex; align-items: center; gap: var(--s-4); padding: 10px 10px 10px 16px;
+		background: var(--ink); color: var(--bg); border-radius: var(--r-full); box-shadow: var(--shadow-lg);
+	}
+	:root[data-theme='dark'] .tray__inner { background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-2); }
+	.tray__label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: 600; white-space: nowrap; }
+	.tray__items { display: flex; align-items: center; gap: 6px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+	.tray__item { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 6px; border-radius: var(--r-full); background: rgba(255,255,255,0.12); font-size: var(--text-xs); font-weight: 500; white-space: nowrap; }
+	:root[data-theme='dark'] .tray__item { background: rgba(255,255,255,0.08); }
+	.tray__item img { width: 20px; height: 20px; border-radius: 5px; object-fit: contain; background: #fff; }
+	.tray__letter { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 700; }
+	.tray__x { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: inherit; opacity: 0.7; font-size: 14px; }
+	.tray__x:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+	.tray__hint { font-size: var(--text-xs); opacity: 0.6; white-space: nowrap; }
+	.tray__actions { display: flex; gap: 6px; flex-shrink: 0; }
+	.tray .btn--ghost { --btn-fg: inherit; --btn-bd: rgba(255,255,255,0.25); }
+	.tray .btn--ghost:hover { background: rgba(255,255,255,0.1); }
+	@media (max-width: 640px) { .tray__label span, .tray__hint { display: none; } .tray__inner { padding-left: 12px; } }
+</style>

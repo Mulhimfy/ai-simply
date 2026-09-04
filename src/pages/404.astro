@@ -1,179 +1,126 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { TOOL_CATEGORIES } from '../consts';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { SITE_TITLE, TOOL_CATEGORIES } from '../consts';
 
-const popularCategories = TOOL_CATEGORIES.slice(0, 8);
-const quickLinks = [
-	{ label: 'All AI Tools', href: '/tools/', icon: '🗂️' },
-	{ label: 'New AI Tools', href: '/tools/new/', icon: '🆕' },
-	{ label: 'Top Rated', href: '/tools/top-rated/', icon: '⭐' },
-	{ label: 'Collections', href: '/tools/collections/', icon: '📦' },
-	{ label: 'Reviews', href: '/reviews/', icon: '⭐' },
-	{ label: 'Tutorials', href: '/tutorials/', icon: '📖' },
-	{ label: 'Articles', href: '/blog/', icon: '📝' },
-	{ label: 'Submit a Tool', href: '/submit/', icon: '🚀' },
+const destinations = [
+	{ href: '/', icon: 'newspaper', title: "Today's brief", text: 'What changed in AI today, why it matters, and what to do about it.' },
+	{ href: '/news/', icon: 'calendar', title: 'The archive', text: 'Every brief we have published, newest first.' },
+	{ href: '/tools/', icon: 'layout-grid', title: 'The Toolbox', text: 'Tools we have tested and rated, by category.' },
+	{ href: '/blog/', icon: 'book-open', title: 'Explainers', text: 'The longer pieces, for when the brief is not enough.' },
 ];
+
+const categories = TOOL_CATEGORIES.slice(0, 8);
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title="Page Not Found (404)"
-		description="The page you're looking for doesn't exist. Browse our AI tools directory or search for what you need."
-		noindex={true}
-	/>
-</head>
-<body>
-	<Header />
-	<main>
-		<section class="not-found">
-			<div class="container nf-inner">
+<Base
+	title={`Page not found | ${SITE_TITLE}`}
+	description="That page doesn't exist. Read today's brief, search the site, or browse the Toolbox."
+	noindex
+	noNudge
+>
+	<section class="nf" aria-labelledby="nf-title">
+		<div class="nf__glow glow" aria-hidden="true"></div>
+		<div class="container nf__inner">
 
-				<!-- Hero -->
-				<div class="nf-hero">
-					<p class="nf-code">404</p>
-					<h1>Page Not Found</h1>
-					<p class="nf-desc">The page you're looking for doesn't exist or may have moved. Try searching for what you need:</p>
+			<p class="nf__code mono">Error 404</p>
+			<h1 class="nf__title" id="nf-title">Lost?</h1>
+			<p class="nf__lead">
+				That page isn't here — it may have moved, or it may never have existed. Nothing is broken on your end.
+				Try the search, or start with today's brief.
+			</p>
 
-					<!-- Search -->
-					<div class="nf-search">
-						<input type="search" id="nf-search-input" placeholder="Search AI tools…" autocomplete="off" aria-label="Search AI tools" />
-						<button type="button" id="nf-search-btn" aria-label="Search">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-						</button>
-					</div>
-				</div>
-
-				<!-- Quick links -->
-				<div class="nf-section">
-					<h2>Popular Pages</h2>
-					<div class="quick-links">
-						{quickLinks.map(l => (
-							<a href={l.href} class="quick-link">
-								<span class="quick-link__icon">{l.icon}</span>
-								{l.label}
-							</a>
-						))}
-					</div>
-				</div>
-
-				<!-- Categories -->
-				<div class="nf-section">
-					<h2>Browse by Category</h2>
-					<div class="cat-chips">
-						{popularCategories.map(cat => (
-							<a href={`/tools/category/${cat.slug}/`} class="cat-chip">
-								{cat.emoji} {cat.name}
-							</a>
-						))}
-						<a href="/tools/" class="cat-chip cat-chip--more">View all 22 →</a>
-					</div>
-				</div>
-
+			<div class="nf__actions">
+				<a href="/" class="btn btn--accent btn--lg">Read today's brief <Icon name="arrow-right" class="icon--arrow" /></a>
+				<button type="button" class="nf__search" data-palette-open>
+					<Icon name="search" size={17} />
+					<span>Search briefs, tools and explainers</span>
+					<kbd class="kbd">⌘K</kbd>
+				</button>
 			</div>
-		</section>
-	</main>
-	<Footer />
-</body>
-</html>
 
-<script data-astro-rerun>
-const input = document.getElementById('nf-search-input');
-const btn = document.getElementById('nf-search-btn');
-function doSearch() {
-	const q = input?.value.trim();
-	if (q) window.location.href = `/tools/?q=${encodeURIComponent(q)}`;
-}
-btn?.addEventListener('click', doSearch);
-input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
-</script>
+			<ul class="nf__grid" role="list" data-stagger>
+				{destinations.map((d) => (
+					<li data-reveal>
+						<a href={d.href} class="dest card card--pad card--hover">
+							<span class="dest__icon"><Icon name={d.icon} size={18} /></span>
+							<span class="dest__title">{d.title}</span>
+							<span class="dest__text">{d.text}</span>
+							<span class="dest__arrow" aria-hidden="true"><Icon name="arrow-right" size={15} /></span>
+						</a>
+					</li>
+				))}
+			</ul>
+
+			<div class="nf__cats">
+				<p class="meta">Or jump to a category</p>
+				<div class="nf__chips">
+					{categories.map((c) => (
+						<a href={`/tools/category/${c.slug}/`} class="chip">{c.name}</a>
+					))}
+					<a href="/tools/" class="chip chip--all">All {TOOL_CATEGORIES.length} categories <Icon name="arrow-right" size={13} /></a>
+				</div>
+			</div>
+
+			<p class="nf__fine">
+				Landed here from a link on this site? <a href="/contact/?subject=Report+an+Error" class="link-u">Tell us where</a> and we'll fix it.
+			</p>
+		</div>
+	</section>
+</Base>
 
 <style>
-.not-found {
-	padding: 4rem 0 5rem;
-	min-height: 60vh;
-}
-.nf-inner { max-width: 760px; }
+	.nf {
+		position: relative; isolation: isolate; overflow: clip;
+		padding-block: clamp(3rem, 2rem + 6vw, 7rem) var(--section);
+	}
+	.nf__glow { top: -320px; left: 50%; translate: -50% 0; width: min(820px, 95vw); aspect-ratio: 1.5; opacity: 0.55; z-index: -1; }
+	.nf__inner { display: grid; justify-items: center; text-align: center; }
 
-.nf-hero { text-align: center; margin-bottom: 3rem; }
-.nf-code {
-	font-size: 6rem;
-	font-weight: 800;
-	color: var(--border);
-	line-height: 1;
-	margin-bottom: 0.5rem;
-	font-family: "Atkinson", system-ui, sans-serif;
-}
-.not-found h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); margin-bottom: 0.6rem; }
-.nf-desc { color: rgb(var(--gray)); font-size: 1rem; margin-bottom: 1.5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+	.nf__code { color: var(--ink-3); }
+	.nf__title {
+		font-family: var(--font-serif); font-style: italic; font-weight: 400;
+		font-size: var(--text-6xl); line-height: 0.92; letter-spacing: -0.02em;
+		margin-block: var(--s-4) var(--s-5);
+	}
+	.nf__lead { font-size: var(--text-md); color: var(--ink-2); line-height: 1.65; max-width: 52ch; }
 
-/* Search */
-.nf-search {
-	display: flex;
-	align-items: center;
-	max-width: 440px;
-	margin: 0 auto;
-	background: #fff;
-	border: 2px solid var(--border);
-	border-radius: 50px;
-	overflow: hidden;
-	transition: border-color 0.2s;
-}
-.nf-search:focus-within { border-color: var(--primary); }
-.nf-search input {
-	flex: 1;
-	padding: 0.75rem 1.25rem;
-	border: none;
-	font-size: 0.95rem;
-	background: transparent;
-	outline: none;
-	font-family: inherit;
-}
-.nf-search button {
-	padding: 0 1rem;
-	background: var(--primary);
-	color: #fff;
-	border: none;
-	height: 44px;
-	cursor: pointer;
-	display: flex; align-items: center; justify-content: center;
-	transition: background 0.15s;
-}
-.nf-search button:hover { background: var(--primary-dark); }
+	.nf__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-3); margin-top: var(--s-8); }
+	.nf__search {
+		display: inline-flex; align-items: center; gap: var(--s-3);
+		height: 52px; padding: 0 var(--s-4) 0 var(--s-5); border-radius: var(--r-full);
+		border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-3);
+		font-size: var(--text-sm); font-weight: 500; cursor: pointer; text-align: left;
+		transition: color var(--dur-2), border-color var(--dur-2), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2);
+	}
+	.nf__search:hover { color: var(--ink); border-color: var(--line-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+	.nf__search :global(.icon) { color: var(--accent); flex-shrink: 0; }
+	.nf__search .kbd { margin-left: var(--s-2); }
+	@media (max-width: 560px) {
+		.nf__actions { flex-direction: column; align-items: stretch; width: 100%; max-width: 380px; }
+		.nf__actions .btn { width: 100%; }
+		.nf__search { justify-content: center; padding-inline: var(--s-4); }
+	}
 
-/* Sections */
-.nf-section { margin-bottom: 2.5rem; }
-.nf-section h2 { font-size: 1rem; font-weight: 700; color: rgb(var(--gray)); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.85rem; }
+	.nf__grid {
+		display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4);
+		width: 100%; margin-top: var(--s-12); text-align: left;
+	}
+	@media (max-width: 900px) { .nf__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+	@media (max-width: 520px) { .nf__grid { grid-template-columns: minmax(0, 1fr); } }
+	.dest { position: relative; display: grid; gap: var(--s-2); height: 100%; align-content: start; padding: var(--s-5); }
+	.dest__icon {
+		display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-sm);
+		background: var(--accent-soft); color: var(--accent-ink); margin-bottom: var(--s-1);
+	}
+	.dest__title { font-size: var(--text-base); font-weight: 600; color: var(--ink); }
+	.dest__text { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.55; }
+	.dest__arrow { position: absolute; top: var(--s-5); right: var(--s-5); color: var(--ink-4); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.dest:hover .dest__arrow { color: var(--accent); transform: translateX(3px); }
 
-/* Quick links */
-.quick-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.6rem; }
-.quick-link {
-	display: flex; align-items: center; gap: 0.5rem;
-	padding: 0.65rem 1rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	font-size: 0.87rem; font-weight: 500;
-	color: rgb(var(--gray-dark));
-	transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-.quick-link:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
-.quick-link__icon { font-size: 1rem; flex-shrink: 0; }
+	.nf__cats { display: grid; justify-items: center; gap: var(--s-4); margin-top: var(--s-12); }
+	.nf__chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); }
+	.nf__chips .chip--all { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
 
-/* Category chips */
-.cat-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.cat-chip {
-	padding: 0.4rem 0.9rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: 99px;
-	font-size: 0.83rem; font-weight: 500;
-	color: rgb(var(--gray-dark));
-	transition: all 0.15s;
-}
-.cat-chip:hover { background: var(--primary-light); border-color: rgba(0,200,150,0.4); color: var(--primary); }
-.cat-chip--more { font-weight: 700; color: var(--primary); background: var(--primary-light); border-color: rgba(0,200,150,0.3); }
+	.nf__fine { margin-top: var(--s-10); font-size: var(--text-sm); color: var(--ink-3); }
 </style>

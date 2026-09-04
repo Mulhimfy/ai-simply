@@ -1,0 +1,690 @@
+---
+/**
+ * The brief itself — the numbered editorial items. Rendered identically by the home page
+ * (today's brief) and by /news/<date>/ (one dated brief), so it must stay generic.
+ *
+ * Props
+ *   brief        Brief     the day (from src/lib/brief.ts — editorial or automatic)
+ *   tools        ToolMap   slug → ToolMini, for the "What to try" mini cards (from lib/news.ts)
+ *   baseUrl      string    ABSOLUTE url of the page these items live on; per-item copy-link and
+ *                          share intents append `#<item id>` to it
+ *   shareText?   string    share copy prefix (default "The 3-minute AI brief for <weekday, month day>")
+ *   personalise? boolean   default true — client-side reorder by localStorage['aib-angles']
+ *   progress?    boolean   default true — 2px fixed reading-progress bar, filled across these items only
+ *   class?       string
+ *
+ * Graceful degradation: automatic briefs carry no `why`/`action` copy. Those items render the
+ * outlet coverage as the body (each source with its own headline) — we never print an empty
+ * "Why it matters" heading and never invent copy.
+ *
+ * Personalisation never hides anything: matching items move above an "For you" divider, the rest
+ * sit under "Also today", and the numbers are re-stamped so the column still reads 01, 02, 03…
+ */
+import { ANGLES, type Brief } from '../lib/brief';
+import { dateParts, type ToolMap } from '../lib/news';
+import Icon from './Icon.astro';
+import ToolCard from './ToolCard.astro';
+import BrandIcon from './BrandIcon.astro';
+
+interface Props {
+	brief: Brief;
+	tools: ToolMap;
+	baseUrl: string;
+	shareText?: string;
+	personalise?: boolean;
+	progress?: boolean;
+	class?: string;
+}
+const {
+	brief,
+	tools,
+	baseUrl,
+	shareText = `The 3-minute AI brief for ${dateParts(brief.date).weekdayMonthDay}`,
+	personalise = true,
+	progress = true,
+	class: className,
+} = Astro.props;
+
+const url = baseUrl.replace(/#.*$/, '');
+/* Automatic items use the outlets' own headlines as the body. When every outlet filed
+   under the same headline we already printed as the h2, that table is the headline
+   echoed back — so fall through to the compact outlet pills instead. */
+const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const items = brief.items.map((item, i) => {
+	const link = `${url}#${item.id}`;
+	const echoOnly = !item.why && item.sources.every((s) => norm(s.title) === norm(item.headline));
+	return {
+		...item,
+		n: String(i + 1).padStart(2, '0'),
+		link,
+		full: !item.why && !echoOnly,
+		x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${shareText}: ${item.headline}`)}&url=${encodeURIComponent(link)}&via=getaibriefs`,
+		picks: item.tools.map((slug) => tools.get(slug)).filter((t): t is NonNullable<typeof t> => !!t),
+	};
+});
+---
+
+{progress && (
+	<div class="bi-progress" data-brief-progress aria-hidden="true"><span class="bi-progress__fill"></span></div>
+)}
+
+<ol
+	class:list={['bi', className]}
+	data-brief-items
+	data-personalise={personalise ? '' : undefined}
+	role="list"
+>
+	<li class="bi__sep" data-sep="you" hidden aria-hidden="true">
+		<span class="bi__sep-label"><Icon name="user-round-check" size={13} /> For you</span>
+		<span class="bi__sep-rule"></span>
+	</li>
+
+	{items.map((item) => (
+		<li class="bi__item" id={item.id} data-angle={item.angle} data-reveal>
+			<div class="bi__rail">
+				<span class="bi__num tnum">{item.n}</span>
+				<span class="bi__thread" aria-hidden="true"></span>
+			</div>
+
+			<div class="bi__body">
+				<div class="bi__meta">
+					<span class="pill bi__angle">
+						<Icon name={ANGLES[item.angle].icon} size={12} />
+						{ANGLES[item.angle].name}
+					</span>
+					<span class="bi__coverage tnum">
+						{item.coverage} {item.coverage === 1 ? 'source' : 'sources'}
+					</span>
+				</div>
+
+				<h2 class="bi__headline">
+					<a href={`#${item.id}`} class="bi__anchor">
+						{item.headline}
+						<Icon name="link" size={14} class="bi__anchor-icon" />
+					</a>
+				</h2>
+
+				{item.why && <p class="bi__why">{item.why}</p>}
+
+				{item.action && (
+					<p class="bi__action">
+						<span class="bi__action-label"><Icon name="corner-down-right" size={14} /> What to do</span>
+						<span class="bi__action-text">{item.action}</span>
+					</p>
+				)}
+
+				{item.picks.length > 0 && (
+					<div class="bi__tools">
+						<span class="bi__tools-label">What to try</span>
+						<div class="bi__tools-row">
+							{item.picks.map((t) => (
+								<ToolCard
+									slug={t.slug}
+									name={t.name}
+									description={t.description}
+									category={t.category}
+									subcategory={t.subcategory}
+									pricing={t.pricing}
+									variant="mini"
+									class="bi__tool"
+								/>
+							))}
+						</div>
+					</div>
+				)}
+
+				<div class:list={['bi__sources', { 'bi__sources--full': item.full }]}>
+					{!item.why && <span class="bi__sources-label">Covered by</span>}
+					<ul class="bi__source-list" role="list">
+						{item.sources.map((s) => (
+							<li>
+								<a href={s.link} target="_blank" rel="noopener noreferrer" class="bi__source">
+									<span class="bi__source-name">{s.source}</span>
+									{item.full && <span class="bi__source-title">{s.title}</span>}
+									<Icon name="arrow-up-right" size={13} class="bi__source-icon" />
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+
+				<div class="bi__actions">
+					<button
+						type="button"
+						class="bi__btn"
+						data-copy={item.link}
+						data-copy-msg="Link to this story copied"
+						aria-label={`Copy a link to “${item.headline}”`}
+					>
+						<Icon name="link" size={14} /> Copy link
+					</button>
+					<a
+						href={item.x}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="bi__btn bi__btn--icon"
+						aria-label={`Share “${item.headline}” on X`}
+					>
+						<BrandIcon name="x" size={13} />
+					</a>
+				</div>
+			</div>
+		</li>
+	))}
+
+	<li class="bi__sep bi__sep--rest" data-sep="rest" hidden aria-hidden="true">
+		<span class="bi__sep-label">Also today</span>
+		<span class="bi__sep-rule"></span>
+	</li>
+</ol>
+
+<script>
+	/* ── personalisation: reorder, never hide ─────────────────────────────── */
+	const KEY = 'aib-angles';
+	const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	function readAngles(): string[] {
+		try {
+			const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+			return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function apply(list: HTMLElement, angles: string[], animate: boolean) {
+		const items = Array.from(list.querySelectorAll<HTMLElement>('.bi__item'));
+		if (!items.length) return;
+		const sepYou = list.querySelector<HTMLElement>('[data-sep="you"]');
+		const sepRest = list.querySelector<HTMLElement>('[data-sep="rest"]');
+		const set = new Set(angles);
+
+		const mine = set.size ? items.filter((el) => set.has(el.dataset.angle || '')) : [];
+		const rest = set.size ? items.filter((el) => !set.has(el.dataset.angle || '')) : items;
+		const split = mine.length > 0 && rest.length > 0;
+
+		// FLIP: measure before.
+		const first = new Map(items.map((el) => [el, el.getBoundingClientRect().top]));
+
+		const order: HTMLElement[] = [];
+		if (split && sepYou) order.push(sepYou);
+		order.push(...mine);
+		if (split && sepRest) order.push(sepRest);
+		order.push(...rest);
+		for (const el of order) list.appendChild(el);
+
+		if (sepYou) sepYou.hidden = !split;
+		if (sepRest) sepRest.hidden = !split;
+		for (const el of items) el.toggleAttribute('data-for-you', split && set.has(el.dataset.angle || ''));
+
+		// Re-stamp the numbers so the rail always reads 01, 02, 03…
+		[...mine, ...rest].forEach((el, i) => {
+			const num = el.querySelector('.bi__num');
+			if (num) num.textContent = String(i + 1).padStart(2, '0');
+		});
+
+		if (!animate || reduced()) return;
+		for (const el of items) {
+			const dy = (first.get(el) ?? 0) - el.getBoundingClientRect().top;
+			if (!dy) continue;
+			el.style.transition = 'none';
+			el.style.transform = `translateY(${dy}px)`;
+		}
+		requestAnimationFrame(() => {
+			for (const el of items) {
+				if (!el.style.transform) continue;
+				el.style.transition = 'transform 460ms cubic-bezier(0.22, 1, 0.36, 1)';
+				el.style.transform = '';
+				el.addEventListener(
+					'transitionend',
+					() => {
+						el.style.transition = '';
+					},
+					{ once: true },
+				);
+			}
+		});
+	}
+
+	function eachList(fn: (el: HTMLElement) => void) {
+		document.querySelectorAll<HTMLElement>('[data-brief-items][data-personalise]').forEach(fn);
+	}
+
+	/* ── reading progress across the items only ───────────────────────────── */
+	let progressBound = false;
+	function trackProgress() {
+		const bar = document.querySelector<HTMLElement>('[data-brief-progress] .bi-progress__fill');
+		const list = document.querySelector<HTMLElement>('[data-brief-items]');
+		if (!bar || !list) return;
+		if (progressBound) return;
+		progressBound = true;
+		let ticking = false;
+		const update = () => {
+			ticking = false;
+			const r = list.getBoundingClientRect();
+			const vh = window.innerHeight;
+			const total = r.height - vh * 0.5;
+			const done = total > 0 ? (vh * 0.5 - r.top) / total : r.top < 0 ? 1 : 0;
+			const p = Math.max(0, Math.min(1, done));
+			bar.style.transform = `scaleX(${p})`;
+			bar.parentElement?.classList.toggle('is-on', p > 0.001 && p < 0.999);
+		};
+		const onScroll = () => {
+			if (ticking) return;
+			ticking = true;
+			requestAnimationFrame(update);
+		};
+		addEventListener('scroll', onScroll, { passive: true });
+		addEventListener('resize', onScroll, { passive: true });
+		update();
+	}
+
+	function init() {
+		const angles = readAngles();
+		eachList((el) => apply(el, angles, false));
+		trackProgress();
+	}
+
+	document.addEventListener('aib:angles-change', (e) => {
+		const angles = (e as CustomEvent<string[]>).detail ?? readAngles();
+		eachList((el) => apply(el, angles, true));
+	});
+	init();
+	document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+	/* ── reading progress ─────────────────────────────────────────────────── */
+	.bi-progress {
+		position: fixed;
+		top: var(--header-h, 64px);
+		left: 0;
+		right: 0;
+		height: 2px;
+		z-index: calc(var(--z-header) - 1);
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity var(--dur-2);
+	}
+	.bi-progress.is-on {
+		opacity: 1;
+	}
+	.bi-progress__fill {
+		display: block;
+		height: 100%;
+		background: var(--accent);
+		transform-origin: 0 50%;
+		transform: scaleX(0);
+	}
+
+	/* ── list ─────────────────────────────────────────────────────────────── */
+	.bi {
+		display: grid;
+		gap: 0;
+		counter-reset: brief;
+	}
+
+	.bi__item {
+		display: grid;
+		grid-template-columns: 64px minmax(0, 1fr);
+		gap: var(--s-5);
+		padding-block: clamp(2rem, 4vw, 3.25rem);
+		border-top: 1px solid var(--line);
+		/* The <li> carries the id, so it — not the headline — is what a deep link scrolls to. */
+		scroll-margin-top: calc(var(--header-h, 64px) + 24px);
+	}
+	.bi__item:first-child,
+	.bi__sep + .bi__item {
+		border-top: 0;
+	}
+
+	/* rail */
+	.bi__rail {
+		display: grid;
+		grid-template-rows: auto 1fr;
+		gap: var(--s-3);
+		justify-items: start;
+	}
+	.bi__num {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+		font-weight: 500;
+		letter-spacing: 0.06em;
+		color: var(--ink-4);
+		padding-top: 3px;
+		transition: color var(--dur-2);
+	}
+	.bi__item[data-for-you] .bi__num {
+		color: var(--accent);
+	}
+	.bi__thread {
+		width: 1px;
+		height: 100%;
+		background: linear-gradient(var(--line), transparent);
+	}
+	.bi__item:hover .bi__num {
+		color: var(--ink-2);
+	}
+
+	/* meta row */
+	.bi__meta {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		flex-wrap: wrap;
+		margin-bottom: var(--s-3);
+	}
+	.bi__angle {
+		gap: 5px;
+		background: var(--surface-2);
+		color: var(--ink-2);
+		border-color: transparent;
+	}
+	.bi__item[data-for-you] .bi__angle {
+		background: var(--accent-soft);
+		color: var(--accent-ink);
+	}
+	.bi__coverage {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.bi__coverage::before {
+		content: '';
+		display: inline-block;
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background: var(--ink-4);
+		margin-right: 8px;
+		vertical-align: middle;
+	}
+
+	/* headline */
+	.bi__headline {
+		font-size: clamp(1.375rem, 1.1rem + 1.15vw, 2rem);
+		font-weight: 600;
+		letter-spacing: -0.025em;
+		line-height: 1.15;
+		text-wrap: balance;
+	}
+	.bi__anchor {
+		color: inherit;
+		display: inline;
+	}
+	.bi__anchor:hover {
+		color: var(--accent-ink);
+	}
+	/* :global() — the icon is an <Icon> root, so it never carries this
+	   component's data-astro-cid and a plain .bi__anchor-icon rule misses it.
+	   `display: none` keeps it out of the flow: as an inline-block it could
+	   otherwise wrap onto a line of its own under a balanced headline. */
+	.bi__anchor :global(.bi__anchor-icon) {
+		display: inline-block;
+		vertical-align: middle;
+		margin-left: 8px;
+		color: var(--ink-4);
+		opacity: 0;
+		transition: opacity var(--dur-2) var(--ease-out);
+	}
+	.bi__item:hover .bi__anchor :global(.bi__anchor-icon),
+	.bi__anchor:focus-visible :global(.bi__anchor-icon) {
+		opacity: 1;
+	}
+
+	/* copy */
+	.bi__why {
+		margin-top: var(--s-4);
+		font-size: var(--text-md);
+		line-height: 1.62;
+		color: var(--ink-2);
+		max-width: 64ch;
+		text-wrap: pretty;
+	}
+	.bi__action {
+		margin-top: var(--s-4);
+		display: grid;
+		gap: 6px;
+		padding: var(--s-4) var(--s-5);
+		border-radius: var(--r-md);
+		background: var(--surface-2);
+		border-left: 2px solid var(--accent);
+		max-width: 64ch;
+	}
+	.bi__action-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--accent-ink);
+	}
+	.bi__action-text {
+		font-size: var(--text-sm);
+		line-height: 1.55;
+		color: var(--ink-2);
+		text-wrap: pretty;
+	}
+
+	/* what to try */
+	.bi__tools {
+		margin-top: var(--s-5);
+		display: grid;
+		gap: var(--s-3);
+	}
+	.bi__tools-label,
+	.bi__sources-label {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.bi__tools-row {
+		display: flex;
+		gap: var(--s-3);
+		flex-wrap: wrap;
+	}
+	.bi__tools-row :global(.tc--mini) {
+		flex: 0 1 260px;
+		min-width: 200px;
+	}
+
+	/* sources */
+	.bi__sources {
+		margin-top: var(--s-5);
+		display: grid;
+		gap: var(--s-2);
+	}
+	.bi__source-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	.bi__source {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 30px;
+		padding: 0 10px;
+		border-radius: var(--r-full);
+		border: 1px solid var(--line);
+		background: var(--surface);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--ink-3);
+		transition: color var(--dur-2), border-color var(--dur-2), transform var(--dur-2) var(--ease-out);
+	}
+	.bi__source:hover {
+		color: var(--ink);
+		border-color: var(--line-strong);
+		transform: translateY(-1px);
+	}
+	:global(.bi__source-icon) {
+		color: var(--ink-4);
+	}
+	.bi__source:hover :global(.bi__source-icon) {
+		color: var(--accent);
+	}
+
+	/* automatic days: the outlets and their own headlines are the body */
+	.bi__sources--full .bi__source-list {
+		flex-direction: column;
+		gap: 0;
+		border-top: 1px solid var(--line);
+		max-width: 68ch;
+	}
+	.bi__sources--full .bi__source {
+		display: grid;
+		grid-template-columns: 132px minmax(0, 1fr) 16px;
+		align-items: baseline;
+		gap: var(--s-4);
+		height: auto;
+		width: 100%;
+		padding: var(--s-3) 0;
+		border: 0;
+		border-bottom: 1px solid var(--line);
+		border-radius: 0;
+		background: none;
+		font-weight: 400;
+	}
+	.bi__sources--full .bi__source:hover {
+		transform: none;
+	}
+	.bi__sources--full .bi__source-name {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.bi__sources--full .bi__source-title {
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		color: var(--ink-2);
+		text-wrap: pretty;
+	}
+	.bi__sources--full .bi__source:hover .bi__source-title {
+		color: var(--ink);
+	}
+
+	/* per-item actions */
+	.bi__actions {
+		margin-top: var(--s-4);
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.bi__btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 32px;
+		padding: 0 10px;
+		border-radius: var(--r-full);
+		color: var(--ink-3);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		border: 1px solid transparent;
+		transition: color var(--dur-2), background-color var(--dur-2), border-color var(--dur-2);
+	}
+	.bi__btn:hover {
+		color: var(--ink);
+		background: var(--surface-2);
+		border-color: var(--line);
+	}
+	.bi__btn.is-copied {
+		color: var(--good);
+	}
+	.bi__btn--icon {
+		width: 32px;
+		padding: 0;
+		justify-content: center;
+	}
+	/* These used to rest at opacity 0.62, which put "Copy link" / "Share" at
+	   2.8:1. The recede-until-hover affordance is already carried by the
+	   --ink-3 → --ink colour step on .bi__btn:hover, so the fade is gone. */
+
+	/* dividers */
+	.bi__sep {
+		display: flex;
+		align-items: center;
+		gap: var(--s-4);
+		padding-block: var(--s-5) 0;
+	}
+	.bi__sep--rest {
+		padding-top: var(--s-8);
+		border-top: 1px solid var(--line);
+		margin-top: var(--s-6);
+	}
+	.bi__sep-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--accent-ink);
+		white-space: nowrap;
+	}
+	.bi__sep--rest .bi__sep-label {
+		color: var(--ink-3);
+	}
+	.bi__sep-rule {
+		flex: 1;
+		height: 1px;
+		background: var(--line);
+	}
+
+	@media (max-width: 720px) {
+		.bi__item {
+			grid-template-columns: 1fr;
+			gap: var(--s-3);
+			padding-block: var(--s-8);
+		}
+		/* 44px targets on touch — these are always visible here (no hover to reveal them). */
+		.bi__sources:not(.bi__sources--full) .bi__source {
+			height: 44px;
+			padding-inline: 14px;
+		}
+		.bi__sources:not(.bi__sources--full) .bi__source-list {
+			gap: 8px;
+		}
+		.bi__actions {
+			gap: 8px;
+		}
+		.bi__btn {
+			height: 44px;
+			padding-inline: 14px;
+			border-color: var(--line);
+		}
+		.bi__btn--icon {
+			width: 44px;
+			padding: 0;
+		}
+		.bi__rail {
+			grid-template-rows: auto;
+		}
+		.bi__thread {
+			display: none;
+		}
+		.bi__num {
+			padding-top: 0;
+		}
+		.bi__sources--full .bi__source {
+			grid-template-columns: minmax(0, 1fr) 16px;
+			gap: 4px var(--s-3);
+		}
+		.bi__sources--full .bi__source-name {
+			grid-column: 1 / -1;
+		}
+		.bi__tools-row :global(.tc--mini) {
+			flex: 1 1 100%;
+		}
+	}
+</style>

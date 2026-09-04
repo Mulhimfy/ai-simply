@@ -1,0 +1,63 @@
+---
+/**
+ * Pros / cons card. Two columns when the container is wide enough (≥ 520px),
+ * stacked otherwise — so it works both in a 320px sidebar and full width.
+ *
+ *   <ProsCons pros={tool.data.pros} cons={tool.data.cons} />
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+	pros?: string[];
+	cons?: string[];
+	title?: string;
+	/** render the outer .card chrome (default true) */
+	card?: boolean;
+	class?: string;
+}
+const { pros = [], cons = [], title = 'Pros & cons', card = true, class: className } = Astro.props;
+const has = pros.length > 0 || cons.length > 0;
+---
+{has && (
+	<section class:list={['pc', { 'card card--pad': card }, className]} aria-label={title}>
+		{title && <h2 class="pc__title h4">{title}</h2>}
+		<div class="pc__cols">
+			{pros.length > 0 && (
+				<div class="pc__col">
+					<p class="pc__label pc__label--pro meta"><Icon name="thumbs-up" size={12} /> Pros</p>
+					<ul role="list" class="pc__list">
+						{pros.map((p) => <li class="pc__li"><Icon name="check" size={15} class="pc__icon pc__icon--pro" /><span>{p}</span></li>)}
+					</ul>
+				</div>
+			)}
+			{cons.length > 0 && (
+				<div class="pc__col">
+					<p class="pc__label pc__label--con meta"><Icon name="thumbs-down" size={12} /> Cons</p>
+					<ul role="list" class="pc__list">
+						{cons.map((c) => <li class="pc__li"><Icon name="x" size={15} class="pc__icon pc__icon--con" /><span>{c}</span></li>)}
+					</ul>
+				</div>
+			)}
+		</div>
+	</section>
+)}
+
+<style>
+	.pc { container-type: inline-size; }
+	.pc__title { margin-bottom: var(--s-4); }
+	.pc__cols { display: grid; gap: var(--s-5); }
+	.pc__label { display: inline-flex; align-items: center; gap: 6px; margin-bottom: var(--s-3); }
+	.pc__label--pro { color: var(--good); }
+	.pc__label--con { color: var(--bad); }
+	.pc__list { display: grid; gap: 10px; }
+	.pc__li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-sm); line-height: 1.5; color: var(--ink-2); }
+	/* The icons are <Icon> roots, so the parent scope never lands on them:
+	   these rules must be :global or they compile to a selector that matches nothing. */
+	.pc__li :global(.pc__icon) { flex-shrink: 0; margin-top: 3px; width: 18px; height: 18px; padding: 2px; border-radius: 50%; }
+	.pc__li :global(.pc__icon--pro) { color: var(--good); background: var(--good-soft); }
+	.pc__li :global(.pc__icon--con) { color: var(--bad); background: var(--bad-soft); }
+	@container (min-width: 520px) {
+		.pc__cols { grid-template-columns: 1fr 1fr; gap: var(--s-8); }
+		.pc__col + .pc__col { border-left: 1px solid var(--line); padding-left: var(--s-8); }
+	}
+</style>

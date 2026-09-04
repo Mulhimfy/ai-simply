@@ -1,11 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../../components/BaseHead.astro';
-import Header from '../../../components/Header.astro';
-import Footer from '../../../components/Footer.astro';
+import Base from '../../../layouts/Base.astro';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
-import ToolCard from '../../../components/ToolCard.astro';
-import { SITE_TITLE } from '../../../consts';
+import ToolListing from '../../../components/ToolListing.astro';
+import Icon from '../../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SITE_TITLE } from '../../../consts';
+import { countBy } from '../../../lib/tools';
 
 export async function getStaticPaths() {
 	const tools = await getCollection('tools');
@@ -20,71 +20,51 @@ export async function getStaticPaths() {
 	return [...tagMap.entries()].map(([slug, tools]) => ({
 		params: { tag: slug },
 		props: {
-			tag: tools[0].data.tags?.find(t => t.toLowerCase().replace(/\s+/g, '-') === slug) ?? slug,
+			tag: tools[0].data.tags?.find((t) => t.toLowerCase().replace(/\s+/g, '-') === slug) ?? slug,
 			tools: tools.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
 		},
 	}));
 }
 
 const { tag, tools } = Astro.props;
-const title = `AI Tools tagged "${tag}" — ${SITE_TITLE}`;
-const description = `Browse ${tools.length} AI tools tagged with "${tag}". Find the best ${tag} tools — free, freemium, and paid.`;
+const title = `Tools tagged “${tag}” — ${SITE_TITLE}`;
+const description = `${tools.length} ${tools.length === 1 ? 'tool' : 'tools'} in the toolbox carry the “${tag}” tag. Tags are looser than categories — a scrapbook, not a ranking.`;
+
+// where these tools live — a handful of category links keeps the (noindex) tag page useful
+const catCounts = countBy(tools, (t) => t.data.category);
+const cats = TOOL_CATEGORIES.filter((c) => catCounts[c.slug]).sort((a, b) => catCounts[b.slug] - catCounts[a.slug]).slice(0, 5);
 ---
+<Base {title} {description} noindex={true} noNudge>
+	<section class="tag-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: `#${tag}` }]} />
+			<div class="tag-hero__in">
+				<span class="eyebrow">Toolbox · tag</span>
+				<h1 class="tag-hero__title"><span class="serif tag-hero__hash">#</span>{tag}</h1>
+				<p class="lead">{tools.length} {tools.length === 1 ? 'tool' : 'tools'} carry this tag. Tags are looser than categories — think of this as a scrapbook, not a ranking.</p>
+				{cats.length > 0 && (
+					<div class="tag-hero__cats">
+						<span class="mono">Mostly in</span>
+						{cats.map((c) => (
+							<a class="chip" href={`/tools/category/${c.slug}/`}><Icon name={CATEGORY_ICONS[c.slug] ?? 'boxes'} size={14} /> {c.name} <span class="chip__count">{catCounts[c.slug]}</span></a>
+						))}
+					</div>
+				)}
+			</div>
+		</div>
+	</section>
 
-<html lang="en">
-<head><BaseHead title={title} description={description} noindex={true} /></head>
-<body>
-<Header />
-
-<Breadcrumb crumbs={[
-	{ label: 'Home', href: '/' },
-	{ label: 'AI Tools', href: '/tools/' },
-	{ label: `Tag: ${tag}` },
-]} />
-
-<main class="container tag-page">
-	<div class="tag-header">
-		<span class="tag-badge">🏷️ Tag</span>
-		<h1>{tag}</h1>
-		<p>{tools.length} AI tool{tools.length !== 1 ? 's' : ''} tagged with "{tag}"</p>
-	</div>
-
-	<div class="tag-grid">
-		{tools.map(tool => (
-			<ToolCard
-				name={tool.data.name}
-				description={tool.data.description}
-				category={tool.data.category}
-				subcategory={tool.data.subcategory}
-				pricing={tool.data.pricing}
-				url={tool.data.url}
-				slug={tool.id}
-				tags={tool.data.tags}
-				sponsored={tool.data.sponsored}
-				verified={tool.data.verified}
-			/>
-		))}
-	</div>
-</main>
-
-<Footer />
-</body>
-</html>
+	<ToolListing tools={tools} allTools={tools} defaultSort="rating" placeholder={`Search ${tools.length} tagged tools…`} />
+</Base>
 
 <style>
-	.tag-page { padding: 2rem 0 4rem; }
-	.tag-header { margin-bottom: 2rem; }
-	.tag-badge {
-		display: inline-block; font-size: 0.72rem; font-weight: 700;
-		text-transform: uppercase; letter-spacing: 0.08em;
-		background: var(--primary-light); color: var(--primary);
-		padding: 0.25rem 0.75rem; border-radius: 50px; margin-bottom: 0.75rem;
-	}
-	.tag-header h1 { font-size: 1.75rem; text-transform: capitalize; margin-bottom: 0.3rem; color: rgb(var(--black)); }
-	.tag-header p { color: rgb(var(--gray)); font-size: 0.95rem; }
-	.tag-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-		gap: 1rem;
-	}
+	.tag-hero { padding: var(--s-8) 0 var(--s-4); }
+	.tag-hero__in { display: grid; gap: var(--s-4); justify-items: start; margin-top: var(--s-6); max-width: 72ch; }
+	.tag-hero__title { font-size: var(--text-5xl); overflow-wrap: anywhere; }
+	.tag-hero__hash { color: var(--accent); margin-right: 0.05em; }
+	.tag-hero__cats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }
+	.tag-hero__cats .mono { margin-right: var(--s-2); }
+	.tag-hero__cats .chip { height: 32px; font-size: var(--text-xs); }
+	.tag-hero__cats .chip :global(.icon) { color: var(--ink-3); }
+	@media (max-width: 640px) { .tag-hero__title { font-size: var(--text-4xl); } }
 </style>

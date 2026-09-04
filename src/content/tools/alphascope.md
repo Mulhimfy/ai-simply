@@ -2,7 +2,7 @@
 name: Alphascope
 description: AI-powered prediction-market research with live odds, probability forecasts, news-impact analysis, alerts, and cross-platform market context.
 category: ai-research
-subcategory: AI Market Research
+subcategory: AI Research Tool
 url: https://www.alphascope.app/
 pricing: freemium
 tags: [prediction-markets, forecasting, polymarket, kalshi, trading, news-analysis, alerts]

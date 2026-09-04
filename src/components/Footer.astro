@@ -1,410 +1,183 @@
 ---
-import { SITE_TITLE, BEEHIIV_FORM_URL, TOOL_CATEGORIES, TOOL_LISTING } from '../consts';
+import { SITE_TITLE, TOOL_CATEGORIES, TOOL_LISTING, BEEHIIV_FORM_URL } from '../consts';
+import Icon from './Icon.astro';
+import BrandIcon from './BrandIcon.astro';
+import Logo from './Logo.astro';
+import Newsletter from './Newsletter.astro';
+
+interface Props { noNudge?: boolean }
+const { noNudge = false } = Astro.props;
 const year = new Date().getFullYear();
-const freeToolLinks = [
-	{ name: 'AI Writing Tools', href: '/tools/category/ai-writing/' },
-	{ name: 'AI Image Generators', href: '/tools/category/ai-image/' },
-	{ name: 'AI Chatbots', href: '/tools/category/ai-chatbot/' },
-	{ name: 'AI Coding Tools', href: '/tools/category/ai-coding/' },
-	{ name: 'AI Video Generators', href: '/tools/category/ai-video/' },
-	{ name: 'AI Productivity', href: '/tools/category/ai-productivity/' },
-	{ name: 'AI Detection Tools', href: '/tools/category/ai-detection/' },
-];
+const cats = TOOL_CATEGORIES.slice(0, 10);
 ---
-
 <footer class="site-footer" role="contentinfo">
-	<div class="container">
-		<div class="footer-grid">
-
-			<!-- Brand -->
+	<div class="container container--wide">
+		<div class="footer-top">
 			<div class="footer-brand">
-				<h4>{SITE_TITLE}</h4>
-				<p>Discover the best AI tools across 21 categories. Curated, categorized, and updated daily.</p>
-				<a href={BEEHIIV_FORM_URL} target="_blank" rel="noopener noreferrer" class="footer-subscribe-btn">Get my newsletter →</a>
-			</div>
-
-			<!-- Free AI Tools -->
-			<div>
-				<h4>Free AI Tools</h4>
-				<ul>
-					{freeToolLinks.map(l => <li><a href={l.href}>{l.name}</a></li>)}
-				</ul>
-			</div>
-
-			<!-- Resources -->
-			<div>
-				<h4>Resources</h4>
-				<ul>
-					<li><a href="/tools/">All AI Tools</a></li>
-					<li><a href="/tools/quiz/">🎯 Find My AI Tool</a></li>
-					<li><a href="/tools/new/">New AI Tools</a></li>
-					<li><a href="/tools/top-rated/">Top Rated Tools</a></li>
-					<li><a href="/tools/collections/">Collections</a></li>
-					<li><a href="/reviews/">Reviews</a></li>
-					<li><a href="/tutorials/">Tutorials</a></li>
-					<li><a href="/blog/">Articles</a></li>
-					<li><a href="/rating-methodology/">Rating Methodology</a></li>
-					<li><a href="/submit/">Submit a Tool</a></li>
-				</ul>
-			</div>
-
-			<!-- Company -->
-			<div>
-				<h4>Company</h4>
-				<ul>
-					<li><a href="/about/">About</a></li>
-					<li><a href="/contact/">Contact</a></li>
-					<li><a href="/privacy/">Privacy Policy</a></li>
-					<li><a href="/terms/">Terms of Service</a></li>
-					<li><a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener noreferrer">Manage or Cancel Listing</a></li>
-				</ul>
-				<div class="footer-newsletter">
-					<p>Stay ahead without the noise</p>
-					<a href={BEEHIIV_FORM_URL} target="_blank" rel="noopener noreferrer" class="newsletter-link">Get my newsletter →</a>
+				<a href="/" aria-label={`${SITE_TITLE} — home`}><Logo /></a>
+				<p class="footer-tag">Know what matters in AI.<br />In <em class="serif">three minutes</em>. Every day.</p>
+				<div class="footer-nl">
+					<span class="footer-h">The brief</span>
+					<Newsletter variant="inline" />
 				</div>
 			</div>
-
+			<nav class="footer-cols" aria-label="Footer">
+				<div class="footer-col">
+					<span class="footer-h">Toolbox</span>
+					<ul role="list">
+						<li><a href="/tools/">All tools</a></li>
+						<li><a href="/tools/quiz/">What to try</a></li>
+						<li><a href="/tools/top-rated/">Top rated</a></li>
+						<li><a href="/tools/new/">New tools</a></li>
+						<li><a href="/tools/collections/">Collections</a></li>
+						<li><a href="/tools/vs/">Comparisons</a></li>
+						<li><a href="/tools/alternatives/">Alternatives</a></li>
+					</ul>
+				</div>
+				<div class="footer-col">
+					<span class="footer-h">Categories</span>
+					<ul role="list">
+						{cats.map((c) => <li><a href={`/tools/category/${c.slug}/`}>{c.name}</a></li>)}
+					</ul>
+				</div>
+				<div class="footer-col">
+					<span class="footer-h">Read</span>
+					<ul role="list">
+						<li><a href="/news/">Daily briefs</a></li>
+						<li><a href="/blog/">Explainers</a></li>
+						<li><a href="/reviews/">Reviews</a></li>
+						<li><a href="/tutorials/">Tutorials</a></li>
+						<li><a href="/rating-methodology/">How we rate</a></li>
+						<li><a href="/author/">Authors</a></li>
+						<li><a href="/rss.xml">RSS</a></li>
+					</ul>
+				</div>
+				<div class="footer-col">
+					<span class="footer-h">Company</span>
+					<ul role="list">
+						<li><a href="/about/">About</a></li>
+						<li><a href="/contact/">Contact</a></li>
+						<li><a href="/submit/">Submit a tool</a></li>
+						<li><a href="/pricing/">Pricing</a></li>
+						<li><a href="/privacy/">Privacy</a></li>
+						<li><a href="/terms/">Terms</a></li>
+						<li><a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener noreferrer">Manage or cancel listing</a></li>
+					</ul>
+				</div>
+			</nav>
 		</div>
 
 		<div class="footer-bottom">
-			<p>&copy; {year} {SITE_TITLE}. All rights reserved.</p>
-			<div class="footer-bottom-right">
-				<div class="footer-bottom-links">
-					<a href="/privacy/">Privacy</a>
-					<a href="/terms/">Terms</a>
-					<a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener noreferrer">Cancel Listing</a>
-					<a href="/sitemap-index.xml">Sitemap</a>
-				</div>
+			<p class="footer-copy">© {year} {SITE_TITLE}. All rights reserved.</p>
+			<div class="footer-meta">
+				<a href="https://twitter.com/getaibriefs" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="AI Briefs on X"><BrandIcon name="x" size={15} /></a>
+				<a href="/rss.xml" class="footer-social" aria-label="RSS feed"><Icon name="rss" size={16} /></a>
+				<a href="/sitemap-index.xml" class="footer-link-sm">Sitemap</a>
+				<a href="/proxy/" class="footer-link-sm">Proxy tool</a>
+				<button type="button" class="footer-theme" data-theme-toggle>
+					<Icon name="sun-moon" size={14} /> Theme
+				</button>
 			</div>
 		</div>
 	</div>
+
+	{!noNudge && (
+		<aside class="nudge" id="nl-nudge" hidden aria-label="Newsletter">
+			<button type="button" class="nudge__close" data-nudge-close aria-label="Dismiss"><Icon name="x" size={16} /></button>
+			<span class="eyebrow">Reading this?</span>
+			<p class="nudge__title">Get the brief in your inbox. <em class="serif">Free.</em></p>
+			<form class="nudge__form" action={BEEHIIV_FORM_URL} method="POST" target="_blank" rel="noopener" data-nl>
+				<label class="sr-only" for="nudge-email">Email</label>
+				<input id="nudge-email" class="input" type="email" name="email" required placeholder="you@example.com" />
+				<button type="submit" class="btn btn--accent btn--icon" aria-label="Subscribe"><Icon name="arrow-right" /></button>
+			</form>
+		</aside>
+	)}
 </footer>
 
-<!-- Back to top -->
-<button id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
-
-<!-- Bottom-left Newsletter Capture -->
-<aside id="nl-toast" class="nl-toast" hidden aria-label="Newsletter signup">
-	<button class="nl-toast__close" id="nl-toast-close" aria-label="Close">✕</button>
-	<div class="nl-toast__body">
-		<div class="nl-toast__icon" aria-hidden="true">📬</div>
-		<div class="nl-toast__copy">
-			<h3>Get deep business tactics</h3>
-			<p>Actionable strategies to grow your business.</p>
-		</div>
-	</div>
-	<form id="nl-toast-form" class="nl-toast__form" action={BEEHIIV_FORM_URL} method="POST" target="_blank" rel="noopener">
-		<input
-			type="email"
-			name="email"
-			required
-			placeholder="you@example.com"
-			aria-label="Email address"
-			class="nl-toast__input"
-			autocomplete="email"
-		/>
-		<button type="submit" class="nl-toast__btn">Subscribe</button>
-	</form>
-	<div id="nl-toast-success" class="nl-toast__success" hidden>Thanks! Check your inbox to confirm. ✨</div>
-</aside>
-
-<script data-astro-rerun>
-// Back-to-top
-(function () {
-	const btn = document.getElementById('back-to-top');
-	if (!btn) return;
-	const onScroll = () => btn.classList.toggle('visible', window.scrollY > 400);
-	window.addEventListener('scroll', onScroll, { passive: true });
-	btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-})();
-
-// Bottom-left newsletter capture toast
-(function () {
-	const toast = document.getElementById('nl-toast');
-	const toastClose = document.getElementById('nl-toast-close');
-	const toastForm = document.getElementById('nl-toast-form');
-	const toastSuccess = document.getElementById('nl-toast-success');
-	if (!toast || !toastForm || !toastClose || !toastSuccess) return;
-
-	const STORAGE_KEY = 'nl_toast_state';
-	const SCROLL_TRIGGER_PX = 300;
-	// Reset each page load / SPA navigation so the toast reappears on every page.
-	let closedThisView = false;
-
-	function getState() {
-		try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { return {}; }
+<script>
+	// Newsletter nudge: shows once after 45% scroll, respects dismissals for 14 days and skips subscribers.
+	function nudge() {
+		const el = document.getElementById('nl-nudge');
+		if (!el || (el as any).__bound) return;
+		(el as any).__bound = true;
+		try {
+			if (localStorage.getItem('nl-subscribed')) return;
+			const dismissed = Number(localStorage.getItem('nl-nudge-dismissed') || 0);
+			if (Date.now() - dismissed < 14 * 864e5) return;
+			// Don't ask on a first visit. The page already carries a newsletter band and
+			// a footer form; a third ask to someone who has read nothing yet is noise.
+			// Ask once the reader has come back — they have shown the habit is forming.
+			const days = JSON.parse(localStorage.getItem('aib-news-days') || '[]');
+			if (!Array.isArray(days) || days.length < 2) return;
+		} catch { return; }
+		let shown = false;
+		function onScroll() {
+			const p = scrollY / (document.documentElement.scrollHeight - innerHeight || 1);
+			if (!shown && p > 0.45) {
+				shown = true; el.hidden = false;
+				document.body.classList.add('has-nudge');
+				requestAnimationFrame(() => el.classList.add('is-in'));
+				removeEventListener('scroll', onScroll);
+			}
+		}
+		addEventListener('scroll', onScroll, { passive: true });
+		el.querySelector('[data-nudge-close]')?.addEventListener('click', () => {
+			el.classList.remove('is-in'); document.body.classList.remove('has-nudge');
+			setTimeout(() => (el.hidden = true), 300);
+			try { localStorage.setItem('nl-nudge-dismissed', String(Date.now())); } catch {}
+		});
+		el.querySelector('form')?.addEventListener('submit', () => setTimeout(() => {
+			el.classList.remove('is-in'); document.body.classList.remove('has-nudge');
+		}, 1200));
+		// never sit on top of the footer — the footer has its own form
+		addEventListener('scroll', () => {
+			const f = document.querySelector('.site-footer');
+			if (!f) return;
+			el.classList.toggle('is-tucked', f.getBoundingClientRect().top < innerHeight - 40);
+		}, { passive: true });
 	}
-	function setState(next) {
-		try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {}
-	}
-	function shouldShow() {
-		if (closedThisView) return false;
-		if (toast.classList.contains('nl-toast--in')) return false;
-		return !getState().subscribed; // stop nagging people who already subscribed
-	}
-	function showToast() {
-		if (!shouldShow()) return;
-		toast.hidden = false;
-		requestAnimationFrame(() => toast.classList.add('nl-toast--in'));
-	}
-	function hideToast() {
-		toast.classList.remove('nl-toast--in');
-		setTimeout(() => { toast.hidden = true; }, 250);
-	}
-
-	// Show on scroll, on every page. Guard against stacking listeners across SPA navigations.
-	const onScroll = () => { if (window.scrollY > SCROLL_TRIGGER_PX) showToast(); };
-	if (window.__nlToastScroll) window.removeEventListener('scroll', window.__nlToastScroll);
-	window.__nlToastScroll = onScroll;
-	window.addEventListener('scroll', onScroll, { passive: true });
-	onScroll(); // handle pages that load already scrolled
-
-	toastClose.addEventListener('click', () => { closedThisView = true; hideToast(); });
-
-	toastForm.addEventListener('submit', () => {
-		setState({ subscribed: true });
-		toastForm.hidden = true;
-		toastSuccess.hidden = false;
-		setTimeout(hideToast, 4000);
-	});
-})();
+	nudge();
+	document.addEventListener('astro:page-load', nudge);
 </script>
 
 <style>
-/* Bottom-left newsletter toast */
-.nl-toast {
-	position: fixed;
-	bottom: 1.25rem;
-	left: 1.25rem;
-	z-index: 10000;
-	width: min(340px, calc(100vw - 2rem));
-	background: var(--surface-1, var(--bg-alt));
-	color: rgb(var(--gray-dark));
-	border: 1px solid var(--border);
-	border-radius: 14px;
-	box-shadow: 0 16px 48px rgba(0,0,0,0.45);
-	padding: 1rem 1rem 0.9rem;
-	opacity: 0;
-	transform: translateY(16px);
-	transition: opacity 0.25s var(--ease-out, ease), transform 0.25s var(--ease-out, ease);
-}
-.nl-toast[hidden] { display: none; }
-.nl-toast--in { opacity: 1; transform: translateY(0); }
+	.site-footer { border-top: 1px solid var(--line); background: var(--bg-sunk); margin-top: var(--section); }
+	.footer-top { display: grid; grid-template-columns: 1.3fr 2fr; gap: var(--s-16); padding-block: var(--s-16) var(--s-12); }
+	.footer-brand { display: grid; gap: var(--s-5); align-content: start; }
+	.footer-tag { color: var(--ink-3); font-size: var(--text-base); line-height: 1.5; max-width: 32ch; }
+	.footer-tag .serif { color: var(--ink); }
+	.footer-nl { display: grid; gap: var(--s-3); margin-top: var(--s-2); }
+	.footer-h { display: block; font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--s-4); }
+	.footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-8); }
+	.footer-col ul { display: grid; gap: 10px; }
+	.footer-col a { font-size: var(--text-sm); color: var(--ink-2); transition: color var(--dur-2); }
+	.footer-col a:hover { color: var(--accent-ink); }
+	.footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; padding-block: var(--s-6); border-top: 1px solid var(--line); }
+	.footer-copy { font-size: var(--text-xs); color: var(--ink-3); }
+	.footer-meta { display: flex; align-items: center; gap: var(--s-3); }
+	.footer-social { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-2); color: var(--ink-2); transition: all var(--dur-2); }
+	.footer-social:hover { border-color: var(--ink); color: var(--ink); transform: translateY(-2px); }
+	.footer-link-sm { font-size: var(--text-xs); color: var(--ink-3); }
+	.footer-link-sm:hover { color: var(--ink); }
+	.footer-theme { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--ink-3); padding: 6px 10px; border-radius: var(--r-full); border: 1px solid var(--line-2); }
+	.footer-theme:hover { color: var(--ink); border-color: var(--line-strong); }
 
-.nl-toast__close {
-	position: absolute;
-	top: 0.4rem;
-	right: 0.5rem;
-	background: none;
-	border: none;
-	cursor: pointer;
-	font-size: 0.95rem;
-	color: rgb(var(--gray));
-	padding: 0.25rem 0.4rem;
-	line-height: 1;
-	border-radius: 6px;
-}
-.nl-toast__close:hover { color: rgb(var(--black)); background: rgb(var(--gray) / 0.12); }
-
-.nl-toast__body {
-	display: flex;
-	gap: 0.7rem;
-	align-items: flex-start;
-	padding-right: 1.25rem;
-	margin-bottom: 0.75rem;
-}
-.nl-toast__icon {
-	font-size: 1.4rem;
-	line-height: 1;
-	flex-shrink: 0;
-	margin-top: 2px;
-}
-.nl-toast__copy h3 {
-	margin: 0 0 0.15rem;
-	font-size: 0.95rem;
-	color: rgb(var(--black));
-	font-weight: 700;
-}
-.nl-toast__copy p {
-	margin: 0;
-	font-size: 0.8rem;
-	color: rgb(var(--gray));
-	line-height: 1.4;
-}
-
-.nl-toast__form {
-	display: flex;
-	gap: 0.4rem;
-}
-.nl-toast__input {
-	flex: 1;
-	min-width: 0;
-	padding: 0.55rem 0.7rem;
-	border: 1px solid var(--border);
-	border-radius: 8px;
-	background: var(--bg);
-	color: rgb(var(--black));
-	font-size: 0.85rem;
-	font-family: inherit;
-	outline: none;
-	transition: border-color 0.15s;
-}
-.nl-toast__input:focus { border-color: var(--primary); }
-.nl-toast__input::placeholder { color: rgb(var(--gray) / 0.7); }
-
-.nl-toast__btn {
-	padding: 0.55rem 0.85rem;
-	background: var(--primary);
-	color: #0b0f0d;
-	border: none;
-	border-radius: 8px;
-	font-size: 0.82rem;
-	font-weight: 700;
-	font-family: inherit;
-	cursor: pointer;
-	white-space: nowrap;
-	transition: background 0.15s;
-}
-.nl-toast__btn:hover { background: var(--primary-dark); }
-
-.nl-toast__success {
-	font-size: 0.85rem;
-	color: var(--primary);
-	font-weight: 600;
-	text-align: center;
-	padding: 0.4rem 0;
-}
-
-/* On desktop, sit clear of the left sidebar nav (top-aligned, ~144px wide) */
-@media (min-width: 768px) {
-	.nl-toast { left: 176px; bottom: 1.5rem; }
-}
-
-/* On small mobile, full-width minus margins */
-@media (max-width: 480px) {
-	.nl-toast { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; width: auto; }
-}
-
-#back-to-top {
-	position: fixed;
-	bottom: 1.5rem;
-	right: 1.5rem;
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	background: var(--primary);
-	color: #fff;
-	border: none;
-	font-size: 1.1rem;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	transform: translateY(12px);
-	transition: opacity 0.2s, transform 0.2s;
-	z-index: 999;
-	box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-}
-#back-to-top.visible { opacity: 1; transform: translateY(0); }
-#back-to-top:hover { background: var(--primary-dark); }
-@media (max-width: 767px) { #back-to-top { display: none; } }
-</style>
-
-<style>
-	.site-footer {
-		background: var(--bg-alt);
-		color: rgb(var(--gray-dark) / 0.85);
-		border-top: 1px solid var(--border);
-		padding: 3.5rem 0 1.5rem;
+	.nudge {
+		position: fixed; right: 20px; bottom: 20px; z-index: var(--z-toast); width: min(360px, calc(100vw - 40px));
+		padding: var(--s-5); border-radius: var(--r-lg); background: var(--bg-elev); border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+		display: grid; gap: var(--s-3);
+		opacity: 0; transform: translateY(16px) scale(0.98);
+		transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-4) var(--ease-spring);
 	}
+	.nudge.is-in { opacity: 1; transform: none; }
+	.nudge.is-tucked { opacity: 0; transform: translateY(16px) scale(0.98); pointer-events: none; }
+	.nudge__close { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-3); }
+	.nudge__close:hover { background: var(--surface-2); color: var(--ink); }
+	.nudge__title { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+	.nudge__form { display: flex; gap: var(--s-2); }
+	.nudge__form .input { height: 44px; }
 
-	.footer-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 2.5rem;
-		margin-bottom: 2.5rem;
-	}
-
-	.site-footer h4 {
-		color: rgb(var(--black));
-		font-size: 0.72rem;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		margin-bottom: 1rem;
-	}
-
-	.footer-brand p { font-size: 0.85rem; line-height: 1.65; margin-bottom: 1rem; }
-
-	.site-footer .footer-subscribe-btn {
-		display: inline-block;
-		padding: 0.5rem 1rem;
-		background: var(--primary);
-		color: #0b0f0d;
-		font-size: 0.82rem;
-		font-weight: 700;
-		border-radius: var(--radius);
-		margin-bottom: 1.25rem;
-		transition: background 0.25s var(--ease-out), transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
-	}
-
-	.site-footer .footer-subscribe-btn:hover { background: var(--primary-dark); color: #0b0f0d; transform: translateY(-1px); box-shadow: var(--accent-glow); }
-
-	.footer-socials {
-		display: flex;
-		gap: 0.6rem;
-	}
-
-	.footer-socials a {
-		width: 32px;
-		height: 32px;
-		background: rgb(var(--black) / 0.08);
-		border-radius: 8px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: rgb(var(--gray-dark) / 0.7);
-		transition: background 0.25s var(--ease-out), color 0.25s var(--ease-out), transform 0.25s var(--ease-out);
-	}
-
-	.footer-socials a:hover { background: var(--primary); color: #0b0f0d; transform: translateY(-2px); }
-
-	.site-footer ul { list-style: none; padding: 0; margin: 0; }
-	.site-footer li { margin-bottom: 0.5rem; }
-	.site-footer a { color: rgb(var(--gray-dark) / 0.82); font-size: 0.85rem; transition: color 0.2s var(--ease-out); }
-	.site-footer a:hover { color: var(--primary); }
-
-	.footer-newsletter { margin-top: 1.5rem; }
-	.footer-newsletter p { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgb(var(--gray)); margin-bottom: 0.4rem; }
-	.newsletter-link { font-size: 0.82rem; color: var(--primary) !important; font-weight: 600; }
-
-	.footer-bottom {
-		border-top: 1px solid var(--border);
-		padding-top: 1.25rem;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.footer-bottom p { font-size: 0.78rem; margin: 0; }
-
-	.footer-bottom-links {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.footer-bottom-links a { font-size: 0.78rem; color: rgb(var(--gray)); }
-	.footer-bottom-links a:hover { color: var(--primary); }
-
-	.footer-bottom-right { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
-
-@media (min-width: 640px) {
-		.footer-grid { grid-template-columns: repeat(2, 1fr); }
-	}
-
-	@media (min-width: 960px) {
-		.footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
-	}
+	@media (max-width: 1024px) { .footer-top { grid-template-columns: 1fr; gap: var(--s-10); } }
+	@media (max-width: 640px) { .footer-cols { grid-template-columns: repeat(2, 1fr); } .nudge { display: none; } }
 </style>

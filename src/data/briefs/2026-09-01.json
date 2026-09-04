@@ -1,0 +1,134 @@
+{
+  "date": "2026-09-01",
+  "title": "The Pentagon gets its own ChatGPT, Instagram unmasks AI accounts, and the labs warn about their own security",
+  "intro": "Institutions moved today: the military built its own chatbot, Instagram started labelling the fake humans, and the people building frontier models spent the day telling everyone how exposed we are.",
+  "items": [
+    {
+      "headline": "The Pentagon now runs its own ChatGPT and Grok",
+      "why": "Defence work is where the money and the constraints both get serious: models that never touch the public internet, run on classified networks, and answer to procurement rules. It also means the same companies now serve consumers and the military from one research pipeline.",
+      "action": "Nothing to do, but note that 'is this model used by the military?' is now a real question to ask any vendor about their training and data practices.",
+      "angle": "policy",
+      "tools": [
+        "chatgpt",
+        "grok"
+      ],
+      "sources": [
+        {
+          "title": "The Pentagon now has its own version of ChatGPT and Grok",
+          "link": "https://techcrunch.com/2026/08/31/the-pentagon-now-has-its-own-version-of-chatgpt-and-grok/",
+          "source": "TechCrunch",
+          "date": "Mon, 31 Aug 2026 20:13:45 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "Instagram puts limits on AI accounts pretending to be human",
+      "why": "Undisclosed AI profiles were farming followers and selling to them. Meta now requires disclosure and restricts reach for accounts that hide it. It is the first mainstream platform to treat 'is this a person?' as a policy question rather than a curiosity.",
+      "action": "If you run an AI-assisted account, add the disclosure now rather than after a reach penalty.",
+      "angle": "creators",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Instagram puts new limits on undisclosed AI profiles",
+          "link": "https://techcrunch.com/2026/08/31/instagram-puts-new-limits-on-undisclosed-ai-profiles/",
+          "source": "TechCrunch",
+          "date": "Mon, 31 Aug 2026 19:16:59 +0000"
+        },
+        {
+          "title": "Instagram cracks down on AI accounts pretending to be human",
+          "link": "https://www.theverge.com/tech/986593/instagram-addresses-fake-ai-profile-slop",
+          "source": "The Verge",
+          "date": "2026-08-31T09:00:00-04:00"
+        }
+      ]
+    },
+    {
+      "headline": "AI companies say the cybersecurity reckoning arrives in months, not years",
+      "why": "The same firms selling the models are warning that offensive capability is outrunning defence. Read it as both a genuine risk signal and a positioning move ahead of regulation, but the technical direction is not in dispute.",
+      "action": "Turn on passkeys or two-factor login on your email and bank this week. That single change blocks most of what gets automated first.",
+      "angle": "policy",
+      "tools": [],
+      "sources": [
+        {
+          "title": "The Cybersecurity Apocalypse Is Coming in ‘Months,’ AI Giants Warn",
+          "link": "https://www.wired.com/story/security-news-this-week-the-cybersecurity-apocalypse-is-coming-in-months-ai-giants-warn/",
+          "source": "Wired",
+          "date": "Sat, 29 Aug 2026 10:30:00 +0000"
+        },
+        {
+          "title": "The Hugging Face hack could indicate cultural issues at OpenAI",
+          "link": "https://www.technologyreview.com/2026/08/31/1143180/hugging-face-hack-could-indicate-cultural-issues-at-openai/",
+          "source": "MIT Tech Review",
+          "date": "Mon, 31 Aug 2026 18:00:00 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "You can now run a capable chatbot on your own computer",
+      "why": "Open models have crossed the line where a normal laptop gives useful answers with nothing leaving the machine. That matters for anyone handling client work, medical notes, or anything they would not paste into a website.",
+      "action": "If you handle confidential text, try a local model this week. It is a download and about twenty minutes.",
+      "angle": "everyday",
+      "tools": [
+        "ollama"
+      ],
+      "sources": [
+        {
+          "title": "How to Run a Chatbot on Your Own Computer",
+          "link": "https://www.wired.com/story/how-to-run-your-own-local-llm/",
+          "source": "Wired",
+          "date": "Sat, 29 Aug 2026 10:00:00 +0000"
+        }
+      ]
+    },
+    {
+      "headline": "The real enterprise AI risk is not rogue agents, it is the mess between them",
+      "why": "Three separate pieces landed on the same conclusion: single agents behave, but a dozen of them wired together with no shared governance produce failures nobody can trace. Orchestration, not autonomy, is where the trouble is.",
+      "action": "If your team is adding agents, write down who owns the data layer before adding the next one.",
+      "angle": "work",
+      "tools": [
+        "zapier-ai"
+      ],
+      "sources": [
+        {
+          "title": "Enterprise AI's real risk isn't autonomous agents. It's the complexity between them.",
+          "link": "https://venturebeat.com/ai/enterprise-ais-real-risk-isnt-autonomous-agents-its-the-complexity-between-them",
+          "source": "VentureBeat",
+          "date": "Thu, 27 Aug 2026 14:01:00 GMT"
+        },
+        {
+          "title": "When agents act on their own, governance has to live in the data layer",
+          "link": "https://venturebeat.com/security/when-agents-act-on-their-own-governance-has-to-live-in-the-data-layer",
+          "source": "VentureBeat",
+          "date": "Thu, 27 Aug 2026 12:01:00 GMT"
+        },
+        {
+          "title": "Orchestration is the new challenge for CX in the age of AI agents",
+          "link": "https://venturebeat.com/orchestration/orchestration-is-the-new-challenge-for-cx-in-the-age-of-ai-agents",
+          "source": "VentureBeat",
+          "date": "Wed, 26 Aug 2026 14:30:00 GMT"
+        }
+      ]
+    },
+    {
+      "headline": "Apple says it has 'shocking evidence' an ex-employee took data to OpenAI",
+      "why": "Talent moves between labs constantly, and so, allegedly, do files. This case will set expectations for what companies can claim when a researcher walks — and it lands while Anthropic is separately in court over training data.",
+      "action": "Nothing personal to do, but expect stricter exit procedures if you work anywhere near model research.",
+      "angle": "money",
+      "tools": [],
+      "sources": [
+        {
+          "title": "Apple shares ‘shocking evidence’ against former employee accused of stealing company data for OpenAI",
+          "link": "https://techcrunch.com/2026/08/31/apple-shares-shocking-evidence-against-former-employee-accused-of-stealing-company-data-for-openai/",
+          "source": "TechCrunch",
+          "date": "Tue, 01 Sep 2026 00:13:00 +0000"
+        },
+        {
+          "title": "“Zlibrary my beloved”: Anthropic staff chats extolling piracy cited in Sony suit",
+          "link": "https://arstechnica.com/tech-policy/2026/08/zlibrary-my-beloved-anthropic-staff-chats-extolling-piracy-cited-in-sony-suit/",
+          "source": "Ars Technica",
+          "date": "Mon, 31 Aug 2026 18:10:45 +0000"
+        }
+      ]
+    }
+  ]
+}

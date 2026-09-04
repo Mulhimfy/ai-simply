@@ -1,15 +1,14 @@
 ---
 import '../styles/global.css';
 import type { ImageMetadata } from 'astro';
-import FallbackImage from '../assets/blog-placeholder-1.jpg';
 import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL, SITE_AUTHOR } from '../consts';
 import { ClientRouter } from 'astro:transitions';
-import ScrollReveal from './ScrollReveal.astro';
 
 interface Props {
 	title: string;
 	description: string;
-	image?: ImageMetadata;
+	/** Either an imported ImageMetadata or an absolute/site-relative path (e.g. /og/tools/chatgpt.png). */
+	image?: ImageMetadata | string;
 	type?: 'website' | 'article';
 	publishDate?: Date;
 	updatedDate?: Date;
@@ -21,13 +20,18 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const {
 	title,
 	description,
-	image = FallbackImage,
+	image = '/og/default.png',
 	type = 'website',
 	publishDate,
 	updatedDate,
 	category,
 	noindex = false,
 } = Astro.props;
+
+const imgSrc = typeof image === 'string' ? image : image.src;
+const imgW = typeof image === 'string' ? 1200 : image.width;
+const imgH = typeof image === 'string' ? 630 : image.height;
+const imageURL = new URL(imgSrc, Astro.site);
 
 /**
  * Append the brand only when it is not already there. Many pages pass a title
@@ -36,32 +40,46 @@ const {
  */
 const brand = SITE_TITLE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const alreadyBranded =
-	new RegExp(`[|—–-]\\s*${brand}\\s*$`).test(title) || // "… | AI Briefs"
-	new RegExp(`^\\s*${brand}\\s*[|—–-]`).test(title);   // "AI Briefs — …"
+	new RegExp(`[|—–-]\\s*${brand}\\s*$`).test(title) ||
+	new RegExp(`^\\s*${brand}\\s*[|—–-]`).test(title);
 const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | ${SITE_TITLE}`;
 ---
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#f8f7f4" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0c0b0a" media="(prefers-color-scheme: dark)" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={new URL('rss.xml', Astro.site)} />
 <meta name="generator" content={Astro.generator} />
 
+<!-- Theme: resolve before first paint to avoid a flash. -->
+<script is:inline>
+	(function () {
+		try {
+			var t = localStorage.getItem('theme');
+			if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			document.documentElement.setAttribute('data-theme', t);
+		} catch (e) {}
+		document.documentElement.classList.remove('no-js');
+	})();
+</script>
+
 <!-- Font Preloads -->
-<link rel="preload" href="/fonts/atkinson-regular.woff" as="font" type="font/woff" crossorigin />
-<link rel="preload" href="/fonts/atkinson-bold.woff" as="font" type="font/woff" crossorigin />
-<link rel="preload" href="/fonts/playfair-display-700.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/inter-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/instrument_serif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
 
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XP68CXTJCM"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XP68CXTJCM');
+<script is:inline>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'G-XP68CXTJCM');
 </script>
 
 <!-- SEO -->
@@ -78,9 +96,9 @@ const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | $
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image.src, Astro.url)} />
-<meta property="og:image:width" content={String(image.width)} />
-<meta property="og:image:height" content={String(image.height)} />
+<meta property="og:image" content={imageURL} />
+<meta property="og:image:width" content={String(imgW)} />
+<meta property="og:image:height" content={String(imgH)} />
 <meta property="og:image:alt" content={title} />
 <meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:locale" content="en_US" />
@@ -92,7 +110,7 @@ const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | $
 <meta name="twitter:url" content={canonicalURL} />
 <meta name="twitter:title" content={fullTitle} />
 <meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={new URL(image.src, Astro.url)} />
+<meta name="twitter:image" content={imageURL} />
 
 <!-- Article-specific meta -->
 {publishDate && <meta property="article:published_time" content={publishDate.toISOString()} />}
@@ -111,17 +129,11 @@ const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | $
 			"@type": "Organization",
 			"name": SITE_TITLE,
 			"url": SITE_URL,
-			"logo": {
-				"@type": "ImageObject",
-				"url": `${SITE_URL}/favicon.svg`,
-			},
+			"logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.svg` },
 		},
 		"potentialAction": {
 			"@type": "SearchAction",
-			"target": {
-				"@type": "EntryPoint",
-				"urlTemplate": `${SITE_URL}/tools/?q={search_term_string}`,
-			},
+			"target": { "@type": "EntryPoint", "urlTemplate": `${SITE_URL}/tools/?q={search_term_string}` },
 			"query-input": "required name=search_term_string",
 		},
 	})} />
@@ -134,13 +146,8 @@ const fullTitle = title === SITE_TITLE || alreadyBranded ? title : `${title} | $
 	"name": SITE_TITLE,
 	"url": SITE_URL,
 	"logo": `${SITE_URL}/favicon.svg`,
-	"sameAs": [
-		"https://twitter.com/getaibriefs",
-	],
+	"sameAs": ["https://twitter.com/getaibriefs"],
 })} />
 
 <!-- Smooth page transitions (SPA-like navigation) -->
 <ClientRouter />
-
-<!-- Scroll-reveal controller (reacts to astro:page-load) -->
-<ScrollReveal />

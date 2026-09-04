@@ -1,232 +1,187 @@
 ---
+/**
+ * `/tutorials/` — the how-to half of the explainers section.
+ * "Tutorial" is one rule, defined in `src/lib/articles.ts` (TUTORIAL_CATEGORIES):
+ * the step-by-step guides plus the under-the-hood pieces.
+ */
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
+import Base from '../layouts/Base.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
-import { CATEGORY_COLORS, SITE_TITLE } from '../consts';
+import ArticleCard from '../components/ArticleCard.astro';
+import Newsletter from '../components/Newsletter.astro';
+import Icon from '../components/Icon.astro';
+import { SITE_TITLE, SITE_URL } from '../consts';
+import { byNewest, tutorials, TUTORIAL_CATEGORIES, categoryName, categoryIcon, countWords } from '../lib/articles';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+/* Reading time is measured, not asserted. */
+const readTime = (body?: string) => `${Math.max(1, Math.round(countWords(body ?? '') / 200))} min read`;
 
-const guides = posts.filter(p => p.data.category === 'guides');
-const explained = posts.filter(p => p.data.category !== 'guides');
+const all = await getCollection('blog');
+const posts = tutorials(all);
+const [feature, ...rest] = posts;
+
+const tracks = TUTORIAL_CATEGORIES.map((slug) => ({
+	slug,
+	name: categoryName(slug),
+	icon: categoryIcon(slug),
+	count: posts.filter((p) => p.data.category === slug).length,
+})).filter((t) => t.count > 0);
+
+/* The conceptual companion: you can follow a guide without it, but the words help. */
+const basics = byNewest(all.filter((p) => p.data.category === 'ai-explained')).slice(0, 3);
+
+const description = 'Step-by-step AI tutorials from AI Briefs. Open the tool, follow along, get something useful out the other end — tested, in plain English.';
+
+const collectionSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'CollectionPage',
+	name: 'Tutorials',
+	description,
+	url: `${SITE_URL}/tutorials/`,
+	isPartOf: { '@type': 'WebSite', name: SITE_TITLE, url: SITE_URL },
+	mainEntity: {
+		'@type': 'ItemList',
+		numberOfItems: posts.length,
+		itemListElement: posts.map((p, i) => ({
+			'@type': 'ListItem', position: i + 1, name: p.data.title, url: `${SITE_URL}/blog/${p.id}/`,
+		})),
+	},
+};
 ---
+<Base title={`AI tutorials — open the tool and follow along | ${SITE_TITLE}`} {description} noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+	</Fragment>
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`AI Tutorials & Guides | ${SITE_TITLE}`}
-		description="Learn how to use AI tools effectively. Step-by-step guides, tutorials, and plain-English explainers — AI made simple for everyone."
-	/>
-</head>
-<body>
-	<Header />
-	<main>
+	<section class="tu-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Explainers', href: '/blog/' }, { name: 'Tutorials' }]} />
+			<div class="tu-hero__in">
+				<div class="tu-hero__copy">
+					<span class="eyebrow">Tutorials · {posts.length} walk-throughs</span>
+					<h1 class="tu-hero__title">Open the tool. Follow <em class="serif">along</em>.</h1>
+					<p class="lead">Step-by-step and written for the free tier you already have — no account juggling, no “upgrade to continue” halfway through. Pick one, do it in twenty minutes, keep the result.</p>
+				</div>
+				<dl class="tu-hero__tracks" aria-label="What's here">
+					{tracks.map((t) => (
+						<div>
+							<dt class="mono"><Icon name={t.icon} size={13} /> {t.name}</dt>
+							<dd class="tnum">{t.count}</dd>
+						</div>
+					))}
+				</dl>
+			</div>
+		</div>
+	</section>
 
-		<section class="page-hero">
-			<div class="container">
-				<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Tutorials' }]} />
-				<div class="hero-badge">Learn AI</div>
-				<h1>Tutorials & Guides</h1>
-				<p>Step-by-step guides and plain-English explainers to help you understand and use AI tools — no jargon, no fluff.</p>
+	{feature && (
+		<section class="container tu-feature">
+			<span class="meta">Newest walk-through</span>
+			<ArticleCard
+				slug={feature.id}
+				title={feature.data.title}
+				description={feature.data.description}
+				category={feature.data.category}
+				pubDate={feature.data.pubDate}
+				readingTime={readTime(feature.body)}
+				heroImage={feature.data.heroImage}
+				author={feature.data.author}
+				variant="feature"
+				eager
+			/>
+		</section>
+	)}
+
+	{rest.length > 0 && (
+		<section class="container section--tight">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">The rest</span>
+					<h2>Everything you can <em class="serif">do</em>.</h2>
+				</div>
+				<a href="/blog/" class="link-arrow">All explainers <Icon name="arrow-right" size={16} /></a>
+			</div>
+			<div class="grid grid--3 tu-grid" data-stagger>
+				{rest.map((p) => (
+					<ArticleCard
+						slug={p.id}
+						title={p.data.title}
+						description={p.data.description}
+						category={p.data.category}
+						pubDate={p.data.pubDate}
+						readingTime={readTime(p.body)}
+						heroImage={p.data.heroImage}
+					/>
+				))}
 			</div>
 		</section>
+	)}
 
-		<div class="container tutorials-body">
-
-			{guides.length > 0 && (
-				<section class="tut-section">
-					<h2 class="section-title">How-To Guides</h2>
-					<div class="tut-grid">
-						{guides.map(post => (
-							<a href={`/blog/${post.id}/`} class="tut-card">
-								<div class="tut-card__img" style={`background:${CATEGORY_COLORS[post.data.category] ?? 'var(--primary-light)'}`}>
-									{post.data.heroImage
-										? <Image width={400} height={220} src={post.data.heroImage} alt={post.data.title} loading="lazy" />
-										: <span aria-hidden="true">📖</span>
-									}
-								</div>
-								<div class="tut-card__body">
-									<span class="tut-badge">Guide</span>
-									<h3>{post.data.title}</h3>
-									<p>{post.data.description}</p>
-									<span class="tut-meta"><FormattedDate date={post.data.pubDate} />{post.data.readingTime && <> · {post.data.readingTime}</>}</span>
-								</div>
-							</a>
-						))}
-					</div>
-				</section>
-			)}
-
-			<section class="tut-section">
-				<h2 class="section-title">AI Explained</h2>
-				<div class="tut-grid">
-					{explained.map(post => (
-						<a href={`/blog/${post.id}/`} class="tut-card">
-							<div class="tut-card__img" style={`background:${CATEGORY_COLORS[post.data.category] ?? 'var(--primary-light)'}`}>
-								{post.data.heroImage
-									? <Image width={400} height={220} src={post.data.heroImage} alt={post.data.title} loading="lazy" />
-									: <span aria-hidden="true">🤖</span>
-								}
-							</div>
-							<div class="tut-card__body">
-								<span class="tut-badge tut-badge--explain">Explainer</span>
-								<h3>{post.data.title}</h3>
-								<p>{post.data.description}</p>
-								<span class="tut-meta"><FormattedDate date={post.data.pubDate} />{post.data.readingTime && <> · {post.data.readingTime}</>}</span>
-							</div>
-						</a>
-					))}
+	{basics.length > 0 && (
+		<section class="container tu-basics-wrap">
+			<div class="tu-basics card card--sunk">
+				<div class="tu-basics__copy">
+					<span class="eyebrow">Before you start</span>
+					<h2 class="tu-basics__title">New to this? Learn the <em class="serif">words</em> first.</h2>
+					<p class="muted">Models, tokens, agents, hallucinations — five minutes each, and every guide here reads easier afterwards.</p>
+					<a href="/blog/category/ai-explained/" class="btn btn--ghost btn--sm">AI explained <Icon name="arrow-right" class="icon--arrow" /></a>
 				</div>
-			</section>
+				<ul class="tu-basics__list" role="list">
+					{basics.map((p) => (
+						<li>
+							<a href={`/blog/${p.id}/`} class="tu-basics__item">
+								<span class="tu-basics__name">{p.data.title}</span>
+								<span class="tu-basics__meta">{readTime(p.body)}</span>
+								<span class="tu-basics__go"><Icon name="arrow-right" size={15} /></span>
+							</a>
+						</li>
+					))}
+				</ul>
+			</div>
+		</section>
+	)}
 
-		</div>
-	</main>
-	<Footer />
-</body>
-</html>
+	<Newsletter variant="band" heading="New walk-throughs go out in the *brief*." text="What changed in AI, why it matters to you, and what to do about it — three minutes a day, plus every new guide as it lands." />
+</Base>
 
 <style>
-.page-hero {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 3.5rem 0 2.5rem;
-	text-align: center;
-}
+	.tu-hero { padding: var(--s-8) 0 var(--s-10); }
+	.tu-hero__in { display: grid; gap: var(--s-8); margin-top: var(--s-6); align-items: end; }
+	.tu-hero__copy { display: grid; gap: var(--s-5); }
+	.tu-hero__title { font-size: var(--text-5xl); max-width: 15ch; text-wrap: balance; }
+	.tu-hero__tracks { display: grid; grid-auto-flow: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+	.tu-hero__tracks > div { background: var(--surface); padding: var(--s-5); display: grid; gap: var(--s-2); min-width: 150px; }
+	.tu-hero__tracks dt { display: inline-flex; align-items: center; gap: 6px; }
+	.tu-hero__tracks dt :global(.icon) { flex-shrink: 0; }
+	.tu-hero__tracks dd { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
 
-.hero-badge {
-	display: inline-block;
-	background: var(--accent);
-	color: #fff;
-	font-size: 0.75rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	padding: 0.3rem 0.9rem;
-	border-radius: 99px;
-	margin-bottom: 1rem;
-}
+	.tu-feature { display: grid; gap: var(--s-5); }
+	.tu-grid { row-gap: var(--s-10); }
 
-.page-hero h1 {
-	font-size: clamp(1.8rem, 4vw, 2.8rem);
-	margin-bottom: 0.75rem;
-}
+	.tu-basics-wrap { padding-bottom: var(--s-16); }
+	.tu-basics { display: grid; gap: var(--s-8); padding: clamp(1.5rem, 4vw, 2.5rem); }
+	.tu-basics__copy { display: grid; gap: var(--s-3); justify-items: start; }
+	.tu-basics__title { font-size: var(--text-2xl); max-width: 18ch; }
+	.tu-basics__copy .btn { margin-top: var(--s-2); }
+	.tu-basics__list { display: grid; align-content: start; border-top: 1px solid var(--line); }
+	.tu-basics__item {
+		display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--s-4);
+		padding: var(--s-4) 0; border-bottom: 1px solid var(--line); transition: color var(--dur-2);
+	}
+	.tu-basics__item:hover { color: var(--accent-ink); }
+	.tu-basics__name { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
+	.tu-basics__meta { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); white-space: nowrap; }
+	.tu-basics__go { display: inline-flex; color: var(--ink-4); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.tu-basics__item:hover .tu-basics__go { transform: translateX(3px); color: var(--accent); }
 
-.page-hero p {
-	color: rgb(var(--gray));
-	max-width: 540px;
-	margin: 0 auto;
-}
-
-.tutorials-body { padding: 3rem 0 4rem; }
-
-.tut-section { margin-bottom: 3.5rem; }
-
-.section-title {
-	font-size: 1.35rem;
-	font-weight: 700;
-	margin-bottom: 1.5rem;
-	padding-bottom: 0.6rem;
-	border-bottom: 2px solid var(--border);
-}
-
-.tut-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.25rem;
-}
-
-.tut-card {
-	display: flex;
-	flex-direction: column;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	overflow: hidden;
-	color: inherit;
-	transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.tut-card:hover {
-	transform: translateY(-4px);
-	border-color: rgba(0,200,150,0.35);
-	box-shadow: 0 8px 28px rgba(0,200,150,0.12);
-}
-
-.tut-card__img {
-	width: 100%;
-	height: 180px;
-	overflow: hidden;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 2.5rem;
-	flex-shrink: 0;
-}
-
-.tut-card__img img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	transition: transform 0.4s ease;
-}
-
-.tut-card:hover .tut-card__img img { transform: scale(1.05); }
-
-.tut-card__body {
-	padding: 1.1rem 1.25rem 1.25rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-	flex: 1;
-}
-
-.tut-card__body h3 {
-	font-size: 1rem;
-	line-height: 1.4;
-	margin: 0;
-	transition: color 0.2s;
-}
-
-.tut-card:hover h3 { color: var(--primary); }
-
-.tut-card__body p {
-	font-size: 0.85rem;
-	color: rgb(var(--gray));
-	margin: 0;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-}
-
-.tut-badge {
-	display: inline-block;
-	font-size: 0.7rem;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	padding: 0.2rem 0.6rem;
-	border-radius: 99px;
-	background: var(--primary-light);
-	color: var(--primary);
-	width: fit-content;
-}
-
-.tut-badge--explain {
-	background: #f0f4ff;
-	color: #4060d0;
-}
-
-.tut-meta {
-	font-size: 0.75rem;
-	color: rgb(var(--gray));
-	margin-top: auto;
-	padding-top: 0.5rem;
-}
+	@media (min-width: 900px) {
+		.tu-hero__in { grid-template-columns: minmax(0, 1fr) auto; }
+		.tu-basics { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--s-12); align-items: center; }
+	}
+	@media (max-width: 720px) {
+		.tu-hero__title { font-size: var(--text-4xl); }
+		.tu-hero__tracks { grid-auto-flow: row; }
+		.tu-basics__item { grid-template-columns: minmax(0, 1fr) auto; }
+		.tu-basics__go { display: none; }
+	}
 </style>
