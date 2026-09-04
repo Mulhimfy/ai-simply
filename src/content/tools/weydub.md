@@ -2,7 +2,7 @@
 name: Weydub
 description: AI video localization studio with hard-subtitle translation, text removal, AI dubbing, image translation, and batch workflows with API access.
 category: ai-video
-subcategory: AI Video Localization
+subcategory: AI Video Editor
 url: https://weydub.com
 pricing: freemium
 tags: [video-translation, dubbing, subtitles, localization, text-removal, batch, api]

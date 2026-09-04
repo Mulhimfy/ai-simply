@@ -1,86 +1,803 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+/**
+ * `/news/` — the Briefs archive. The hub for the daily ritual: today's brief up top,
+ * the last 30 days as a heat strip, then every brief we have published, by month.
+ * Indexable (the dated pages are not), so it carries the topic for search.
+ */
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
+import { ANGLES } from '../../lib/brief';
+import { SITE_TITLE, SITE_URL } from '../../consts';
+import { ogUrl } from '../../og/url';
+import { loadBriefs, archive, briefAngles, dateParts, sourcesOf, SNAPSHOTS } from '../../lib/news';
 
-interface NewsItem { title: string; link: string; date: string; source: string; }
-interface Snapshot { date: string; fetchedAt?: string; items: NewsItem[]; }
+const { briefs, latest } = await loadBriefs();
+const arc = archive(briefs, 30);
+const outlets = sourcesOf(SNAPSHOTS.flatMap((s) => s.items));
+const totalStories = SNAPSHOTS.reduce((n, s) => n + s.items.length, 0);
 
-const snapshots = import.meta.glob<Snapshot>('../../data/news/*.json', { eager: true });
-const entries = Object.entries(snapshots)
-	.map(([path, data]) => ({ slug: path.split('/').pop()!.replace(/\.json$/, ''), data }))
-	.sort((a, b) => b.slug.localeCompare(a.slug));
+const today = latest!;
+const t = dateParts(today.date);
+const firstDay = arc.first ? dateParts(arc.first) : null;
 
-const title = 'AI News Archive';
-const description = `Daily AI news snapshots — deduped headlines from VentureBeat, The Verge, TechCrunch, Ars Technica, Wired, MIT Tech Review, Hugging Face, and IEEE Spectrum. ${entries.length} days archived.`;
+/* One flat list (month headings inline) so "show more" can reveal rows in batches
+   without breaking the month grouping. 133 rows of archive would otherwise make this
+   page 15,000px tall. */
+const PAGE = 24;
+let n = 0;
+type Row =
+	| { kind: 'month'; label: string; from: number }
+	| { kind: 'brief'; brief: (typeof briefs)[number]; i: number };
+const rows: Row[] = arc.months.flatMap((m) => [
+	{ kind: 'month' as const, label: m.label, from: n },
+	...m.briefs.map((brief) => ({ kind: 'brief' as const, brief, i: n++ })),
+]);
+const older = Math.max(0, n - PAGE);
 
-function prettyDate(iso: string) {
-	return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', {
-		weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
-	});
-}
+/* Every day carries 30–32 stories, so a "busiest day" heat map would be decoration
+   pretending to be data. The strip says the one true thing instead: which of the last
+   30 days has a brief. */
+const covered = arc.heat.filter((c) => c.href).length;
+const gaps = arc.heat.length - covered;
+
+const description = `Every AI brief we have published — ${briefs.length} days of what changed in AI, why it matters and what to do about it, compiled from ${outlets.length} outlets. Three minutes a morning.`;
+
+const ld = {
+	'@context': 'https://schema.org',
+	'@type': 'CollectionPage',
+	name: 'AI briefs',
+	description,
+	url: `${SITE_URL}/news/`,
+	isPartOf: { '@type': 'WebSite', name: SITE_TITLE, url: SITE_URL },
+	mainEntity: {
+		'@type': 'ItemList',
+		numberOfItems: briefs.length,
+		itemListElement: briefs.slice(0, 30).map((b, i) => ({
+			'@type': 'ListItem',
+			position: i + 1,
+			name: b.title,
+			url: `${SITE_URL}/news/${b.date}/`,
+		})),
+	},
+};
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead title={title} description={description} />
-</head>
-<body>
-<Header />
+<Base title="AI briefs — every day, in 3 minutes" description={description} image={ogUrl('news', today.date)}>
+	<script slot="head" type="application/ld+json" set:html={JSON.stringify(ld)} />
 
-<main id="main-content">
-	<section class="section">
-		<div class="container news-index">
-			<h1 class="news-title">AI News Archive</h1>
-			<p class="news-sub">Daily AI news snapshots — deduped headlines from 8 outlets, refreshed every morning.</p>
+	<div class="nx">
+		<!-- ── hero ─────────────────────────────────────────────────────── -->
+		<section class="nx__hero">
+			<div class="nx__hero-bg" aria-hidden="true"><div class="bg-grid nx__grid"></div></div>
+			<div class="container container--narrow nx__hero-inner">
+				<Breadcrumb items={[{ name: 'Briefs' }]} class="nx__crumbs" />
+				<p class="eyebrow" data-reveal>The archive</p>
+				<h1 class="display nx__title" data-reveal style="--i:1">
+					Every day, in <em class="serif">3 minutes</em>.
+				</h1>
+				<p class="lead nx__lead" data-reveal style="--i:2">
+					One brief every morning: what changed in AI, why it matters to you, and what to do about it.
+					Nothing else.
+				</p>
 
-			{entries.length === 0 ? (
-				<p class="news-empty">No snapshots yet. The daily workflow runs at 07:00 UTC.</p>
-			) : (
-				<ul class="archive-list">
-					{entries.map(entry => (
-						<li class="archive-row">
-							<a href={`/news/${entry.slug}/`} class="archive-link">
-								<div class="archive-date">
-									<span class="archive-date-main">{prettyDate(entry.slug)}</span>
-									<span class="archive-date-iso">{entry.slug}</span>
-								</div>
-								<div class="archive-meta">
-									<span class="archive-count">{entry.data.items.length} headlines</span>
-									<span class="archive-arrow">→</span>
-								</div>
-							</a>
+				<div class="nx__rail" data-reveal style="--i:3">
+					<span class="nx__stat tnum">{briefs.length} briefs</span>
+					<span class="nx__dot" aria-hidden="true"></span>
+					<span class="nx__stat tnum">{totalStories.toLocaleString()} stories scanned</span>
+					<span class="nx__dot" aria-hidden="true"></span>
+					<span class="nx__stat tnum">{outlets.length} outlets</span>
+					{firstDay && (
+						<>
+							<span class="nx__dot" aria-hidden="true"></span>
+							<span class="nx__stat">since {firstDay.monthDayYear}</span>
+						</>
+					)}
+				</div>
+
+				<div class="nx__actions" data-reveal style="--i:4">
+					<span class="nx__streak" data-streak hidden>
+						<Icon name="flame" size={14} />
+						<span data-streak-label></span>
+					</span>
+					<Newsletter variant="inline" class="nx__form" />
+					<a href="/rss.xml" class="nx__rss">
+						<Icon name="rss" size={14} /> RSS
+					</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- ── today ────────────────────────────────────────────────────── -->
+		<section class="container container--narrow nx__today" aria-labelledby="nx-today">
+			<a href={`/news/${today.date}/`} class="nx__card" data-reveal>
+				<div class="nx__card-rail">
+					<span class="pill pill--live nx__live">{arc.heatEnd === today.date ? 'Latest brief' : 'Brief'}</span>
+					<time class="nx__card-date" datetime={today.date}>{t.weekdayMonthDay}</time>
+					<span class="nx__card-meta tnum">{today.readingMinutes} min read</span>
+				</div>
+				<h2 id="nx-today" class="nx__card-title">{today.title}</h2>
+				{today.intro && <p class="nx__card-intro">{today.intro}</p>}
+				<ol class="nx__heads" role="list">
+					{today.items.map((item) => (
+						<li class="nx__head">
+							<Icon name={ANGLES[item.angle].icon} size={13} class="nx__head-icon" />
+							<span>{item.headline}</span>
 						</li>
 					))}
-				</ul>
-			)}
-		</div>
-	</section>
-</main>
+				</ol>
+				<span class="btn btn--accent nx__cta">
+					Read the brief <Icon name="arrow-right" class="icon--arrow" />
+				</span>
+			</a>
+		</section>
 
-<Footer />
+		<!-- ── heat strip ───────────────────────────────────────────────── -->
+		<section class="container container--narrow nx__heat-wrap" aria-labelledby="nx-heat">
+			<div class="nx__head-row">
+				<h2 id="nx-heat" class="nx__h2">The last 30 days</h2>
+				<span class="nx__h2-meta tnum">
+					{dateParts(arc.heatStart).short} – {dateParts(arc.heatEnd).short}
+				</span>
+			</div>
+			<div class="nx__heat" data-reveal>
+				{arc.heat.map((cell) => {
+					const p = dateParts(cell.date);
+					return cell.href ? (
+						<a
+							href={cell.href}
+							class:list={['nx__cell', { 'nx__cell--latest': cell.date === arc.heatEnd }]}
+							title={`${p.shortWeekday} — read the brief`}
+							aria-label={`Brief for ${p.shortWeekday}`}
+						>
+							<span class="nx__cell-day tnum" aria-hidden="true">{p.day}</span>
+						</a>
+					) : (
+						<span class="nx__cell nx__cell--empty" title={`${p.shortWeekday} — no brief`}>
+							<span class="nx__cell-day tnum" aria-hidden="true">{p.day}</span>
+						</span>
+					);
+				})}
+			</div>
+			<p class="nx__heat-note">
+				<Icon name={gaps ? 'calendar-days' : 'check'} size={13} />
+				{gaps === 0
+					? `A brief every day for ${arc.heat.length} days running.`
+					: `${covered} of the last ${arc.heat.length} days have a brief.`}
+			</p>
+		</section>
+
+		<!-- ── every brief ──────────────────────────────────────────────── -->
+		<section class="container container--narrow nx__all" aria-labelledby="nx-all">
+			<div class="nx__head-row">
+				<h2 id="nx-all" class="nx__h2">Every brief</h2>
+				<span class="nx__h2-meta tnum">{briefs.length} days</span>
+			</div>
+
+			{rows.length === 0 ? (
+				<p class="nx__empty">Today's is the first brief. Come back tomorrow — there will be another.</p>
+			) : (
+				<>
+					<ol class="nx__rows" role="list" data-archive>
+						{rows.map((row) =>
+							row.kind === 'month' ? (
+								<li class="nx__month-row" data-month data-from={row.from} hidden={row.from >= PAGE}>
+									<h3 class="nx__month-label">{row.label}</h3>
+								</li>
+							) : (
+								<li class="nx__row" data-date={row.brief.date} hidden={row.i >= PAGE}>
+									<a href={`/news/${row.brief.date}/`} class="nx__row-link">
+										<span class="nx__row-date">
+											<span class="nx__row-day tnum">{String(dateParts(row.brief.date).day).padStart(2, '0')}</span>
+											<span class="nx__row-wd">{dateParts(row.brief.date).weekdayShort}</span>
+										</span>
+										<span class="nx__row-main">
+											<span class="nx__row-title">{row.brief.title}</span>
+											<span class="nx__row-meta">
+												<span class="tnum">{row.brief.items.length} in the brief</span>
+												<span class="nx__row-sep" aria-hidden="true">·</span>
+												<span class="tnum">{row.brief.storyCount} stories</span>
+												{row.brief.kind === 'editorial' && (
+													<>
+														<span class="nx__row-sep" aria-hidden="true">·</span>
+														<span class="nx__row-written">Written</span>
+													</>
+												)}
+											</span>
+										</span>
+										<span class="nx__row-angles" aria-hidden="true">
+											{briefAngles(row.brief).slice(0, 5).map((a) => (
+												<Icon name={ANGLES[a].icon} size={13} class="nx__angle" />
+											))}
+										</span>
+										<Icon name="arrow-right" size={16} class="nx__row-go" />
+									</a>
+								</li>
+							),
+						)}
+					</ol>
+					{older > 0 && (
+						<div class="nx__more-wrap">
+							<button type="button" class="btn btn--ghost nx__more" data-archive-more>
+								Show earlier briefs
+								<span class="nx__more-left tnum" data-archive-left>{older}</span>
+							</button>
+						</div>
+					)}
+				</>
+			)}
+		</section>
+
+		<Newsletter variant="band" id="newsletter" />
+	</div>
+</Base>
+
+<script>
+	/* Reading streak (same contract as the brief pages): localStorage['aib-news-days']
+	   is the list of days the reader showed up; a streak survives one missed day. */
+	const KEY = 'aib-news-days';
+	const DAY = 86400000;
+
+	function paintStreak() {
+		const chips = document.querySelectorAll<HTMLElement>('[data-streak]');
+		if (!chips.length) return;
+		const now = new Date();
+		const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+		let days: string[] = [];
+		try {
+			const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+			if (Array.isArray(v)) days = v.filter((x) => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x));
+		} catch {}
+		days = [...new Set([...days, today])].sort().slice(-400);
+		try {
+			localStorage.setItem(KEY, JSON.stringify(days));
+		} catch {}
+		const sorted = [...days].reverse();
+		let n = sorted.length ? 1 : 0;
+		let prev = sorted.length ? Date.parse(sorted[0] + 'T00:00:00Z') : 0;
+		for (let i = 1; i < sorted.length; i++) {
+			const ts = Date.parse(sorted[i] + 'T00:00:00Z');
+			if (Math.round((prev - ts) / DAY) <= 2) {
+				n++;
+				prev = ts;
+			} else break;
+		}
+		/* A streak is earned, not advertised: nothing shows until there is one, so a
+		   first-time reader never meets a pill that looks tappable and does nothing. */
+		chips.forEach((chip) => {
+			const label = chip.querySelector('[data-streak-label]');
+			if (label) label.textContent = `${n}-day streak`;
+			chip.classList.toggle('is-live', n >= 2);
+			chip.title = `You have read the brief ${n} days running`;
+			chip.hidden = n < 2;
+		});
+	}
+
+	/* "New since your last visit": window.__aib.lastVisit() is the PREVIOUS session's
+	   timestamp, so anything published after it is new to this reader. */
+	function markNew() {
+		const prev = (window as any).__aib?.lastVisit?.();
+		if (!prev) return;
+		const rows = Array.from(document.querySelectorAll<HTMLElement>('.nx__row[data-date]'));
+		const fresh = rows.filter((r) => Date.parse((r.dataset.date || '') + 'T07:00:00Z') > prev);
+		if (!fresh.length || fresh.length === rows.length) return;
+		const last = fresh[fresh.length - 1];
+		const div = document.createElement('li');
+		div.className = 'nx__since';
+		div.setAttribute('role', 'presentation');
+		div.textContent = 'New since your last visit';
+		last.after(div);
+	}
+
+	/* Archive paging: rows are in the DOM from the start (crawlable, no layout shift)
+	   and revealed in batches; a month heading appears with its first visible row. */
+	const PAGE = 24;
+
+	function syncMonths(list: HTMLElement) {
+		const kids = Array.from(list.children) as HTMLElement[];
+		let head: HTMLElement | null = null;
+		let any = false;
+		for (const el of kids) {
+			if (el.hasAttribute('data-month')) {
+				if (head) head.hidden = !any;
+				head = el;
+				any = false;
+			} else if (el.classList.contains('nx__row') && !el.hidden) {
+				any = true;
+			}
+		}
+		if (head) head.hidden = !any;
+	}
+
+	function paging() {
+		const list = document.querySelector<HTMLElement>('[data-archive]');
+		const btn = document.querySelector<HTMLButtonElement>('[data-archive-more]');
+		if (!list || !btn || btn.dataset.bound) return;
+		btn.dataset.bound = '1';
+		const left = btn.querySelector<HTMLElement>('[data-archive-left]');
+		btn.addEventListener('click', () => {
+			const hidden = Array.from(list.querySelectorAll<HTMLElement>('.nx__row[hidden]'));
+			hidden.slice(0, PAGE).forEach((r) => (r.hidden = false));
+			syncMonths(list);
+			const rest = list.querySelectorAll('.nx__row[hidden]').length;
+			if (left) left.textContent = String(rest);
+			if (!rest) btn.hidden = true;
+		});
+	}
+
+	function init() {
+		paintStreak();
+		markNew();
+		paging();
+	}
+	init();
+	document.addEventListener('astro:page-load', init);
+</script>
 
 <style>
-	.news-index { max-width: 760px; }
-	.news-title { font-size: 2rem; font-weight: 800; margin: 0 0 0.5rem; color: rgb(var(--black)); }
-	.news-sub { font-size: 0.95rem; color: rgb(var(--gray)); margin: 0 0 2rem; }
-	.news-empty { padding: 2rem; background: var(--bg-alt); border-radius: var(--radius); text-align: center; color: rgb(var(--gray)); }
-
-	.archive-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-	.archive-row { margin: 0; }
-	.archive-link {
-		display: flex; align-items: center; justify-content: space-between;
-		padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius);
-		color: inherit; transition: all 0.15s;
+	/* ── hero ─────────────────────────────────────────────────────────── */
+	.nx__hero {
+		position: relative;
+		padding-block: clamp(2.5rem, 5vw, 4.5rem) clamp(2.5rem, 5vw, 4rem);
+		border-bottom: 1px solid var(--line);
+		overflow: hidden;
 	}
-	.archive-link:hover { border-color: var(--primary); background: var(--primary-light); }
-	.archive-date { display: flex; flex-direction: column; gap: 0.15rem; }
-	.archive-date-main { font-size: 1rem; font-weight: 700; color: rgb(var(--black)); }
-	.archive-date-iso { font-size: 0.75rem; color: rgb(var(--gray)); font-family: monospace; }
-	.archive-meta { display: flex; align-items: center; gap: 1rem; }
-	.archive-count { font-size: 0.85rem; color: rgb(var(--gray)); font-weight: 600; }
-	.archive-arrow { font-size: 1rem; color: var(--primary); }
+	.nx__hero-bg {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.nx__grid {
+		position: absolute;
+		inset: -1px;
+		opacity: 0.5;
+		mask-image: radial-gradient(120% 80% at 20% 0%, #000, transparent 70%);
+		-webkit-mask-image: radial-gradient(120% 80% at 20% 0%, #000, transparent 70%);
+	}
+	.nx__hero-inner {
+		position: relative;
+	}
+	:global(.nx__crumbs) {
+		margin-bottom: var(--s-8);
+	}
+	.nx__title {
+		margin-top: var(--s-4);
+		font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+		letter-spacing: -0.04em;
+		line-height: 1;
+	}
+	.nx__lead {
+		margin-top: var(--s-5);
+		max-width: 52ch;
+	}
+	.nx__rail {
+		display: flex;
+		align-items: center;
+		gap: var(--s-3);
+		flex-wrap: wrap;
+		margin-top: var(--s-6);
+	}
+	.nx__stat {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nx__dot {
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background: var(--ink-4);
+	}
+	.nx__actions {
+		display: flex;
+		align-items: center;
+		gap: var(--s-4);
+		flex-wrap: wrap;
+		margin-top: var(--s-8);
+	}
+	:global(.nx__form) {
+		flex: 1 1 360px;
+		max-width: 460px;
+	}
+	.nx__streak {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		height: 44px;
+		padding: 0 14px;
+		border-radius: var(--r-full);
+		border: 1px solid var(--line-2);
+		background: var(--surface);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		color: var(--ink-3);
+		white-space: nowrap;
+	}
+	.nx__streak :global(svg) {
+		color: var(--ink-4);
+	}
+	.nx__streak.is-live {
+		color: var(--accent-ink);
+		border-color: var(--accent-soft-2);
+		background: var(--accent-soft);
+	}
+	.nx__streak.is-live :global(svg) {
+		color: var(--accent);
+	}
+	.nx__rss {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 44px;
+		padding-inline: 4px;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		transition: color var(--dur-2);
+	}
+	.nx__rss:hover {
+		color: var(--accent-ink);
+	}
+
+	/* ── today's card ─────────────────────────────────────────────────── */
+	.nx__today {
+		margin-top: clamp(2.5rem, 5vw, 4rem);
+	}
+	.nx__card {
+		display: grid;
+		gap: var(--s-5);
+		padding: clamp(1.5rem, 4vw, 2.5rem);
+		border: 1px solid var(--line);
+		border-radius: var(--r-xl);
+		background: var(--surface);
+		box-shadow: var(--shadow-sm);
+		transition: border-color var(--dur-3), transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
+	}
+	.nx__card:hover {
+		border-color: var(--line-2);
+		transform: translateY(-3px);
+		box-shadow: var(--shadow-lg);
+	}
+	.nx__card-rail {
+		display: flex;
+		align-items: center;
+		gap: var(--s-3);
+		flex-wrap: wrap;
+	}
+	.nx__live {
+		gap: 6px;
+	}
+	.nx__card-date,
+	.nx__card-meta {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nx__card-title {
+		font-size: clamp(1.5rem, 1.15rem + 1.6vw, 2.25rem);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+		text-wrap: balance;
+		transition: color var(--dur-2);
+	}
+	.nx__card:hover .nx__card-title {
+		color: var(--accent-ink);
+	}
+	.nx__card-intro {
+		font-size: var(--text-md);
+		line-height: 1.6;
+		color: var(--ink-2);
+		max-width: 62ch;
+	}
+	.nx__heads {
+		display: grid;
+		gap: 0;
+		border-top: 1px solid var(--line);
+	}
+	.nx__head {
+		display: grid;
+		grid-template-columns: 20px minmax(0, 1fr);
+		gap: var(--s-3);
+		align-items: baseline;
+		padding: var(--s-3) 0;
+		border-bottom: 1px solid var(--line);
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		color: var(--ink-2);
+	}
+	:global(.nx__head-icon) {
+		color: var(--ink-4);
+		position: relative;
+		top: 2px;
+	}
+	.nx__cta {
+		justify-self: start;
+	}
+
+	/* ── heat ─────────────────────────────────────────────────────────── */
+	.nx__heat-wrap {
+		margin-top: clamp(3rem, 6vw, 5rem);
+	}
+	.nx__head-row {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-4);
+		padding-bottom: var(--s-4);
+		margin-bottom: var(--s-5);
+		border-bottom: 1px solid var(--line);
+	}
+	.nx__h2 {
+		font-size: var(--text-xl);
+		letter-spacing: -0.02em;
+	}
+	.nx__h2-meta {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nx__heat {
+		display: flex;
+		gap: 4px;
+		align-items: stretch;
+	}
+	.nx__cell {
+		flex: 1;
+		min-width: 6px;
+		height: 46px;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		padding-bottom: 5px;
+		border-radius: 5px;
+		background: rgba(var(--accent-rgb), 0.18);
+		border: 1px solid rgba(var(--accent-rgb), 0.3);
+		transition: background-color var(--dur-2), transform var(--dur-2) var(--ease-out), color var(--dur-2);
+	}
+	.nx__cell-day {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.02em;
+		color: var(--accent-ink);
+	}
+	.nx__cell--latest {
+		background: var(--accent);
+		border-color: var(--accent);
+	}
+	.nx__cell--latest .nx__cell-day {
+		color: var(--on-accent);
+	}
+	a.nx__cell:hover {
+		background: var(--accent);
+		transform: translateY(-3px);
+	}
+	a.nx__cell:hover .nx__cell-day {
+		color: var(--on-accent);
+		opacity: 1;
+	}
+	.nx__cell--empty {
+		background: none;
+		border: 1px dashed var(--line-2);
+	}
+	.nx__cell--empty .nx__cell-day {
+		color: var(--ink-4);
+		opacity: 0.7;
+	}
+	.nx__heat-note {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: var(--s-4);
+		font-size: var(--text-xs);
+		color: var(--ink-3);
+	}
+	.nx__heat-note :global(svg) {
+		color: var(--accent);
+	}
+
+	/* ── every brief ──────────────────────────────────────────────────── */
+	.nx__all {
+		margin-top: clamp(3rem, 6vw, 5rem);
+		margin-bottom: clamp(3rem, 6vw, 5rem);
+	}
+	.nx__month-row {
+		padding-top: var(--s-8);
+		padding-bottom: var(--s-2);
+	}
+	.nx__month-row:first-child {
+		padding-top: 0;
+	}
+	.nx__more-wrap {
+		display: flex;
+		justify-content: center;
+		margin-top: var(--s-8);
+	}
+	.nx__more {
+		gap: var(--s-3);
+	}
+	.nx__more-left {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: var(--ink-3);
+		padding: 2px 8px;
+		border-radius: var(--r-full);
+		background: var(--surface-2);
+	}
+	.nx__month-label {
+		display: inline-block;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		font-weight: 500;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		padding: 6px 10px;
+		margin-left: -10px;
+		margin-bottom: var(--s-2);
+		background: var(--bg);
+		border-radius: var(--r-full);
+	}
+	.nx__rows {
+		display: grid;
+	}
+	.nx__row {
+		border-bottom: 1px solid var(--line);
+	}
+	.nx__month-row + .nx__row {
+		border-top: 1px solid var(--line);
+	}
+	.nx__row-link {
+		display: grid;
+		grid-template-columns: 54px minmax(0, 1fr) auto 20px;
+		align-items: center;
+		gap: var(--s-4);
+		padding: var(--s-4) var(--s-3);
+		margin-inline: calc(var(--s-3) * -1);
+		border-radius: var(--r-sm);
+		transition: background-color var(--dur-2);
+	}
+	.nx__row-link:hover {
+		background: var(--surface-2);
+	}
+	.nx__row-date {
+		display: grid;
+		gap: 1px;
+		text-align: center;
+	}
+	.nx__row-day {
+		font-family: var(--font-mono);
+		font-size: var(--text-md);
+		font-weight: 500;
+		color: var(--ink-2);
+		line-height: 1;
+	}
+	.nx__row-wd {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--ink-4);
+	}
+	.nx__row-main {
+		display: grid;
+		gap: 4px;
+		min-width: 0;
+	}
+	.nx__row-title {
+		font-size: var(--text-base);
+		font-weight: 500;
+		line-height: 1.4;
+		color: var(--ink);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.nx__row-link:hover .nx__row-title {
+		color: var(--accent-ink);
+	}
+	.nx__row-meta {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nx__row-sep {
+		color: var(--ink-4);
+	}
+	.nx__row-written {
+		color: var(--accent-ink);
+	}
+	.nx__row-angles {
+		display: flex;
+		gap: 6px;
+		color: var(--ink-4);
+	}
+	:global(.nx__row-go) {
+		color: var(--ink-4);
+		opacity: 0;
+		transform: translateX(-4px);
+		transition: opacity var(--dur-2), transform var(--dur-2) var(--ease-out);
+	}
+	.nx__row-link:hover :global(.nx__row-go),
+	.nx__row-link:focus-visible :global(.nx__row-go) {
+		opacity: 1;
+		transform: none;
+		color: var(--accent);
+	}
+	.nx__since {
+		display: flex;
+		align-items: center;
+		gap: var(--s-3);
+		padding: var(--s-4) 0 var(--s-2);
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--accent-ink);
+	}
+	.nx__since::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--accent-soft-2);
+	}
+	.nx__empty {
+		padding: var(--s-8) 0;
+		color: var(--ink-3);
+	}
+
+	@media (max-width: 640px) {
+		.nx__actions {
+			gap: var(--s-3);
+		}
+		:global(.nx__form) {
+			flex-basis: 100%;
+		}
+		.nx__row-link {
+			grid-template-columns: 42px minmax(0, 1fr) 18px;
+			gap: var(--s-3);
+		}
+		.nx__row-angles {
+			display: none;
+		}
+		:global(.nx__row-go) {
+			opacity: 1;
+			transform: none;
+		}
+		/* 30 equal-flex cells become 8px-wide links on a phone. Scroll the ribbon instead,
+		   at a real touch size, with the dates legible again. */
+		.nx__heat {
+			overflow-x: auto;
+			scrollbar-width: none;
+			margin-inline: calc(var(--gutter) * -1);
+			padding-inline: var(--gutter);
+			scroll-snap-type: x proximity;
+			mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%);
+			-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%);
+		}
+		.nx__heat::-webkit-scrollbar {
+			display: none;
+		}
+		.nx__cell {
+			flex: 0 0 44px;
+			height: 46px;
+			scroll-snap-align: start;
+		}
+	}
 </style>
-</body>
-</html>

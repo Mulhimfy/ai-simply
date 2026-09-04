@@ -1,21 +1,47 @@
 ---
-interface Crumb {
-	label: string;
-	href?: string;
-}
-
-interface Props {
-	crumbs: Crumb[];
-}
-
-const { crumbs } = Astro.props;
+/** Breadcrumb with BreadcrumbList JSON-LD. items: [{ name, href }] — last item is the current page (no href needed). */
+import { SITE_URL } from '../consts';
+import Icon from './Icon.astro';
+interface Crumb { name?: string; label?: string; href?: string }
+interface Props { items?: Crumb[]; /** legacy prop name */ crumbs?: Crumb[]; class?: string }
+const { items, crumbs, class: className } = Astro.props;
+const raw = (items ?? crumbs ?? []).map((c) => ({ name: c.name ?? c.label ?? '', href: c.href }));
+const all = raw[0]?.href === '/' ? raw : [{ name: 'Home', href: '/' }, ...raw];
+const ld = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: all.map((c, i) => ({
+		'@type': 'ListItem', position: i + 1, name: c.name,
+		...(c.href ? { item: new URL(c.href, SITE_URL).toString() } : {}),
+	})),
+};
 ---
-
-<nav class="breadcrumbs" aria-label="Breadcrumb">
-	{crumbs.map((crumb, i) => (
-		<>
-			{i > 0 && <span aria-hidden="true">/</span>}
-			{crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span>{crumb.label}</span>}
-		</>
-	))}
+<nav class:list={['crumbs', className]} aria-label="Breadcrumb">
+	<ol role="list" class="crumbs__list">
+		{all.map((c, i) => (
+			<li class="crumbs__item">
+				{i > 0 && <Icon name="chevron-right" size={12} class="crumbs__sep" />}
+				{c.href && i < all.length - 1
+					? <a href={c.href} class="crumbs__link">{c.name}</a>
+					: <span class="crumbs__current" aria-current="page">{c.name}</span>}
+			</li>
+		))}
+	</ol>
 </nav>
+<script type="application/ld+json" set:html={JSON.stringify(ld)} />
+
+<style>
+	.crumbs { font-size: var(--text-xs); color: var(--ink-3); overflow-x: auto; scrollbar-width: none; }
+	.crumbs::-webkit-scrollbar { display: none; }
+	.crumbs__list { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+	.crumbs__item { display: inline-flex; align-items: center; gap: 6px; }
+	:global(.crumbs__sep) { color: var(--ink-4); }
+	.crumbs__link { color: var(--ink-3); transition: color var(--dur-2); }
+	/* keep the visual size but give coarse pointers a 44px target */
+	@media (pointer: coarse) {
+		.crumbs__list { gap: 2px; }
+		.crumbs__link, .crumbs__current { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px; }
+	}
+	.crumbs__link:hover { color: var(--ink); }
+	.crumbs__current { color: var(--ink); font-weight: 500; }
+</style>

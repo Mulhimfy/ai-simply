@@ -1,20 +1,20 @@
 ---
+/**
+ * One explainer. Thin on purpose: the layout derives everything else it needs
+ * (related posts, tools mentioned, the brief this belongs to) from the entry.
+ */
 import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: post,
-	}));
+	return posts.map((post) => ({ params: { slug: post.id }, props: post }));
 }
 type Props = CollectionEntry<'blog'>;
 
 const post = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 ---
-
-<BlogPost {...post.data} body={post.body}>
+<BlogPost {post} {headings}>
 	<Content />
 </BlogPost>

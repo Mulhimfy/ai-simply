@@ -1,0 +1,115 @@
+---
+/**
+ * FAQ accordion. Styled <details> so it works with no JS, prints, and is findable
+ * by in-page search. Emits FAQPage JSON-LD unless `schema={false}` / `jsonld={false}`.
+ *
+ *   <Faq faqs={[{ question, answer }]} />
+ *   <Faq items={[{ q, a }]} heading={false} jsonld={false} />
+ *
+ * Both prop shapes are accepted (`faqs`/`question`/`answer` and `items`/`q`/`a`)
+ * because the pages were written against two revisions of this component.
+ * Answers may contain inline HTML (links, <strong>); the JSON-LD copy is stripped.
+ */
+import Icon from './Icon.astro';
+
+interface FaqEntry { question?: string; answer?: string; q?: string; a?: string }
+interface Props {
+	faqs?: FaqEntry[];
+	/** alias for `faqs` */
+	items?: FaqEntry[];
+	title?: string;
+	/** render the component's own eyebrow + title (off when the page supplies a section head) */
+	heading?: boolean;
+	/** emit the FAQPage JSON-LD (default true) */
+	schema?: boolean;
+	/** alias for `schema` */
+	jsonld?: boolean;
+	/** open the first item on load */
+	openFirst?: boolean;
+	id?: string;
+	class?: string;
+}
+const {
+	faqs,
+	items,
+	title = 'Questions people ask',
+	heading = true,
+	schema,
+	jsonld,
+	openFirst = false,
+	id = 'faq',
+	class: className,
+} = Astro.props;
+
+const list = (faqs ?? items ?? [])
+	.map((f) => ({ q: (f.question ?? f.q ?? '').trim(), a: (f.answer ?? f.a ?? '').trim() }))
+	.filter((f) => f.q);
+const emitSchema = jsonld ?? schema ?? true;
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+
+const ld = emitSchema && list.length
+	? {
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: list.map((f) => ({
+			'@type': 'Question',
+			name: f.q,
+			acceptedAnswer: { '@type': 'Answer', text: plain(f.a) },
+		})),
+	}
+	: null;
+---
+{list.length > 0 && (
+	<section class:list={['faq', className]} id={id} aria-labelledby={heading ? `${id}-title` : undefined}>
+		{heading && (
+			<div class="faq__head">
+				<span class="eyebrow">FAQ</span>
+				<h2 class="faq__title" id={`${id}-title`}>{title}</h2>
+			</div>
+		)}
+		<div class="faq__list">
+			{list.map((f, i) => (
+				<details class="faq__item" open={openFirst && i === 0}>
+					<summary class="faq__q">
+						<span>{f.q}</span>
+						<span class="faq__mark" aria-hidden="true"><Icon name="plus" size={16} /></span>
+					</summary>
+					<div class="faq__a"><p set:html={f.a} /></div>
+				</details>
+			))}
+		</div>
+		{ld && <script type="application/ld+json" set:html={JSON.stringify(ld)} />}
+	</section>
+)}
+
+<style>
+	.faq { display: grid; gap: var(--s-6); }
+	.faq__head { display: grid; gap: var(--s-3); }
+	.faq__title { font-size: var(--text-2xl); }
+	.faq__list { border-top: 1px solid var(--line); }
+
+	.faq__item { border-bottom: 1px solid var(--line); }
+	.faq__q {
+		display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-5);
+		padding: var(--s-5) 0; cursor: pointer; list-style: none;
+		font-size: var(--text-md); font-weight: 600; letter-spacing: -0.015em; line-height: 1.4; color: var(--ink);
+		transition: color var(--dur-2) var(--ease-out);
+	}
+	.faq__q::-webkit-details-marker { display: none; }
+	.faq__q:hover { color: var(--accent-ink); }
+	.faq__mark {
+		flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; margin-top: -2px;
+		border: 1px solid var(--line-2); border-radius: var(--r-full); color: var(--ink-3);
+		transition: transform var(--dur-3) var(--ease-out), color var(--dur-2), border-color var(--dur-2), background-color var(--dur-2);
+	}
+	.faq__q:hover .faq__mark { color: var(--ink); border-color: var(--line-strong); }
+	.faq__item[open] .faq__mark { transform: rotate(45deg); background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
+	.faq__a { padding-bottom: var(--s-5); max-width: 68ch; }
+	.faq__a p { color: var(--ink-2); line-height: 1.7; }
+	.faq__a :global(a) { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 0.18em; }
+	.faq__a :global(a:hover) { text-decoration-thickness: 2px; }
+	.faq__a :global(strong) { color: var(--ink); font-weight: 600; }
+	.faq__item[open] .faq__a { animation: faq-in var(--dur-3) var(--ease-out) both; }
+	@keyframes faq-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+	@media (prefers-reduced-motion: reduce) { .faq__item[open] .faq__a { animation: none; } }
+</style>

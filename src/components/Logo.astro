@@ -1,0 +1,23 @@
+---
+/** Wordmark: "AI Briefs" with the signal dot. `mark` renders only the glyph. */
+interface Props { mark?: boolean; size?: number; class?: string; }
+const { mark = false, size = 22, class: className } = Astro.props;
+---
+<span class:list={['wordmark', className]} style={`--wm:${size}px`}>
+	<svg class="wordmark__glyph" width={size + 4} height={size + 4} viewBox="0 0 28 28" aria-hidden="true">
+		<rect x="2" y="2" width="24" height="24" rx="7" class="wordmark__box" />
+		<path d="M9.5 19.5 14 8.5l4.5 11" class="wordmark__a" />
+		<path d="M11.2 15.6h5.6" class="wordmark__a" />
+		<circle cx="21.5" cy="7.5" r="2.4" class="wordmark__dot" />
+	</svg>
+	{!mark && <span class="wordmark__text">AI Briefs</span>}
+</span>
+
+<style>
+	.wordmark { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); }
+	.wordmark__text { font-weight: 700; letter-spacing: -0.035em; font-size: var(--wm, 22px); line-height: 1; }
+	.wordmark__box { fill: var(--ink); }
+	.wordmark__a { fill: none; stroke: var(--bg); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+	.wordmark__dot { fill: var(--accent); stroke: var(--bg); stroke-width: 1.5; }
+	.brand:hover .wordmark__dot { animation: pulse 1.4s infinite; }
+</style>

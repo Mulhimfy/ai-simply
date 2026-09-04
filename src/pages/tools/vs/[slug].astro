@@ -1,9 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../../components/BaseHead.astro';
-import Header from '../../../components/Header.astro';
-import Footer from '../../../components/Footer.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE } from '../../../consts';
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import ToolLogo from '../../../components/ToolLogo.astro';
+import Stars from '../../../components/Stars.astro';
+import ShareBar from '../../../components/ShareBar.astro';
+import ToolCard from '../../../components/ToolCard.astro';
+import CompareTable from '../../../components/CompareTable.astro';
+import Newsletter from '../../../components/Newsletter.astro';
+import Icon from '../../../components/Icon.astro';
+import { TOOL_CATEGORIES, PRICING_BADGE, CATEGORY_ICONS } from '../../../consts';
+import { ogUrl } from '../../../og/url';
 
 export async function getStaticPaths() {
 	const tools = await getCollection('tools');
@@ -35,33 +42,23 @@ export async function getStaticPaths() {
 }
 
 const { toolA, toolB } = Astro.props;
+const { slug } = Astro.params;
 const allTools = await getCollection('tools');
 
 const catA = TOOL_CATEGORIES.find(c => c.slug === toolA.data.category);
-const badgeA = PRICING_BADGE[toolA.data.pricing];
-const badgeB = PRICING_BADGE[toolB.data.pricing];
-const domainA = new URL(toolA.data.url).hostname;
-const domainB = new URL(toolB.data.url).hostname;
-const faviconA = `https://www.google.com/s2/favicons?domain=${domainA}&sz=128`;
-const faviconB = `https://www.google.com/s2/favicons?domain=${domainB}&sz=128`;
-
 const year = new Date().getFullYear();
 
-// Related comparisons: other tools in same subcategory
-const related = allTools
-	.filter(t => t.data.subcategory === toolA.data.subcategory && t.id !== toolA.id && t.id !== toolB.id)
-	.slice(0, 4);
+const nameA = toolA.data.name;
+const nameB = toolB.data.name;
+const subKey = toolA.data.subcategory ?? toolA.data.category;
+const subLabel = toolA.data.subcategory ?? catA?.name ?? 'AI';
+/** "AI Chatbot" → "AI chatbot": keep initialisms, lowercase the rest, so generated
+ *  sentences read like English instead of a database field. */
+const speak = (str: string) => str.split(' ').map((w) => (/^[A-Z0-9.]{2,}$/.test(w) ? w : w.toLowerCase())).join(' ');
+const subSpoken = speak(subLabel);
 
-const seoTitle = `${toolA.data.name} vs ${toolB.data.name} (${year}): Which Is Better?`;
-const seoDesc = `${toolA.data.name} vs ${toolB.data.name} — side-by-side comparison of features, pricing, and ratings to help you pick the right ${catA?.name ?? 'AI'} tool.`;
-
-// Simple score: rating * 2 + (featured ? 1 : 0) + pricing bonus
-function score(t: typeof toolA) {
-	return (t.data.rating ?? 0) * 2 + (t.data.featured ? 1 : 0) + (t.data.pricing === 'free' ? 0.5 : 0);
-}
-const scoreA = score(toolA);
-const scoreB = score(toolB);
-const winner = scoreA > scoreB ? toolA : scoreB > scoreA ? toolB : null;
+const seoTitle = `${nameA} vs ${nameB} (${year}): Which Is Better?`;
+const seoDesc = `${nameA} vs ${nameB} — side-by-side comparison of features, pricing, and ratings to help you pick the right ${speak(catA?.name ?? 'AI')} tool.`;
 
 /**
  * Every tool review already carries hand-written pros and cons, and this page
@@ -73,42 +70,6 @@ const prosA: string[] = toolA.data.pros ?? [];
 const consA: string[] = toolA.data.cons ?? [];
 const prosB: string[] = toolB.data.pros ?? [];
 const consB: string[] = toolB.data.cons ?? [];
-
-const nameA = toolA.data.name;
-const nameB = toolB.data.name;
-
-/** A verdict built from real differences, not from a rating subtraction. */
-function buildVerdict(): string {
-	const parts: string[] = [];
-
-	// Pros are written as capitalised capability phrases ("Firefly AI is trained on…"),
-	// so they are quoted after a colon rather than spliced mid-sentence — lowercasing
-	// the first letter would mangle proper nouns and acronyms ("aI tools").
-	const clean = (s: string) => s.trim().replace(/\.$/, '');
-
-	if (prosA[0] && prosB[0]) {
-		parts.push(
-			`Pick ${nameA} for one reason above all: ${clean(prosA[0])}. ` +
-			`Pick ${nameB} instead if this matters more: ${clean(prosB[0])}.`,
-		);
-	} else {
-		parts.push(`${nameA} and ${nameB} both sit in ${catA?.name ?? 'this category'}, with different emphases.`);
-	}
-
-	if (toolA.data.pricing !== toolB.data.pricing) {
-		const label = (t: typeof toolA) => PRICING_BADGE[t.data.pricing].label.toLowerCase();
-		parts.push(`On cost they differ: ${nameA} is ${label(toolA)}, ${nameB} is ${label(toolB)}.`);
-	} else {
-		parts.push(`Both are ${PRICING_BADGE[toolA.data.pricing].label.toLowerCase()}, so price is unlikely to decide it.`);
-	}
-
-	if (consA[0] && consB[0]) {
-		parts.push(`The trade-offs are real on both sides, so weigh ${nameA}'s limits against ${nameB}'s before committing.`);
-	}
-
-	return parts.join(' ');
-}
-const verdictText = buildVerdict();
 
 /**
  * Staged rollout, deliberately small.
@@ -124,430 +85,376 @@ const verdictText = buildVerdict();
  * refused, nothing was risked.
  */
 const isTestBatch = !!toolA.data.rating && !!toolB.data.rating;
+
+/* ── Quick verdict strip: one tile per criterion where the data exists ── */
+type Side = 0 | 1;
+interface Criterion { label: string; winner: Side | null; note: string }
+const updatedA = toolA.data.updatedDate ?? toolA.data.pubDate;
+const updatedB = toolB.data.updatedDate ?? toolB.data.pubDate;
+const fmtMonth = (d: Date) => d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+const criteria: Criterion[] = [];
+if (toolA.data.rating && toolB.data.rating) {
+	const rA = toolA.data.rating, rB = toolB.data.rating;
+	criteria.push({ label: 'Rating', winner: rA === rB ? null : rA > rB ? 0 : 1, note: `${rA.toFixed(1)} vs ${rB.toFixed(1)}` });
+}
+const freeA = toolA.data.pricing !== 'paid', freeB = toolB.data.pricing !== 'paid';
+criteria.push(
+	freeA !== freeB
+		? { label: 'Free tier', winner: freeA ? 0 : 1, note: 'Has a free plan' }
+		: { label: 'Free tier', winner: null, note: freeA ? 'Both have one' : 'Neither has one' },
+);
+if (toolA.data.verified || toolB.data.verified) {
+	criteria.push({ label: 'Verified', winner: toolA.data.verified && toolB.data.verified ? null : toolA.data.verified ? 0 : 1, note: 'Tested by AI Briefs' });
+}
+if (toolA.data.featured || toolB.data.featured) {
+	criteria.push({ label: "Editor's pick", winner: toolA.data.featured && toolB.data.featured ? null : toolA.data.featured ? 0 : 1, note: 'Featured in the directory' });
+}
+if (Math.abs(updatedA.valueOf() - updatedB.valueOf()) > 864e5) {
+	const w: Side = updatedA > updatedB ? 0 : 1;
+	criteria.push({ label: 'Fresher review', winner: w, note: `Updated ${fmtMonth(w === 0 ? updatedA : updatedB)}` });
+}
+const sides = [toolA, toolB];
+
+/* ── Quick take: template prose built from real differences, worded plainly ── */
+function buildQuickTake(): string[] {
+	const paras: string[] = [];
+	// Pros are capitalised capability phrases, so they are quoted after a colon rather
+	// than spliced mid-sentence — lowercasing would mangle proper nouns and acronyms.
+	const clean = (s: string) => s.trim().replace(/\.$/, '');
+
+	if (prosA[0] && prosB[0]) {
+		paras.push(`Pick ${nameA} if this matters most to you: ${clean(prosA[0])}. Pick ${nameB} if this does: ${clean(prosB[0])}.`);
+	} else {
+		paras.push(`${nameA} and ${nameB} are both ${subSpoken} tools, with different emphases. We have not written up detailed strengths for both yet, so start with their descriptions and the links below.`);
+	}
+
+	const label = (t: typeof toolA) => PRICING_BADGE[t.data.pricing].label.toLowerCase();
+	if (toolA.data.pricing !== toolB.data.pricing) {
+		paras.push(`On cost they differ: ${nameA} is ${label(toolA)}, ${nameB} is ${label(toolB)}. If budget is the deciding factor, that settles it.`);
+	} else {
+		paras.push(`Both are ${label(toolA)}, so price is unlikely to decide it.`);
+	}
+
+	if (toolA.data.rating && toolB.data.rating) {
+		const rA = toolA.data.rating, rB = toolB.data.rating;
+		if (rA === rB) paras.push(`Our editorial scores put them level at ${rA.toFixed(1)}, so the use case should decide.`);
+		else {
+			const [hi, lo, hiR, loR] = rA > rB ? [nameA, nameB, rA, rB] : [nameB, nameA, rB, rA];
+			const gap = Math.abs(rA - rB);
+			paras.push(gap <= 0.3
+				? `Our editorial scores put ${hi} slightly ahead (${hiR.toFixed(1)} vs ${loR.toFixed(1)}), but the gap is small enough that ${lo} is the better choice whenever its strengths line up with your work.`
+				: `Our editorial scores put ${hi} ahead (${hiR.toFixed(1)} vs ${loR.toFixed(1)}). ${lo} still wins for the specific case above.`);
+		}
+	} else {
+		paras.push(`We have not fully rated both tools yet, so treat this as a starting point rather than a verdict.`);
+	}
+
+	if (consA[0] && consB[0]) {
+		paras.push(`The trade-offs are real on both sides: ${nameA}'s biggest limit is that ${clean(consA[0]).charAt(0).toLowerCase()}${clean(consA[0]).slice(1)}; ${nameB}'s is that ${clean(consB[0]).charAt(0).toLowerCase()}${clean(consB[0]).slice(1)}.`);
+	}
+	return paras;
+}
+const quickTake = buildQuickTake();
+
+/* ── Other comparisons in the same subcategory ────────────────────────
+ * Pair slugs follow collection order (matching getStaticPaths), so each link
+ * resolves to a page that exists. Only both-rated pairs are indexable; the rest
+ * are linked with rel="nofollow", as before.
+ */
+const order = new Map(allTools.map((t, i) => [t.id, i]));
+const pairSlug = (x: typeof toolA, y: typeof toolA) =>
+	(order.get(x.id) ?? 0) < (order.get(y.id) ?? 0) ? `${x.id}-vs-${y.id}` : `${y.id}-vs-${x.id}`;
+const peers = allTools
+	.filter(t => (t.data.subcategory ?? t.data.category) === subKey && t.id !== toolA.id && t.id !== toolB.id)
+	.sort((a, b) => (b.data.rating ?? 0) - (a.data.rating ?? 0))
+	.slice(0, 5);
+const otherComparisons = peers
+	.flatMap(r => [toolA, toolB].map(base => ({
+		href: `/tools/vs/${pairSlug(base, r)}/`,
+		label: `${base.data.name} vs ${r.data.name}`,
+		indexable: !!base.data.rating && !!r.data.rating,
+	})))
+	.sort((a, b) => Number(b.indexable) - Number(a.indexable));
+
+const col = (t: typeof toolA) => ({
+	slug: t.id, name: t.data.name, description: t.data.description,
+	category: t.data.category, subcategory: t.data.subcategory, pricing: t.data.pricing,
+	rating: t.data.rating, ratingCount: t.data.ratingCount,
+	pros: t.data.pros ?? [], cons: t.data.cons ?? [],
+	updated: t.data.updatedDate ?? t.data.pubDate,
+	url: t.data.url, affiliateUrl: t.data.affiliateUrl, verified: t.data.verified,
+});
+const catIcon = CATEGORY_ICONS[toolA.data.category] ?? 'layers';
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead title={seoTitle} description={seoDesc} noindex={!isTestBatch} />
-	<script type="application/ld+json" set:html={JSON.stringify({
-		"@context": "https://schema.org",
-		"@type": "BreadcrumbList",
-		"itemListElement": [
-			{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getaibriefs.com/" },
-			{ "@type": "ListItem", "position": 2, "name": "AI Tools", "item": "https://getaibriefs.com/tools/" },
-			{ "@type": "ListItem", "position": 3, "name": `${toolA.data.name} vs ${toolB.data.name}` }
-		]
-	})} />
-</head>
-<body>
-<Header />
+<Base
+	title={seoTitle}
+	description={seoDesc}
+	noindex={!isTestBatch}
+	image={isTestBatch ? ogUrl('vs', slug) : undefined}
 
-<main>
-
+	noNudge>
 	<!-- Hero -->
-	<section class="vs-hero">
-		<div class="container">
-			<nav class="breadcrumbs">
-				<a href="/">Home</a><span>/</span>
-				<a href="/tools/">AI Tools</a><span>/</span>
-				<span>{toolA.data.name} vs {toolB.data.name}</span>
-			</nav>
+	<section class="vs-hero section--tight">
+		<div class="glow vs-hero__glow" aria-hidden="true"></div>
+		<div class="container vs-hero__inner">
+			<Breadcrumb items={[{ name: 'AI Tools', href: '/tools/' }, { name: `${nameA} vs ${nameB}` }]} />
 
-			<div class="vs-header">
-				<div class="vs-tool">
-					<div class="vs-logo">
-						<img src={faviconA} alt={toolA.data.name} width="60" height="60" loading="eager"
-							class="js-favicon" />
-						<span class="vs-emoji-fb" style="display:none">{catA?.emoji ?? '🤖'}</span>
+			<p class="eyebrow vs-hero__eyebrow"><Icon name={catIcon} size={12} /> {subLabel} · Head-to-head</p>
+
+			<div class="duel" data-reveal="scale">
+				<ToolLogo slug={toolA.id} name={nameA} size={72} class="duel__logo duel__logo--a" />
+				<span class="duel__vs" aria-hidden="true">vs</span>
+				<ToolLogo slug={toolB.id} name={nameB} size={72} class="duel__logo duel__logo--b" />
+
+				<h1 class="duel__title">
+					<a href={`/tools/${toolA.id}/`} class="duel__name duel__name--a">{nameA}</a>
+					<span class="sr-only"> vs </span>
+					<a href={`/tools/${toolB.id}/`} class="duel__name duel__name--b">{nameB}</a>
+				</h1>
+
+				{sides.map((t, i) => (
+					<div class:list={['duel__meta', i === 0 ? 'duel__meta--a' : 'duel__meta--b']}>
+						<span class:list={['pill', `pill--${t.data.pricing}`]}>{PRICING_BADGE[t.data.pricing].label}</span>
+						{t.data.rating
+							? <Stars rating={t.data.rating} count={t.data.ratingCount} size={14} />
+							: <span class="duel__unrated">Not yet rated</span>}
 					</div>
-					<h1 class="vs-tool-name">{toolA.data.name}</h1>
-					<span class="vs-badge" style={`background:${badgeA.bg};color:${badgeA.text}`}>{badgeA.label}</span>
-					{toolA.data.rating && <div class="vs-score">★ {toolA.data.rating.toFixed(1)}</div>}
-					{winner?.id === toolA.id && <span class="vs-winner-badge">✓ Editor's Pick</span>}
-				</div>
-
-				<div class="vs-divider">VS</div>
-
-				<div class="vs-tool">
-					<div class="vs-logo">
-						<img src={faviconB} alt={toolB.data.name} width="60" height="60" loading="eager"
-							class="js-favicon" />
-						<span class="vs-emoji-fb" style="display:none">{catA?.emoji ?? '🤖'}</span>
-					</div>
-					<h1 class="vs-tool-name">{toolB.data.name}</h1>
-					<span class="vs-badge" style={`background:${badgeB.bg};color:${badgeB.text}`}>{badgeB.label}</span>
-					{toolB.data.rating && <div class="vs-score">★ {toolB.data.rating.toFixed(1)}</div>}
-					{winner?.id === toolB.id && <span class="vs-winner-badge">✓ Editor's Pick</span>}
-				</div>
+				))}
 			</div>
 
-			<p class="vs-subtitle">{catA?.name} · Side-by-side comparison · Updated {year}</p>
+			<p class="lead vs-hero__lead">
+				Two {subSpoken} tools compared on the same eight rows — rating, pricing, what each does best and where each falls short — so you can decide in a minute.
+			</p>
+
+			<!-- Quick verdict strip -->
+			<ul role="list" class="verdict" aria-label="Quick verdict" data-stagger>
+				{criteria.map((c) => (
+					<li class:list={['verdict__tile', { 'verdict__tile--tie': c.winner === null }]} data-reveal>
+						<span class="verdict__label">{c.label}</span>
+						{c.winner === null ? (
+							<span class="verdict__winner verdict__winner--tie"><Icon name="equal" size={14} /> {c.label === 'Rating' ? 'Tie' : c.note}</span>
+						) : (
+							<span class="verdict__winner">
+								<ToolLogo slug={sides[c.winner].id} name={sides[c.winner].data.name} size={22} />
+								<span class="verdict__name">{sides[c.winner].data.name}</span>
+								<span class="verdict__wins">wins</span>
+							</span>
+						)}
+						<span class="verdict__note">{c.winner === null && c.label === 'Rating' ? c.note : c.winner === null ? '' : c.note}</span>
+					</li>
+				))}
+			</ul>
+
+			<div class="vs-hero__share">
+				<ShareBar title={`${nameA} vs ${nameB}`} text={`${nameA} vs ${nameB}: which ${subLabel} tool is better? Compared side by side on AI Briefs.`} />
+			</div>
 		</div>
 	</section>
 
-	<!-- Quick Summary -->
-	<section class="section">
-		<div class="container vs-body">
-
-			<div class="summary-grid">
-				<div class="summary-card">
-					<div class="summary-logo">
-						<img src={faviconA} alt={toolA.data.name} width="36" height="36" loading="lazy" />
-					</div>
-					<h3>{toolA.data.name}</h3>
-					<p>{toolA.data.description}</p>
-					<div class="summary-actions">
-						<a href={`/tools/${toolA.id}/`} class="btn btn--secondary btn--sm">Full Review</a>
-						<a href={toolA.data.url} target="_blank" rel="noopener noreferrer" class="btn btn--outline btn--sm">Visit →</a>
-					</div>
-				</div>
-
-				<div class="summary-card">
-					<div class="summary-logo">
-						<img src={faviconB} alt={toolB.data.name} width="36" height="36" loading="lazy" />
-					</div>
-					<h3>{toolB.data.name}</h3>
-					<p>{toolB.data.description}</p>
-					<div class="summary-actions">
-						<a href={`/tools/${toolB.id}/`} class="btn btn--secondary btn--sm">Full Review</a>
-						<a href={toolB.data.url} target="_blank" rel="noopener noreferrer" class="btn btn--outline btn--sm">Visit →</a>
-					</div>
+	<!-- Side by side -->
+	<section class="section--tight">
+		<div class="container vs-main">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Side by side</span>
+					<h2>The same rows for <em class="serif">both</em>.</h2>
+					<p class="section-head__desc">Rows come straight from each review. A soft highlight marks the objectively better cell: higher score, cheaper tier, fresher review.</p>
 				</div>
 			</div>
-
-			<!-- Comparison table -->
-			<h2 class="compare-heading">At a Glance</h2>
-			<div class="compare-table-wrap">
-				<table class="compare-table">
-					<thead>
-						<tr>
-							<th></th>
-							<th>{toolA.data.name}</th>
-							<th>{toolB.data.name}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>Pricing</td>
-							<td><span class="tbl-badge" style={`background:${badgeA.bg};color:${badgeA.text}`}>{badgeA.label}</span></td>
-							<td><span class="tbl-badge" style={`background:${badgeB.bg};color:${badgeB.text}`}>{badgeB.label}</span></td>
-						</tr>
-						<tr>
-							<td>Category</td>
-							<td>{catA?.name ?? '—'}</td>
-							<td>{TOOL_CATEGORIES.find(c => c.slug === toolB.data.category)?.name ?? '—'}</td>
-						</tr>
-						<tr>
-							<td>Subcategory</td>
-							<td>{toolA.data.subcategory ?? '—'}</td>
-							<td>{toolB.data.subcategory ?? '—'}</td>
-						</tr>
-						{(toolA.data.rating || toolB.data.rating) && (
-							<tr>
-								<td>Rating</td>
-								<td>{toolA.data.rating ? `★ ${toolA.data.rating.toFixed(1)} / 5` : '—'}</td>
-								<td>{toolB.data.rating ? `★ ${toolB.data.rating.toFixed(1)} / 5` : '—'}</td>
-							</tr>
-						)}
-						<tr>
-							<td>Editor's Pick</td>
-							<td>{winner?.id === toolA.id ? '✓ Yes' : '—'}</td>
-							<td>{winner?.id === toolB.id ? '✓ Yes' : '—'}</td>
-						</tr>
-					</tbody>
-				</table>
+			<div data-reveal>
+				<CompareTable a={col(toolA)} b={col(toolB)} />
 			</div>
+		</div>
+	</section>
 
-			<!-- Strengths and trade-offs, straight from each tool's review -->
-			{(prosA.length > 0 || prosB.length > 0) && (
-				<>
-					<h2 class="compare-heading">Strengths &amp; Trade-offs</h2>
-					<div class="proscons-grid">
-						{[{ t: toolA, pros: prosA, cons: consA }, { t: toolB, pros: prosB, cons: consB }].map(col => (
-							<div class="proscons-card">
-								<h3>{col.t.data.name}</h3>
-								{col.pros.length > 0 && (
-									<>
-										<div class="pc-label pc-label--pro">What it does well</div>
-										<ul class="pc-list pc-list--pro">
-											{col.pros.map(p => <li>{p}</li>)}
-										</ul>
-									</>
-								)}
-								{col.cons.length > 0 && (
-									<>
-										<div class="pc-label pc-label--con">Where it falls short</div>
-										<ul class="pc-list pc-list--con">
-											{col.cons.map(c => <li>{c}</li>)}
-										</ul>
-									</>
-								)}
-							</div>
-						))}
-					</div>
-				</>
-			)}
-
-			<!-- Decision guide -->
-			<h2 class="compare-heading">Which Should You Choose?</h2>
-			<div class="choose-grid">
-				<div class="choose-card">
-					<div class="choose-head">Choose {toolA.data.name} if</div>
-					<ul>
-						{prosA.slice(0, 3).map(p => <li>{p}</li>)}
-						{prosA.length === 0 && <li>{toolA.data.description}</li>}
-						{toolA.data.pricing === 'free' && toolB.data.pricing !== 'free' && <li>You need a tool with no paywall at all.</li>}
-					</ul>
+	<!-- Quick take -->
+	<section class="section--tight">
+		<div class="container vs-main">
+			<article class="take card card--sunk" data-reveal>
+				<div class="take__head">
+					<span class="pill pill--accent"><Icon name="sparkles" size={11} /> Quick take, not a full review</span>
+					<span class="take__meta mono">Generated from the two reviews · {year}</span>
 				</div>
-				<div class="choose-card">
-					<div class="choose-head">Choose {toolB.data.name} if</div>
-					<ul>
-						{prosB.slice(0, 3).map(p => <li>{p}</li>)}
-						{prosB.length === 0 && <li>{toolB.data.description}</li>}
-						{toolB.data.pricing === 'free' && toolA.data.pricing !== 'free' && <li>You need a tool with no paywall at all.</li>}
-					</ul>
-				</div>
-			</div>
-
-			<!-- Verdict -->
-			<div class="verdict-box">
-				<div class="verdict-label">Our Verdict</div>
-				<div class="verdict-content">
-					<p set:html={verdictText} />
-					<p class="verdict-links">
-						Read the full <a href={`/tools/${toolA.id}/`}>{toolA.data.name} review</a> or the
-						full <a href={`/tools/${toolB.id}/`}>{toolB.data.name} review</a> for pricing detail and limitations.
+				<h2 class="take__title">Which one should you <em class="serif">pick</em>?</h2>
+				<div class="prose take__prose">
+					{quickTake.map((p) => <p>{p}</p>)}
+					<p>
+						For pricing detail and limits, read the full <a href={`/tools/${toolA.id}/`}>{nameA} review</a> or the full <a href={`/tools/${toolB.id}/`}>{nameB} review</a>.
 					</p>
 				</div>
-			</div>
-
-			<!-- Also compare -->
-			{related.length > 0 && (
-				<div class="also-compare">
-					<h3>Also Compare</h3>
-					<div class="also-compare-links">
-						{related.map(r => (
-							<>
-								<a href={`/tools/vs/${toolA.id}-vs-${r.id}/`} rel="nofollow" class="compare-link">
-									{toolA.data.name} vs {r.data.name}
-								</a>
-								<a href={`/tools/vs/${toolB.id}-vs-${r.id}/`} rel="nofollow" class="compare-link">
-									{toolB.data.name} vs {r.data.name}
-								</a>
-							</>
-						))}
-					</div>
-				</div>
-			)}
-
+			</article>
 		</div>
 	</section>
 
-</main>
+	<!-- Other comparisons -->
+	{otherComparisons.length > 0 && (
+		<section class="section--tight">
+			<div class="container vs-main">
+				<div class="section-head">
+					<div class="section-head__title">
+						<span class="eyebrow">Other comparisons</span>
+						<h2>More head-to-heads in {subLabel}</h2>
+					</div>
+					<a href="/tools/vs/" class="link-arrow">All comparisons <Icon name="arrow-right" /></a>
+				</div>
+				<ul role="list" class="others" data-stagger>
+					{otherComparisons.map((o) => (
+						<li data-reveal>
+							<a href={o.href} class="chip others__chip" rel={o.indexable ? undefined : 'nofollow'}>
+								<Icon name="git-compare" size={14} /> {o.label}
+								{o.indexable && <span class="others__rated" title="Both tools rated"><Icon name="star" size={11} /></span>}
+							</a>
+						</li>
+					))}
+				</ul>
+			</div>
+		</section>
+	)}
 
-<Footer />
-</body>
-</html>
+	<!-- Full reviews -->
+	<section class="section--tight">
+		<div class="container vs-main">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Go deeper</span>
+					<h2>Read the full reviews</h2>
+				</div>
+			</div>
+			<div class="grid grid--2" data-stagger>
+				{sides.map((t, i) => (
+					<ToolCard
+						slug={t.id} name={t.data.name} description={t.data.description}
+						category={t.data.category} subcategory={t.data.subcategory} pricing={t.data.pricing}
+						rating={t.data.rating} ratingCount={t.data.ratingCount} tags={t.data.tags}
+						featured={t.data.featured} sponsored={t.data.sponsored} verified={t.data.verified}
+						pubDate={t.data.pubDate} eager={i === 0}
+					/>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<section class="section--tight vs-nl">
+		<div class="container vs-main">
+			<Newsletter variant="card" heading="Compare *smarter*." text="The tools worth switching to, the ones worth skipping, and why. Plain English, no hype." />
+		</div>
+	</section>
+</Base>
+
+<script>
+	// GA4 outbound click on the Visit buttons, same event name as the tool page.
+	if (!(document as any).__vsTrack) {
+		(document as any).__vsTrack = true;
+		document.addEventListener('click', (e) => {
+			const a = (e.target as HTMLElement).closest<HTMLElement>('[data-track="visit"]');
+			if (a) (window as any).gtag?.('event', 'visit', { tool: a.dataset.tool, from: 'vs' });
+		});
+	}
+</script>
 
 <style>
-	.breadcrumbs {
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		flex-wrap: wrap;
-		margin-bottom: 2rem;
-	}
-	.breadcrumbs a { color: rgb(var(--gray)); }
-	.breadcrumbs a:hover { color: var(--primary); }
+	.vs-main { max-width: 1040px; }
 
-	.vs-hero {
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
-		padding: 2.5rem 0 2rem;
+	/* ── hero ─────────────────────────────────────────────────────────── */
+	.vs-hero { position: relative; overflow: hidden; padding-top: var(--s-6); border-bottom: 1px solid var(--line); }
+	.vs-hero::before {
+		content: ''; position: absolute; inset: 0; pointer-events: none;
+		background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+		background-size: 48px 48px;
+		mask-image: radial-gradient(ellipse 60% 55% at 50% 30%, #000 20%, transparent 100%);
+		-webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 30%, #000 20%, transparent 100%);
 	}
-	.vs-header {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-		margin-bottom: 1rem;
-		flex-wrap: wrap;
-	}
-	.vs-tool {
-		flex: 1;
-		min-width: 140px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		gap: 0.4rem;
-	}
-	.vs-logo {
-		width: 60px;
-		height: 60px;
-		border-radius: 14px;
-		overflow: hidden;
-		background: #fff;
-		border: 1px solid var(--border);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	.vs-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
-	.vs-emoji-fb { font-size: 1.8rem; }
-	.vs-tool-name { font-size: 1.4rem; margin: 0; }
-	.vs-badge { font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; }
-	.vs-score { font-size: 0.9rem; font-weight: 700; color: #f59e0b; }
-	.vs-winner-badge {
-		background: #10b981;
-		color: #fff;
-		font-size: 0.7rem;
-		font-weight: 700;
-		padding: 0.2rem 0.6rem;
-		border-radius: 50px;
-	}
-	.vs-divider {
-		font-size: 1.5rem;
-		font-weight: 900;
-		color: rgb(var(--gray));
-		flex-shrink: 0;
-	}
-	.vs-subtitle {
-		text-align: center;
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		margin: 0;
-	}
+	.vs-hero__glow { top: -140px; left: 50%; width: 560px; height: 560px; transform: translateX(-50%); opacity: 0.55; }
+	.vs-hero__inner { position: relative; display: grid; justify-items: center; text-align: center; gap: var(--s-6); max-width: 960px; }
+	.vs-hero__inner > :global(.crumbs) { justify-self: start; text-align: left; }
+	.vs-hero__eyebrow { margin-top: var(--s-2); }
+	.vs-hero__eyebrow :global(.icon) { color: var(--accent); }
+	.vs-hero__lead { max-width: 58ch; margin-inline: auto; text-align: center; }
+	.vs-hero__share { margin-top: var(--s-2); }
 
-	.vs-body { max-width: 780px; }
+	/* the duel: logos, giant serif vs, names, meta — one symmetric grid */
+	.duel {
+		display: grid; align-items: center; justify-items: center;
+		grid-template-columns: minmax(0, 1fr) clamp(96px, 14vw, 160px) minmax(0, 1fr);
+		grid-template-areas: 'la vs lb' 'na vs nb' 'ma vs mb';
+		column-gap: var(--s-4); row-gap: var(--s-3);
+		width: min(100%, 820px); margin-top: var(--s-2);
+	}
+	/* <ToolLogo> roots sit outside this component's scope, so without :global the
+	   grid-area never lands and both logos fall out of the duel grid. */
+	.duel :global(.duel__logo) { box-shadow: var(--shadow-md); }
+	.duel :global(.duel__logo--a) { grid-area: la; }
+	.duel :global(.duel__logo--b) { grid-area: lb; }
+	.duel__vs {
+		grid-area: vs; align-self: center;
+		font-family: var(--font-serif); font-style: italic; font-size: clamp(3.5rem, 8vw, 6rem); line-height: 0.8;
+		color: var(--ink); letter-spacing: -0.03em; user-select: none;
+		padding-bottom: 0.1em;
+	}
+	.duel__vs::after { content: ''; display: block; width: 100%; height: 2px; margin-top: 10px; background: var(--accent); border-radius: 2px; opacity: 0.9; }
+	.duel__title { display: contents; }
+	.duel__name {
+		font-size: clamp(1.5rem, 1rem + 2.4vw, 2.5rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05;
+		color: var(--ink); text-wrap: balance; transition: color var(--dur-2);
+		text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.14em; text-decoration-thickness: 2px;
+	}
+	.duel__name:hover { color: var(--accent-ink); text-decoration-color: var(--accent); }
+	.duel__name--a { grid-area: na; } .duel__name--b { grid-area: nb; }
+	.duel__meta { display: inline-flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; justify-content: center; }
+	.duel__meta--a { grid-area: ma; } .duel__meta--b { grid-area: mb; }
+	.duel__unrated { font-size: var(--text-xs); color: var(--ink-4); }
 
-	.summary-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
-		margin-bottom: 2rem;
+	/* verdict strip */
+	.verdict {
+		display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-3);
+		width: 100%; max-width: 880px;
 	}
-	.summary-card {
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 1.25rem;
+	.verdict__tile {
+		flex: 1 1 150px; max-width: 220px; min-height: 96px;
+		display: grid; align-content: start; gap: 6px; padding: var(--s-4);
+		background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); text-align: left;
+		box-shadow: var(--shadow-sm);
 	}
-	.summary-logo { margin-bottom: 0.5rem; }
-	.summary-logo img { border-radius: 8px; }
-	.summary-card h3 { font-size: 1rem; margin: 0 0 0.4rem; }
-	.summary-card p { font-size: 0.82rem; color: rgb(var(--gray)); margin: 0 0 0.75rem; }
-	.summary-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+	.verdict__tile--tie { background: var(--surface-2); box-shadow: none; }
+	.verdict__label { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+	.verdict__winner { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: var(--text-sm); color: var(--ink); min-width: 0; }
+	.verdict__winner--tie { color: var(--ink-2); font-weight: 500; }
+	.verdict__winner--tie :global(.icon) { color: var(--ink-4); }
+	.verdict__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.verdict__wins {
+		flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: var(--r-full);
+		font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;
+		background: var(--accent); color: var(--on-accent);
+	}
+	.verdict__note { font-size: var(--text-xs); color: var(--ink-3); min-height: 1.2em; }
+	.verdict__note:empty { display: none; }
 
-	.compare-heading { font-size: 1.15rem; margin: 0 0 0.75rem; }
-	.compare-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
-	.compare-table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 0.88rem;
-	}
-	.compare-table th, .compare-table td {
-		padding: 0.65rem 0.85rem;
-		border: 1px solid var(--border);
-		text-align: left;
-	}
-	.compare-table th {
-		background: var(--bg-alt);
-		font-weight: 700;
-		font-size: 0.82rem;
-	}
-	.compare-table td:first-child {
-		font-weight: 600;
-		color: rgb(var(--gray));
-		background: var(--bg-alt);
-		width: 30%;
-	}
-	.tbl-badge { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 50px; }
+	/* ── quick take ───────────────────────────────────────────────────── */
+	.take { padding: clamp(1.5rem, 4vw, 2.75rem); }
+	.take__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-5); }
+	.take__meta { text-transform: none; letter-spacing: 0.02em; }
+	.take__title { font-size: var(--text-2xl); margin-bottom: var(--s-4); }
+	.take__prose { font-size: var(--text-md); line-height: 1.7; max-width: 66ch; }
+	.take__prose > * + * { margin-top: 1em; }
 
-	/* Strengths & trade-offs */
-	.proscons-grid,
-	.choose-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1rem;
-		margin-bottom: 1.75rem;
-	}
-	@media (min-width: 720px) {
-		.proscons-grid, .choose-grid { grid-template-columns: 1fr 1fr; }
-	}
-	.proscons-card {
-		border: 1px solid var(--border, #e5e7eb);
-		border-radius: var(--radius);
-		padding: 1.1rem 1.25rem;
-	}
-	.proscons-card h3 { margin: 0 0 0.75rem; font-size: 1.05rem; }
-	.pc-label {
-		font-size: 0.7rem;
-		font-weight: 800;
-		text-transform: uppercase;
-		letter-spacing: 0.07em;
-		margin: 0.85rem 0 0.4rem;
-	}
-	.pc-label--pro { color: #059669; }
-	.pc-label--con { color: #b45309; }
-	.pc-list { margin: 0; padding-left: 1.1rem; }
-	.pc-list li { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.35rem; }
-	.pc-list--pro li::marker { color: #059669; }
-	.pc-list--con li::marker { color: #b45309; }
+	/* ── other comparisons ────────────────────────────────────────────── */
+	.others { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+	.others__chip { height: 40px; }
+	.others__chip :global(.icon-git-compare) { color: var(--ink-4); }
+	.others__chip:hover :global(.icon-git-compare) { color: var(--accent); }
+	.others__rated { display: inline-flex; color: var(--accent); }
 
-	.choose-card {
-		border: 1px solid var(--border, #e5e7eb);
-		border-left: 3px solid var(--primary);
-		border-radius: var(--radius);
-		padding: 1.1rem 1.25rem;
+	.vs-nl { padding-bottom: var(--section); }
+
+	@media (max-width: 720px) {
+		.duel { grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); column-gap: var(--s-2); }
+		.duel__vs { font-size: 3rem; }
+		.duel__name { font-size: 1.35rem; }
+		.verdict__tile { flex-basis: calc(50% - var(--s-3)); max-width: none; }
+		.vs-hero__inner { gap: var(--s-5); }
 	}
-	.choose-head { font-weight: 700; font-size: 0.98rem; margin-bottom: 0.6rem; }
-	.choose-card ul { margin: 0; padding-left: 1.1rem; }
-	.choose-card li { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.35rem; }
-
-	.verdict-content p { margin: 0 0 0.6rem; }
-	.verdict-content p:last-child { margin-bottom: 0; }
-	.verdict-links { font-size: 0.85rem; }
-
-	.verdict-box {
-		background: #f0fdf4;
-		border: 1px solid #a7f3d0;
-		border-radius: var(--radius);
-		padding: 1rem 1.25rem;
-		margin-bottom: 1.5rem;
-	}
-	.verdict-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #059669; margin-bottom: 0.3rem; }
-	.verdict-content { font-size: 0.9rem; line-height: 1.6; }
-	.verdict-content a { color: var(--primary); }
-
-	.also-compare { margin-top: 2rem; }
-	.also-compare h3 { font-size: 1rem; margin-bottom: 0.75rem; }
-	.also-compare-links { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-	.compare-link {
-		font-size: 0.8rem;
-		padding: 0.3rem 0.7rem;
-		border: 1px solid var(--border);
-		border-radius: 50px;
-		color: rgb(var(--gray-dark));
-		text-decoration: none;
-		transition: all 0.15s;
-	}
-	.compare-link:hover { border-color: var(--primary); color: var(--primary); }
-
-	@media (max-width: 480px) {
-		.summary-grid { grid-template-columns: 1fr; }
-		.vs-header { gap: 1rem; }
+	@media (max-width: 400px) {
+		.verdict__tile { flex-basis: 100%; }
 	}
 </style>
-
-<script data-astro-rerun>
-document.querySelectorAll('.js-favicon').forEach(img => {
-	img.addEventListener('error', () => {
-		img.style.display = 'none';
-		const fb = img.nextElementSibling;
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-});
-</script>

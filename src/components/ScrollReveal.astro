@@ -1,74 +1,212 @@
 ---
-// Shared scroll-reveal controller. Injects an inline script that:
-//   1. Selects known card/heading classes + any [data-reveal] element.
-//   2. Adds .reveal (initial hidden state) then toggles .reveal.in via IntersectionObserver.
-//   3. Honors prefers-reduced-motion (reveals immediately, no observer).
-//   4. Re-runs on astro:page-load so View Transitions keep animations working.
+// Global interaction controller: scroll-reveal, header scroll state, theme toggle,
+// copy-to-clipboard buttons, and relative-time formatting. Re-runs on every
+// Astro view transition (astro:page-load) so it survives client-side navigation.
 ---
-
 <script is:inline>
 	(function () {
-		const SELECTOR = [
-			'[data-reveal]',
-			'.section-heading',
-			'.featured-card',
-			'.tool-card',
-			'.blog-card',
-			'.popular-item',
-			'.tut-row-card',
-			'.hot-card',
-			'.cat-tile',
-			'.timeline-item',
-			'.quiz-cta-inner',
-			'.todays-pick-inner',
-			'.review-card',
-			'.article-hero',
-			'.article-body > h2',
-			'.article-body > h3',
-			'.faq-item',
-			'.post h2',
-			'.post h3',
-		].join(',');
+		if (window.__aib) return; // idempotent across view transitions
+		var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		function run() {
-			const els = document.querySelectorAll(SELECTOR);
-			if (!els.length) return;
-
-			if (reduced || !('IntersectionObserver' in window)) {
-				els.forEach((el) => {
-					el.classList.add('reveal', 'in');
-				});
-				return;
+		/* ── reveal on scroll ───────────────────────────────────────────
+		   Scroll-driven rather than IntersectionObserver: a single rAF-throttled
+		   pass over the pending set. IO with a percentage rootMargin proved
+		   unreliable here (elements were observed but never notified), and a
+		   silent failure hides whole card grids. This cannot fail silently:
+		   worst case everything is revealed. */
+		var pending = [];
+		var ticking = false;
+		function showAll() { pending.forEach(function (e) { e.classList.add('is-in'); }); pending = []; }
+		function sweep() {
+			ticking = false;
+			if (!pending.length) return;
+			var h = innerHeight || 800;
+			var rest = [];
+			for (var i = 0; i < pending.length; i++) {
+				var el = pending[i];
+				var r = el.getBoundingClientRect();
+				// reveal once any part of it reaches 92% of the viewport height
+				if (r.top < h * 0.92 && r.bottom > -80) el.classList.add('is-in');
+				else rest.push(el);
 			}
-
-			els.forEach((el, i) => {
-				if (el.classList.contains('reveal')) return;
-				el.classList.add('reveal');
-				el.style.transitionDelay = (i % 6) * 60 + 'ms';
+			pending = rest;
+		}
+		function queueSweep() { if (!ticking) { ticking = true; requestAnimationFrame(sweep); } }
+		function reveal() {
+			var els = document.querySelectorAll('[data-reveal]:not(.is-in)');
+			if (!els.length) return;
+			if (reduced) { Array.prototype.forEach.call(els, function (e) { e.classList.add('is-in'); }); return; }
+			pending = Array.prototype.slice.call(els);
+			sweep();
+			queueSweep();
+			// safety net: nothing stays invisible for longer than 3s
+			clearTimeout(reveal._t);
+			reveal._t = setTimeout(function () {
+				var h = innerHeight || 800;
+				pending = pending.filter(function (e) {
+					var r = e.getBoundingClientRect();
+					if (r.top < h * 1.6) { e.classList.add('is-in'); return false; }
+					return true;
+				});
+			}, 3000);
+		}
+		/* mark stagger children as reveal targets automatically */
+		function autoStagger() {
+			document.querySelectorAll('[data-stagger]').forEach(function (p) {
+				Array.prototype.forEach.call(p.children, function (c) { if (!c.hasAttribute('data-reveal')) c.setAttribute('data-reveal', ''); });
 			});
-
-			const io = new IntersectionObserver(
-				(entries) => {
-					entries.forEach((entry) => {
-						if (entry.isIntersecting) {
-							entry.target.classList.add('in');
-							io.unobserve(entry.target);
-						}
-					});
-				},
-				{ threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
-			);
-
-			els.forEach((el) => io.observe(el));
 		}
 
-		if (document.readyState === 'loading') {
-			document.addEventListener('DOMContentLoaded', run);
-		} else {
-			run();
+		/* ── header scroll state ─────────────────────────────────────── */
+		var lastY = 0;
+		function onScroll() {
+			var h = document.querySelector('.site-header');
+			if (!h) return;
+			var y = scrollY;
+			h.classList.toggle('is-scrolled', y > 8);
+			h.classList.toggle('is-hidden', y > 160 && y > lastY + 6 && !document.body.classList.contains('menu-open'));
+			if (y < lastY - 6 || y <= 160) h.classList.remove('is-hidden');
+			lastY = y;
 		}
-		document.addEventListener('astro:page-load', run);
+
+		/* ── theme ───────────────────────────────────────────────────── */
+		function setTheme(t) {
+			document.documentElement.setAttribute('data-theme', t);
+			try { localStorage.setItem('theme', t); } catch (e) {}
+			document.querySelectorAll('[data-theme-toggle]').forEach(function (b) { b.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme'); });
+		}
+		document.addEventListener('click', function (e) {
+			var t = e.target.closest('[data-theme-toggle]');
+			if (!t) return;
+			var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+			if (!document.startViewTransition || reduced) { setTheme(next); return; }
+			var x = e.clientX, y = e.clientY;
+			document.documentElement.style.setProperty('--vt-x', x + 'px');
+			document.documentElement.style.setProperty('--vt-y', y + 'px');
+			document.documentElement.classList.add('theme-switching');
+			document.startViewTransition(function () { setTheme(next); }).finished.finally(function () {
+				document.documentElement.classList.remove('theme-switching');
+			});
+		});
+
+		/* ── copy buttons: <button data-copy="text"> ─────────────────── */
+		document.addEventListener('click', function (e) {
+			var b = e.target.closest('[data-copy]');
+			if (!b) return;
+			var text = b.getAttribute('data-copy') === 'url' ? location.href : b.getAttribute('data-copy');
+			navigator.clipboard && navigator.clipboard.writeText(text).then(function () {
+				b.classList.add('is-copied');
+				window.__aib.toast(b.getAttribute('data-copy-msg') || 'Copied to clipboard');
+				setTimeout(function () { b.classList.remove('is-copied'); }, 1600);
+			});
+		});
+
+		/* ── toast ───────────────────────────────────────────────────── */
+		function toast(msg, ms) {
+			var host = document.getElementById('toast-host');
+			if (!host) { host = document.createElement('div'); host.id = 'toast-host'; host.setAttribute('role', 'status'); host.setAttribute('aria-live', 'polite'); document.body.appendChild(host); }
+			var t = document.createElement('div');
+			t.className = 'toast'; t.textContent = msg;
+			host.appendChild(t);
+			requestAnimationFrame(function () { t.classList.add('is-in'); });
+			setTimeout(function () { t.classList.remove('is-in'); setTimeout(function () { t.remove(); }, 300); }, ms || 2200);
+		}
+
+		/* ── relative time: <time data-relative datetime="ISO"> ──────── */
+		function relTime() {
+			var now = Date.now();
+			document.querySelectorAll('time[data-relative]').forEach(function (el) {
+				var d = new Date(el.getAttribute('datetime')); if (isNaN(d)) return;
+				var s = Math.max(0, (now - d.getTime()) / 1000), out;
+				if (s < 60) out = 'just now';
+				else if (s < 3600) out = Math.floor(s / 60) + 'm ago';
+				else if (s < 86400) out = Math.floor(s / 3600) + 'h ago';
+				else if (s < 86400 * 7) out = Math.floor(s / 86400) + 'd ago';
+				else out = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+				el.textContent = out;
+			});
+		}
+
+		/* ── magnetic hover for [data-magnetic] (subtle) ─────────────── */
+		function magnetic() {
+			if (reduced || matchMedia('(hover: none)').matches) return;
+			document.querySelectorAll('[data-magnetic]').forEach(function (el) {
+				if (el.__mag) return; el.__mag = true;
+				el.addEventListener('mousemove', function (e) {
+					var r = el.getBoundingClientRect();
+					var dx = (e.clientX - (r.left + r.width / 2)) / r.width, dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+					el.style.transform = 'translate(' + dx * 6 + 'px,' + dy * 6 + 'px)';
+				});
+				el.addEventListener('mouseleave', function () { el.style.transform = ''; });
+			});
+		}
+
+		/* ── tilt for [data-tilt] cards (subtle 3D) ───────────────────── */
+		function tilt() {
+			if (reduced || matchMedia('(hover: none)').matches) return;
+			document.querySelectorAll('[data-tilt]').forEach(function (el) {
+				if (el.__tilt) return; el.__tilt = true;
+				el.addEventListener('mousemove', function (e) {
+					var r = el.getBoundingClientRect();
+					var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+					el.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+					el.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+					el.style.setProperty('--rx', ((0.5 - py) * 6).toFixed(2) + 'deg');
+					el.style.setProperty('--ry', ((px - 0.5) * 6).toFixed(2) + 'deg');
+				});
+				el.addEventListener('mouseleave', function () { el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); });
+			});
+		}
+
+		/* ── counters: <span data-count="1234"> ──────────────────────── */
+		function counters() {
+			document.querySelectorAll('[data-count]:not(.is-done)').forEach(function (el) {
+				var target = parseFloat(el.getAttribute('data-count')); if (isNaN(target)) return;
+				var suffix = el.getAttribute('data-suffix') || '';
+				if (reduced) { el.textContent = target.toLocaleString() + suffix; el.classList.add('is-done'); return; }
+				var obs = new IntersectionObserver(function (en) {
+					if (!en[0].isIntersecting) return; obs.disconnect(); el.classList.add('is-done');
+					var t0 = performance.now(), dur = 1100;
+					(function step(t) {
+						var p = Math.min(1, (t - t0) / dur), ease = 1 - Math.pow(1 - p, 4);
+						el.textContent = Math.round(target * ease).toLocaleString() + suffix;
+						if (p < 1) requestAnimationFrame(step);
+					})(t0);
+				}, { threshold: 0.5 });
+				obs.observe(el);
+			});
+		}
+
+		function init() { autoStagger(); reveal(); onScroll(); relTime(); magnetic(); tilt(); counters(); }
+		window.__aib = { toast: toast, reveal: reveal, init: init, showAll: showAll };
+		addEventListener('scroll', function () { onScroll(); queueSweep(); }, { passive: true });
+		addEventListener('resize', queueSweep, { passive: true });
+		addEventListener('load', function () { reveal(); queueSweep(); });
+		document.addEventListener('astro:page-load', init);
+		document.addEventListener('astro:after-swap', function () {
+			/* keep theme after swap (Astro replaces <html> attributes) */
+			try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+		});
+		if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
 	})();
 </script>
+
+<style is:global>
+	#toast-host { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: var(--z-toast); display: grid; gap: 8px; pointer-events: none; }
+	.toast {
+		padding: 10px 16px; border-radius: var(--r-full); background: var(--ink); color: var(--bg);
+		font-size: var(--text-sm); font-weight: 500; box-shadow: var(--shadow-lg);
+		opacity: 0; transform: translateY(12px) scale(0.96);
+		transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-spring);
+	}
+	.toast.is-in { opacity: 1; transform: none; }
+	/* theme switch: circular wipe from the click point */
+	.theme-switching::view-transition-old(root) { animation: none; }
+	.theme-switching::view-transition-new(root) {
+		animation: theme-wipe 520ms var(--ease-out) both;
+		clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%));
+	}
+	@keyframes theme-wipe { to { clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 50%)); } }
+	[data-tilt] { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform var(--dur-3) var(--ease-out); transform-style: preserve-3d; }
+	[data-tilt]:hover { transition-duration: 80ms; }
+</style>

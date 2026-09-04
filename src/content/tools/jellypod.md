@@ -2,7 +2,7 @@
 name: Jellypod
 description: Jellypod turns docs, lectures, and training materials into studio-quality podcasts your audience will actually finish.
 category: ai-learning
-subcategory: AI Audio
+subcategory: AI Course
 url: https://www.jellypod.com
 pricing: paid
 tags: [podcast, audio, text-to-speech, learning, ai-voice]

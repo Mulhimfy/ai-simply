@@ -1,1058 +1,872 @@
 ---
+/**
+ * /tools/quiz/ — "What to try".
+ *
+ * A five-question stepper that ranks the toolbox against your answers.
+ * The engine (questions, option ids, scoring matrix, `?r=` encoding) lives in
+ * `src/lib/quiz.ts` and is FROZEN: old shared links must keep resolving to the
+ * same top match. This file owns presentation only.
+ *
+ * Questions are server-rendered (real <Icon>s, works before hydration); the
+ * results are built client-side from an inlined compact tool blob, so every
+ * results style lives in the global stylesheet below and the Lucide glyphs the
+ * script needs are harvested from a hidden <template>.
+ */
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import { TOOL_CATEGORIES, SITE_TITLE } from '../../consts';
+import { existsSync } from 'node:fs';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import Icon from '../../components/Icon.astro';
+import ShareBar from '../../components/ShareBar.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SITE_TITLE, SITE_URL } from '../../consts';
+import { QUESTIONS } from '../../lib/quiz';
+import type { QuestionId, QuizTool } from '../../lib/quiz';
 
+/* ── data ─────────────────────────────────────────────────────────────── */
 const allTools = await getCollection('tools');
 
-// Compact tool data passed to client — only what scoring needs
-const toolsData = allTools.map(t => ({
-  id: t.id,
-  name: t.data.name,
-  description: t.data.description,
-  category: t.data.category,
-  pricing: t.data.pricing,
-  url: t.data.url,
-  rating: t.data.rating ?? null,
-  ratingCount: t.data.ratingCount ?? null,
-  featured: t.data.featured,
-  verified: t.data.verified,
-  tags: t.data.tags,
-}));
+/** Keep the inlined blob small: the card only ever shows two lines of copy. */
+function short(s: string, max = 110): string {
+	if (s.length <= max) return s;
+	const cut = s.slice(0, max - 1);
+	const sp = cut.lastIndexOf(' ');
+	return `${(sp > 60 ? cut.slice(0, sp) : cut).replace(/[,;:.\s]+$/, '')}…`;
+}
 
-const catsData = TOOL_CATEGORIES.map(c => ({ slug: c.slug, name: c.name, emoji: c.emoji }));
+const tools: QuizTool[] = allTools.map((t) => {
+	const d = t.data;
+	return {
+		slug: t.id,
+		name: d.name,
+		description: short(d.description),
+		category: d.category,
+		pricing: d.pricing,
+		...(d.rating ? { rating: d.rating } : {}),
+		...(d.ratingCount ? { ratingCount: d.ratingCount } : {}),
+		...(d.featured ? { featured: true } : {}),
+		...(d.verified ? { verified: true } : {}),
+		...(d.tags.includes('api') || d.tags.includes('sdk') ? { api: true } : {}),
+		...(existsSync(`public/tools/${t.id}.jpg`) ? { hasShot: true } : {}),
+		...(existsSync(`public/logos/${t.id}.png`) ? {} : { noLogo: true }),
+	};
+});
+
+const cats: Record<string, { name: string; icon: string }> = {};
+for (const c of TOOL_CATEGORIES) cats[c.slug] = { name: c.name, icon: CATEGORY_ICONS[c.slug] ?? 'boxes' };
+
+const payload = JSON.stringify({ tools, cats }).replace(/</g, '\\u003c');
+
+/* ── step chrome ──────────────────────────────────────────────────────── */
+const STEP_META: Record<QuestionId, { label: string; icon: string }> = {
+	goal: { label: 'Your goal', icon: 'target' },
+	role: { label: 'You', icon: 'user-round' },
+	budget: { label: 'Budget', icon: 'wallet' },
+	freq: { label: 'Rhythm', icon: 'calendar-days' },
+	tech: { label: 'Comfort', icon: 'sliders-horizontal' },
+};
+
+/** Every glyph the client-side results renderer needs, harvested from a <template>. */
+const CLIENT_ICONS = [...new Set([
+	...Object.values(CATEGORY_ICONS),
+	'star', 'badge-check', 'check', 'arrow-right', 'arrow-up-right', 'bookmark', 'sparkles',
+])];
+
+const ratedCount = allTools.filter((t) => t.data.rating).length;
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
+<Base
+	title={`What to try — the 5-question AI tool finder | ${SITE_TITLE}`}
+	description={`Answer five quick questions and get AI tools matched to your goal, your role and your budget — scored against all ${tools.length} tools in the toolbox.`}
 
-<!doctype html>
-<html lang="en">
-<head>
-  <BaseHead
-    title={`AI Tool Finder Quiz — Find Your Perfect Match | ${SITE_TITLE}`}
-    description="Answer 5 quick questions and get personalised AI tool recommendations from 200+ tools — matched to your goals, role, and budget."
-  />
-</head>
-<body class="quiz-page">
-<Header />
-<main id="quiz-main">
-  <div id="quiz-app" role="main" aria-live="polite">
-    <noscript>
-      <div class="noscript-msg">
-        <p>This quiz requires JavaScript. <a href="/tools/">Browse all 200+ AI tools →</a></p>
-      </div>
-    </noscript>
-  </div>
-</main>
-<Footer />
+	noNudge>
+	<script type="application/json" id="qz-data" is:inline set:html={payload} />
 
-<script define:vars={{ toolsData, catsData }} data-astro-rerun>
+	<div class="qz" data-qz>
+		<span class="glow qz-glow" aria-hidden="true"></span>
 
-/* ─── DATA ────────────────────────────────────────────────────── */
+		<!-- ── progress rail (questions only) ───────────────────────────── -->
+		<div class="qz-rail" data-qz-rail hidden>
+			<div class="container container--narrow">
+				<ol class="qz-rail__steps" role="list">
+					{QUESTIONS.map((q) => (
+						<li class="qz-rail__step" data-rail-step={q.step}>
+							<span class="qz-rail__ico"><Icon name={STEP_META[q.id].icon} size={13} /></span>
+							<span class="qz-rail__label">{STEP_META[q.id].label}</span>
+						</li>
+					))}
+				</ol>
+				<div class="qz-rail__track"><span class="qz-rail__fill" data-qz-fill></span></div>
+			</div>
+		</div>
 
-const QUESTIONS = [
-  {
-    id: 'goal',
-    step: 1,
-    question: 'What do you mainly want to achieve with AI?',
-    subtitle: 'Pick the one that fits best — we\'ll personalise your results from 200+ tools.',
-    options: [
-      { id: 'write',    emoji: '✍️', label: 'Write better content',       sub: 'Blog posts, emails, copy, scripts' },
-      { id: 'images',   emoji: '🖼️', label: 'Generate images & visuals',  sub: 'Photos, illustrations, art, design' },
-      { id: 'code',     emoji: '💻', label: 'Code and build software',     sub: 'Autocomplete, debugging, generation' },
-      { id: 'business', emoji: '📊', label: 'Run and grow my business',    sub: 'Marketing, automation, CRM, analytics' },
-      { id: 'video',    emoji: '🎬', label: 'Create videos and audio',     sub: 'Video generation, voice cloning, music' },
-      { id: 'research', emoji: '💬', label: 'Research and get answers',    sub: 'Q&A, summarise documents, learn fast' },
-      { id: 'design',   emoji: '🎨', label: 'Design and creative work',    sub: 'UI, logos, branding, 3D, graphics' },
-    ],
-  },
-  {
-    id: 'role',
-    step: 2,
-    question: 'Which best describes you?',
-    subtitle: 'This helps us weight tools suited to your context and experience.',
-    options: [
-      { id: 'student',  emoji: '🎓', label: 'Student or researcher',       sub: 'Learning, essays, research papers' },
-      { id: 'pro',      emoji: '💼', label: 'Working professional',         sub: 'Productivity, reports, communication' },
-      { id: 'dev',      emoji: '🧑‍💻', label: 'Developer or engineer',     sub: 'APIs, code, technical side projects' },
-      { id: 'creator',  emoji: '🎨', label: 'Content creator or artist',   sub: 'YouTube, social, design, music' },
-      { id: 'biz',      emoji: '🏢', label: 'Business owner or marketer',  sub: 'Growth, campaigns, customer ops' },
-      { id: 'newcomer', emoji: '🤔', label: 'Curious AI newcomer',         sub: 'Just exploring — new to all this' },
-    ],
-  },
-  {
-    id: 'budget',
-    step: 3,
-    question: "What's your budget?",
-    subtitle: "We'll make sure every recommendation fits your spending comfort.",
-    options: [
-      { id: 'free',     emoji: '🆓', label: 'Has a free tier',            sub: 'Free or freemium — start without paying' },
-      { id: 'freemium', emoji: '💳', label: 'Open to paying if it\'s worth it', sub: 'Mix of freemium and paid tools' },
-      { id: 'any',      emoji: '🚀', label: 'Budget isn\'t the priority', sub: 'Show me the best, whatever the price' },
-    ],
-  },
-  {
-    id: 'freq',
-    step: 4,
-    question: 'How will you use AI day-to-day?',
-    subtitle: 'Frequent use cases versus one-off projects need different tools.',
-    options: [
-      { id: 'daily',     emoji: '📅', label: 'Every day for work or study', sub: 'I\'ll use this constantly' },
-      { id: 'project',   emoji: '🎯', label: 'For a specific project',      sub: 'One big use case I\'m working on' },
-      { id: 'exploring', emoji: '🔍', label: 'Just exploring AI',           sub: 'Curious — no specific plan yet' },
-      { id: 'building',  emoji: '🔨', label: 'Building something with AI',  sub: 'Integrating AI into a product' },
-    ],
-  },
-  {
-    id: 'tech',
-    step: 5,
-    question: 'How technical are you?',
-    subtitle: "We'll match you with tools that fit your comfort level.",
-    options: [
-      { id: 'easy', emoji: '🖱️', label: 'Non-technical',         sub: 'Point, click, done — no setup please' },
-      { id: 'mid',  emoji: '⚙️', label: 'Somewhat technical',    sub: 'Fine with some configuration' },
-      { id: 'dev',  emoji: '🔌', label: 'Very technical',         sub: 'I want APIs, SDKs, and integrations' },
-    ],
-  },
-];
+		<!-- ── screen: start ────────────────────────────────────────────── -->
+		<section class="qz-screen qz-screen--pane" data-screen="intro" aria-label="Start">
+			<div class="container">
+				<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: 'What to try' }]} class="qz-crumbs" />
+				<div class="qz-intro-grid">
+				<div class="qz-intro" data-stagger>
+					<span class="eyebrow">What to try · five questions · about a minute</span>
+					<h1 class="qz-intro__title">What should you actually <em class="serif">try</em>?</h1>
+					<p class="lead qz-intro__lead">
+						Answer five questions and we score all {tools.length} tools in the toolbox against them —
+						then hand back one to start with, two close runners-up, and the reason each one fits.
+					</p>
+					<div class="qz-intro__cta">
+						<button type="button" class="btn btn--accent btn--lg" data-qz-start>
+							Show me what to try <Icon name="arrow-right" class="icon--arrow" />
+						</button>
+						<a href="/tools/" class="link-arrow qz-intro__browse">Or browse all {tools.length} tools <Icon name="arrow-right" size={16} /></a>
+					</div>
+					<ul class="qz-facts" role="list">
+						<li class="qz-fact"><Icon name="sparkles" size={15} /> {tools.length} tools scored</li>
+						<li class="qz-fact"><Icon name="star" size={15} /> {ratedCount} rated by us</li>
+						<li class="qz-fact"><Icon name="check" size={15} /> No sign-up, no account</li>
+					</ul>
+					<noscript>
+						<p class="qz-noscript">This quiz needs JavaScript. <a href="/tools/" class="link-u">Browse the whole toolbox instead</a>.</p>
+					</noscript>
+				</div>
 
-/* ─── SCORING MATRIX ──────────────────────────────────────────── */
+				<aside class="qz-plan card" data-reveal="right">
+					<h2 class="qz-plan__title mono">What we ask</h2>
+					<ol class="qz-plan__list" role="list">
+						{QUESTIONS.map((q) => (
+							<li class="qz-plan__row">
+								<span class="mono qz-plan__n">{pad(q.step)}</span>
+								<span class="qz-plan__ico"><Icon name={STEP_META[q.id].icon} size={16} /></span>
+								<span class="qz-plan__label">{STEP_META[q.id].label}</span>
+							</li>
+						))}
+					</ol>
+					<p class="qz-plan__foot">Then: one tool to start with, two close runners-up, and five more worth a look — each with the reason it fits.</p>
+				</aside>
+				</div>
+			</div>
+		</section>
 
-const SCORES = {
-  goal: {
-    write:    { 'ai-writing': 5, 'ai-marketing': 3, 'ai-productivity': 2 },
-    images:   { 'ai-image': 5, 'ai-art': 4, 'ai-design': 2 },
-    code:     { 'ai-coding': 5, 'ai-productivity': 2 },
-    business: { 'ai-business': 5, 'ai-marketing': 4, 'ai-productivity': 3 },
-    video:    { 'ai-video': 5, 'ai-voice': 3 },
-    research: { 'ai-chatbot': 5, 'ai-research': 4, 'ai-learning': 3 },
-    design:   { 'ai-design': 5, 'ai-art': 3, 'ai-image': 2 },
-  },
-  role: {
-    student:  { 'ai-learning': 3, 'ai-research': 3, 'ai-writing': 2, 'ai-chatbot': 2 },
-    pro:      { 'ai-productivity': 3, 'ai-writing': 2, 'ai-business': 2 },
-    dev:      { 'ai-coding': 4, 'ai-productivity': 2 },
-    creator:  { 'ai-image': 2, 'ai-video': 2, 'ai-art': 2, 'ai-writing': 2 },
-    biz:      { 'ai-business': 3, 'ai-marketing': 3, 'ai-productivity': 2 },
-    newcomer: { 'ai-chatbot': 3, 'ai-learning': 3 },
-  },
-  freq: {
-    daily:     { 'ai-productivity': 2, 'ai-writing': 1 },
-    project:   {},
-    exploring: { 'ai-chatbot': 2, 'ai-learning': 1 },
-    building:  { 'ai-coding': 2, 'ai-productivity': 1 },
-  },
-  tech: {
-    easy: {},
-    mid:  {},
-    dev:  { 'ai-coding': 2 },
-  },
-};
+		<!-- ── screens: the five questions ──────────────────────────────── -->
+		{QUESTIONS.map((q) => {
+			const cols = q.options.length > 3 ? 2 : 1;
+			return (
+				<section class="qz-screen qz-screen--pane" data-screen={`q${q.step}`} data-step={q.step} aria-label={q.question} hidden>
+					<div class="container container--narrow">
+						<div class="qz-q">
+							<div class="qz-q__head">
+								<button type="button" class="qz-back" data-qz-back>
+									<Icon name="arrow-left" size={16} /> Back
+								</button>
+								<span class="mono qz-q__count tnum">{pad(q.step)} <span class="qz-q__of">/ 05</span></span>
+							</div>
+							<h2 class="qz-q__title" tabindex="-1">{q.question}</h2>
+							<p class="qz-q__sub">{q.subtitle}</p>
+							<div class:list={['qz-opts', `qz-opts--${cols}`, { 'qz-opts--odd': cols === 2 && q.options.length % 2 === 1 }]} role="group" aria-label={q.question}>
+								{q.options.map((o, i) => (
+									<button type="button" class="qz-opt" data-qz-opt={o.id} data-qz-q={q.id} aria-pressed="false">
+										<span class="qz-opt__ico"><Icon name={o.icon} size={20} /></span>
+										<span class="qz-opt__txt">
+											<span class="qz-opt__label">{o.label}</span>
+											<span class="qz-opt__sub">{o.sub}</span>
+										</span>
+										<span class="qz-opt__mark">
+											<kbd class="kbd qz-opt__key">{i + 1}</kbd>
+											<span class="qz-opt__tick"><Icon name="check" size={13} /></span>
+										</span>
+									</button>
+								))}
+							</div>
+							<p class="qz-hint mono">Pick one — or press {q.options.length > 1 ? `1–${q.options.length}` : '1'}</p>
+						</div>
+					</div>
+				</section>
+			);
+		})}
 
-const PRICING_FILTER = {
-  free:     ['free', 'freemium'],
-  freemium: ['free', 'freemium', 'paid'],
-  any:      ['free', 'freemium', 'paid'],
-};
+		<!-- ── screen: results (body injected by the script) ────────────── -->
+		<section class="qz-screen qz-res" data-screen="results" aria-label="Your matches" hidden>
+			<div class="container">
+				<header class="qz-res__head">
+					<span class="eyebrow">Your matches</span>
+					<h2 class="qz-res__title" tabindex="-1" data-qz-title></h2>
+					<p class="lead qz-res__lead" data-qz-lead></p>
+					<div class="qz-answers" data-qz-answers aria-label="Your answers — tap one to change it"></div>
+				</header>
 
-/* ─── STATE ───────────────────────────────────────────────────── */
+				<div class="qz-res__body" data-qz-body></div>
 
-const state = {
-  step: 0,
-  answers: {},
-  results: [],
-  transitioning: false,
-};
+				<div class="qz-share card" data-qz-share>
+					<div class="qz-share__copy">
+						<h3 class="qz-share__title">Send it to <em class="serif">someone</em></h3>
+						<p class="qz-share__text muted">The link carries your five answers, so it opens on exactly this result.</p>
+						<ShareBar
+							title="My AI tool match"
+							url={`${SITE_URL}/tools/quiz/`}
+							text="My AI tool match — find yours in five questions."
+							label="Share"
+							class="qz-share__bar"
+						/>
+						<div class="qz-share__actions">
+							<button type="button" class="btn btn--ghost btn--sm" data-qz-retake>
+								<Icon name="rotate-ccw" size={16} /> Start over
+							</button>
+							<a href="/tools/" class="btn btn--soft btn--sm">Browse the toolbox <Icon name="arrow-right" size={16} class="icon--arrow" /></a>
+						</div>
+					</div>
+					<figure class="qz-share__card" data-qz-og-wrap>
+						<img class="qz-share__og" data-qz-og width="1200" height="630" alt="" loading="lazy" decoding="async" />
+						<figcaption class="mono">Share card preview</figcaption>
+					</figure>
+				</div>
 
-/* ─── SCORING ENGINE ──────────────────────────────────────────── */
+				<p class="qz-note">
+					Ranked from your five answers and our own ratings. Nobody pays for a place on this list.
+					<a href="/rating-methodology/" class="link-u">How we rate tools</a>.
+				</p>
 
-function scoreTools(answers) {
-  // Build category weight map
-  const catWeights = {};
-  for (const [qId, optId] of Object.entries(answers)) {
-    if (qId === 'budget') continue;
-    const map = SCORES[qId]?.[optId] ?? {};
-    for (const [cat, w] of Object.entries(map)) {
-      catWeights[cat] = (catWeights[cat] ?? 0) + w;
-    }
-  }
+			</div>
+			<Newsletter
+				variant="band"
+				heading="The brief, in your *inbox*."
+				text="Know what matters in AI. In three minutes. Every day — the same brief that picks the tools above."
+				id="quiz-newsletter"
+				class="qz-nl"
+			/>
+		</section>
+	</div>
 
-  const allowedPricing = PRICING_FILTER[answers.budget ?? 'any'];
+	<!-- Glyph bank for the client-rendered results. -->
+	<template id="qz-icons">
+		{CLIENT_ICONS.map((n) => <span data-ico={n}><Icon name={n} /></span>)}
+	</template>
+</Base>
 
-  const scored = toolsData
-    .filter(t => allowedPricing.includes(t.pricing))
-    .map(t => {
-      let score = catWeights[t.category] ?? 0;
-      // Quality / curation bonuses (these break ties between tools in the same category)
-      if (t.featured)                              score += 2;
-      if (t.verified)                              score += 0.5;
-      if (t.rating)                                score += (t.rating - 4.0) * 1.5;
-      if (t.ratingCount)                           score += Math.min(1.5, Math.log10(t.ratingCount + 1) * 0.4);
-      // Pricing preference bonus — within "has a free tier", prefer truly free over freemium
-      if (answers.budget === 'free' && t.pricing === 'free') score += 0.75;
-      // Tech-level bonuses
-      if (answers.tech === 'dev'  && (t.tags?.includes('api') || t.tags?.includes('sdk') || t.category === 'ai-coding')) score += 1;
-      if (answers.tech === 'easy' && t.rating && t.rating >= 4.5) score += 0.5;
-      return { ...t, score };
-    })
-    .filter(t => t.score > 0)
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      // Stable tiebreakers when scores are equal
-      if ((b.featured ? 1 : 0) !== (a.featured ? 1 : 0)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
-      if ((b.rating ?? 0) !== (a.rating ?? 0))           return (b.rating ?? 0) - (a.rating ?? 0);
-      if ((b.ratingCount ?? 0) !== (a.ratingCount ?? 0)) return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
-      return a.name.localeCompare(b.name);
-    });
+<script>
+	import {
+		QUESTIONS, QUESTION_IDS, scoreTools, encodeAnswers, decodeAnswers, optionOf, matchReasons, PRICING_FILTER,
+	} from '../../lib/quiz';
+	import type { Answers, CompleteAnswers, QuestionId, QuizTool, ScoredTool } from '../../lib/quiz';
 
-  // Match % derived from actual score relative to the top match (not rank position).
-  // Tied tools get the same %, which is honest. Floor at 62% so even weaker matches feel reasonable.
-  const maxScore = scored[0]?.score ?? 1;
-  return scored.slice(0, 8).map(t => ({
-    ...t,
-    matchPct: Math.round(Math.max(62, Math.min(98, 62 + (t.score / maxScore) * 36))),
-  }));
-}
+	type Cat = { name: string; icon: string };
+	const root = document.querySelector<HTMLElement>('[data-qz]');
+	const dataEl = document.getElementById('qz-data');
+	if (root && dataEl) init(root, JSON.parse(dataEl.textContent || '{}'));
 
-function getMatchReason(tool, answers) {
-  const reasons = [];
-  const cat = catsData.find(c => c.slug === tool.category);
+	function init(root: HTMLElement, DATA: { tools: QuizTool[]; cats: Record<string, Cat> }) {
+		const TOOLS = DATA.tools ?? [];
+		const CATS = DATA.cats ?? {};
+		const PRICING_LABEL = { free: 'Free', freemium: 'Freemium', paid: 'Paid' } as const;
+		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (answers.goal === 'write'    && ['ai-writing','ai-marketing'].includes(tool.category)) reasons.push('matches your writing goal');
-  if (answers.goal === 'images'   && ['ai-image','ai-art'].includes(tool.category))         reasons.push('perfect for image creation');
-  if (answers.goal === 'code'     && tool.category === 'ai-coding')                         reasons.push('built for coders');
-  if (answers.goal === 'business' && ['ai-business','ai-marketing'].includes(tool.category)) reasons.push('built for business');
-  if (answers.goal === 'video'    && ['ai-video','ai-voice'].includes(tool.category))       reasons.push('great for video & audio');
-  if (answers.goal === 'research' && ['ai-chatbot','ai-research'].includes(tool.category)) reasons.push('ideal for research');
-  if (answers.goal === 'design'   && ['ai-design','ai-art'].includes(tool.category))       reasons.push('top design tool');
+		/* ── glyph bank ─────────────────────────────────────────────── */
+		const ICONS: Record<string, string> = {};
+		document.querySelectorAll<HTMLTemplateElement>('#qz-icons').forEach((tpl) => {
+			tpl.content.querySelectorAll<HTMLElement>('[data-ico]').forEach((s) => {
+				const svg = s.querySelector('svg');
+				if (svg) ICONS[s.dataset.ico!] = svg.innerHTML;
+			});
+		});
+		const ico = (name: string, size = 16, cls = '') =>
+			`<svg class="icon ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] ?? ICONS.boxes ?? ''}</svg>`;
+		const STAR5 = new Array(5).fill(ico('star', 13)).join('');
 
-  if (answers.role === 'student'  && ['ai-learning','ai-research'].includes(tool.category)) reasons.push('popular with students');
-  if (answers.role === 'dev'      && tool.category === 'ai-coding')                         reasons.push('developer favourite');
-  if (answers.role === 'creator'  && ['ai-image','ai-video','ai-art'].includes(tool.category)) reasons.push('loved by creators');
-  if (answers.role === 'newcomer' && ['ai-chatbot','ai-learning'].includes(tool.category)) reasons.push('great starting point');
+		/* ── screens ────────────────────────────────────────────────── */
+		const screens = new Map<string, HTMLElement>();
+		root.querySelectorAll<HTMLElement>('[data-screen]').forEach((s) => screens.set(s.dataset.screen!, s));
+		const rail = root.querySelector<HTMLElement>('[data-qz-rail]')!;
+		const fill = root.querySelector<HTMLElement>('[data-qz-fill]')!;
+		let current: HTMLElement | null = screens.get('intro') ?? null;
 
-  if (answers.budget === 'free' && tool.pricing === 'free') reasons.push('100% free');
-  if (tool.rating && tool.rating >= 4.7) reasons.push(`top-rated ${tool.rating}/5`);
-  if (tool.featured) reasons.push("editor's pick");
+		function paintRail(step: number) {
+			rail.hidden = step < 1;
+			fill.style.transform = `scaleX(${Math.max(0.02, step / QUESTIONS.length)})`;
+			rail.querySelectorAll<HTMLElement>('[data-rail-step]').forEach((el) => {
+				const n = Number(el.dataset.railStep);
+				el.classList.toggle('is-done', n < step);
+				el.classList.toggle('is-now', n === step);
+			});
+		}
 
-  const top = reasons.slice(0, 2);
-  if (top.length === 0 && cat) top.push(`top ${cat.name} tool`);
-  return top.join(' · ');
-}
+		function goTo(name: string, dir: 'fwd' | 'back' = 'fwd') {
+			const next = screens.get(name);
+			if (!next || next === current) return;
+			const out = current;
+			const swap = () => {
+				if (out) { out.hidden = true; out.classList.remove('qz-leave-l', 'qz-leave-r'); }
+				next.hidden = false;
+				next.classList.add(dir === 'back' ? 'qz-enter-l' : 'qz-enter-r');
+				current = next;
+				requestAnimationFrame(() => requestAnimationFrame(() => next.classList.remove('qz-enter-l', 'qz-enter-r')));
+				const h = next.querySelector<HTMLElement>('[tabindex="-1"]');
+				if (h) h.focus({ preventScroll: true });
+			};
+			if (out && !reduced) {
+				out.classList.add(dir === 'back' ? 'qz-leave-r' : 'qz-leave-l');
+				setTimeout(swap, 170);
+			} else swap();
+			if (scrollY > 8) scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+		}
 
-function getCategoryOf(tool) {
-  return catsData.find(c => c.slug === tool.category);
-}
+		/* ── state ──────────────────────────────────────────────────── */
+		const answers: Answers = {};
+		let step = 0;            // 0 = intro, 1..5 = questions, 6 = results
+		let editing = false;     // jumped back from the results to change one answer
 
-function faviconUrl(url) {
-  try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`; }
-  catch { return ''; }
-}
+		function showStep(n: number, dir: 'fwd' | 'back' = 'fwd') {
+			step = n;
+			paintRail(n > 0 && n <= QUESTIONS.length ? n : 0);
+			if (n === 0) goTo('intro', dir);
+			else if (n > QUESTIONS.length) goTo('results', dir);
+			else {
+				const q = QUESTIONS[n - 1];
+				paintSelection(q.id);
+				goTo(`q${q.step}`, dir);
+			}
+		}
 
-function esc(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
+		function paintSelection(qid: QuestionId) {
+			root.querySelectorAll<HTMLButtonElement>(`[data-qz-q="${qid}"]`).forEach((b) => {
+				const on = answers[qid] === b.dataset.qzOpt;
+				b.classList.toggle('is-on', on);
+				b.setAttribute('aria-pressed', String(on));
+			});
+		}
 
-function pricingBadge(pricing) {
-  const MAP = {
-    free:     { bg: '#E0F5EE', color: '#00875A', label: 'Free' },
-    freemium: { bg: '#EEF3FF', color: '#3B5BDB', label: 'Freemium' },
-    paid:     { bg: '#FFF4E6', color: '#E67700', label: 'Paid' },
-  };
-  return MAP[pricing] ?? MAP.freemium;
-}
+		function choose(qid: QuestionId, value: string) {
+			answers[qid] = value;
+			paintSelection(qid);
+			const jump = editing && QUESTION_IDS.every((k) => answers[k]);
+			editing = false;
+			setTimeout(() => {
+				if (jump) finish();
+				else if (step >= QUESTIONS.length) finish();
+				else showStep(step + 1);
+			}, reduced ? 0 : 260);
+		}
 
-/* ─── URL SHARING ─────────────────────────────────────────────── */
+		/* ── results ────────────────────────────────────────────────── */
+		const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		const catOf = (slug: string): Cat => CATS[slug] ?? { name: slug, icon: 'boxes' };
 
-function encodeAnswers(answers) {
-  const keys = ['goal','role','budget','freq','tech'];
-  return keys.map(k => answers[k] ?? '').join(',');
-}
+		function logoHtml(t: QuizTool, size: number) {
+			if (!t.noLogo) {
+				const inner = Math.round(size * 0.6);
+				return `<span class="logo-mark" style="--mark:${size}px" aria-hidden="true"><img src="/logos/${t.slug}.png" alt="" width="${inner}" height="${inner}" loading="lazy" decoding="async"></span>`;
+			}
+			let h = 0;
+			for (const ch of t.slug) h = (h * 31 + ch.charCodeAt(0)) % 360;
+			return `<span class="logo-mark" style="--mark:${size}px;--lm-h:${h}" aria-hidden="true"><span class="qz-letter">${esc((t.name.trim()[0] ?? '?').toUpperCase())}</span></span>`;
+		}
 
-function decodeAnswers(str) {
-  if (!str) return null;
-  const keys = ['goal','role','budget','freq','tech'];
-  const vals = str.split(',');
-  const out = {};
-  keys.forEach((k, i) => { if (vals[i]) out[k] = vals[i]; });
-  return Object.keys(out).length === 5 ? out : null;
-}
+		function ratingHtml(t: QuizTool) {
+			if (!t.rating) return '<span class="qz-unrated">Not yet rated</span>';
+			const pct = (Math.max(0, Math.min(5, t.rating)) / 5) * 100;
+			const label = `Rated ${t.rating.toFixed(1)} out of 5${t.ratingCount ? ` from ${t.ratingCount.toLocaleString()} ratings` : ''}`;
+			return `<span class="qz-rate"><span class="qz-stars" role="img" aria-label="${esc(label)}"><span class="qz-stars__row">${STAR5}</span><span class="qz-stars__row qz-stars__on" style="width:${pct}%">${STAR5}</span></span>`
+				+ `<span class="qz-rate__num tnum">${t.rating.toFixed(1)}</span>`
+				+ `${t.ratingCount ? `<span class="qz-rate__c tnum">(${t.ratingCount.toLocaleString()})</span>` : ''}</span>`;
+		}
 
-/* ─── RENDERERS ───────────────────────────────────────────────── */
+		const saveBtn = (t: QuizTool) =>
+			`<button type="button" class="qz-save" data-save="${esc(t.slug)}" data-save-name="${esc(t.name)}" aria-pressed="false" aria-label="Save ${esc(t.name)}" title="Save">${ico('bookmark', 16)}</button>`;
 
-function renderIntro() {
-  return `
-    <div class="qz-intro">
-      <div class="qz-intro__icon">🎯</div>
-      <h1 class="qz-intro__title">Find Your Perfect AI Tool</h1>
-      <p class="qz-intro__sub">5 quick questions. Personalised matches from 200+ AI tools — filtered to your goals, role, and budget.</p>
-      <div class="qz-intro__stats">
-        <span>✓ 200+ tools</span>
-        <span>✓ 21 categories</span>
-        <span>✓ ~1 minute</span>
-      </div>
-      <button class="qz-start-btn" id="qz-start">Start the Quiz →</button>
-      <p class="qz-intro__privacy">No sign-up. No data stored. Results are instant.</p>
-    </div>
-  `;
-}
+		const metaRow = (t: QuizTool) => {
+			const c = catOf(t.category);
+			return `<span class="qz-meta"><span class="qz-meta__cat">${ico(c.icon, 13)} ${esc(c.name)}</span><span class="pill pill--${t.pricing}">${PRICING_LABEL[t.pricing]}</span></span>`;
+		};
 
-function renderQuestion(q, currentAnswer) {
-  const progress = (q.step / 5) * 100;
-  return `
-    <div class="qz-question">
-      <div class="qz-progress">
-        <div class="qz-progress__bar" style="width:${progress}%"></div>
-      </div>
-      <div class="qz-q-header">
-        <span class="qz-step">Question ${q.step} of 5</span>
-        ${q.step > 1 ? `<button class="qz-back-btn" id="qz-back">← Back</button>` : ''}
-      </div>
-      <h2 class="qz-q-title">${q.question}</h2>
-      <p class="qz-q-sub">${q.subtitle}</p>
-      <div class="qz-options qz-options--${q.options.length <= 4 ? 'small' : 'large'}" id="qz-options">
-        ${q.options.map(opt => `
-          <button
-            class="qz-option${currentAnswer === opt.id ? ' selected' : ''}"
-            data-value="${opt.id}"
-            aria-pressed="${currentAnswer === opt.id ? 'true' : 'false'}"
-          >
-            <span class="qz-option__emoji">${opt.emoji}</span>
-            <span class="qz-option__label">${opt.label}</span>
-            <span class="qz-option__sub">${opt.sub}</span>
-            <span class="qz-option__check" aria-hidden="true">✓</span>
-          </button>
-        `).join('')}
-      </div>
-      <div class="qz-nav">
-        <button class="qz-next-btn${currentAnswer ? '' : ' disabled'}" id="qz-next" ${!currentAnswer ? 'disabled' : ''}>
-          ${q.step < 5 ? 'Next Question →' : 'See My Matches →'}
-        </button>
-      </div>
-    </div>
-  `;
-}
+		function whyList(t: ScoredTool, a: Answers, max: number) {
+			const reasons = matchReasons(t, a, catOf(t.category).name).slice(0, max);
+			if (!reasons.length) return '';
+			return `<ul class="qz-why" role="list">${reasons.map((r) => `<li>${ico('check', 13)} ${esc(r)}</li>`).join('')}</ul>`;
+		}
 
-function renderCalculating() {
-  return `
-    <div class="qz-calculating">
-      <div class="qz-calc-spinner"></div>
-      <h2>Finding your matches…</h2>
-      <p>Scoring 200+ tools against your answers</p>
-      <div class="qz-calc-steps">
-        <span class="qz-calc-step active" id="cs1">Analysing your goals</span>
-        <span class="qz-calc-step" id="cs2">Filtering by budget</span>
-        <span class="qz-calc-step" id="cs3">Ranking top matches</span>
-      </div>
-    </div>
-  `;
-}
+		function topCard(t: ScoredTool, a: Answers) {
+			const media = t.hasShot
+				? `<a class="qz-top__media" href="/tools/${esc(t.slug)}/" tabindex="-1" aria-hidden="true"><img src="/tools/${esc(t.slug)}.jpg" alt="" width="1200" height="630" decoding="async"></a>`
+				: '';
+			return `<article class="qz-top${t.hasShot ? '' : ' qz-top--flat'}" style="--i:0">
+				${media}
+				<div class="qz-top__body">
+					<span class="qz-tier qz-tier--best">${ico('sparkles', 12)} ${esc(t.tier)}</span>
+					<div class="qz-top__id">
+						${logoHtml(t, 56)}
+						<span class="qz-top__names">
+							<span class="qz-top__name">${esc(t.name)}${t.verified ? `<span class="qz-verified" title="Tested by AI Briefs">${ico('badge-check', 16)}</span>` : ''}</span>
+							${metaRow(t)}
+						</span>
+						${saveBtn(t)}
+					</div>
+					<p class="qz-top__desc">${esc(t.description)}</p>
+					${whyList(t, a, 3)}
+					<div class="qz-top__foot">
+						<a class="btn btn--accent" href="/tools/${esc(t.slug)}/">Open ${esc(t.name)} ${ico('arrow-right', 16, 'icon--arrow')}</a>
+						${ratingHtml(t)}
+					</div>
+				</div>
+			</article>`;
+		}
 
-function renderResults(results, answers) {
-  const topMatches = results.slice(0, 3);
-  const alsoConsider = results.slice(3);
-  const goalLabel = QUESTIONS[0].options.find(o => o.id === answers.goal)?.label ?? '';
-  const roleLabel = QUESTIONS[1].options.find(o => o.id === answers.role)?.label ?? '';
+		function runnerCard(t: ScoredTool, a: Answers, i: number) {
+			return `<article class="qz-run" style="--i:${i + 1}">
+				<a class="qz-run__link" href="/tools/${esc(t.slug)}/">
+					<span class="qz-run__head">
+						${logoHtml(t, 44)}
+						<span class="qz-run__names">
+							<span class="qz-run__name">${esc(t.name)}${t.verified ? `<span class="qz-verified" title="Tested by AI Briefs">${ico('badge-check', 15)}</span>` : ''}</span>
+							${metaRow(t)}
+						</span>
+					</span>
+					<span class="qz-tier">${esc(t.tier)}</span>
+					<p class="qz-run__desc">${esc(t.description)}</p>
+					${whyList(t, a, 2)}
+					<span class="qz-run__foot">${ratingHtml(t)}<span class="qz-run__go">Details ${ico('arrow-right', 14)}</span></span>
+				</a>
+				${saveBtn(t)}
+			</article>`;
+		}
 
-  const shareUrl = `${window.location.origin}/tools/quiz/?r=${encodeURIComponent(encodeAnswers(answers))}`;
+		function alsoRow(t: ScoredTool, i: number) {
+			return `<li class="qz-alsoRow" style="--i:${i}">
+				<a class="qz-alsoRow__link" href="/tools/${esc(t.slug)}/">
+					${logoHtml(t, 36)}
+					<span class="qz-alsoRow__txt">
+						<span class="qz-alsoRow__name">${esc(t.name)}</span>
+						<span class="qz-alsoRow__desc">${esc(t.description)}</span>
+					</span>
+					<span class="pill pill--${t.pricing}">${PRICING_LABEL[t.pricing]}</span>
+					<span class="qz-alsoRow__go">${ico('arrow-up-right', 16)}</span>
+				</a>
+			</li>`;
+		}
 
-  return `
-    <div class="qz-results">
-      <div class="qz-results__hero">
-        <div class="qz-results__badge">Your AI Matches</div>
-        <h1 class="qz-results__title">Here are your top picks</h1>
-        <p class="qz-results__sub">
-          Based on your goal to <strong>${goalLabel.toLowerCase()}</strong> as a <strong>${roleLabel.toLowerCase()}</strong>
-          — scored and ranked from ${toolsData.filter(t => PRICING_FILTER[answers.budget].includes(t.pricing)).length}+ eligible tools.
-        </p>
-      </div>
+		function answerChips(a: CompleteAnswers) {
+			return QUESTION_IDS.map((q, i) => {
+				const o = optionOf(q, a[q]);
+				if (!o) return '';
+				return `<button type="button" class="chip qz-chip" data-qz-edit="${i + 1}">${ico(o.icon, 14)} ${esc(o.label)}</button>`;
+			}).join('');
+		}
 
-      <div class="qz-top-matches">
-        ${topMatches.map((tool, i) => {
-          const cat = getCategoryOf(tool);
-          const badge = pricingBadge(tool.pricing);
-          const reason = getMatchReason(tool, answers);
-          const favicon = faviconUrl(tool.url);
-          const medals = ['🥇','🥈','🥉'];
-          return `
-            <a href="/tools/${tool.id}/" class="qz-match-card qz-match-card--top" target="_self">
-              <div class="qz-match-card__rank">${medals[i]}</div>
-              <div class="qz-match-card__head">
-                <div class="qz-match-logo">
-                  <img src="${favicon}" alt="${esc(tool.name)}" width="44" height="44" loading="${i === 0 ? 'eager' : 'lazy'}"
-                    class="qz-favicon" />
-                  <span class="qz-match-logo-fb" style="display:none">${cat?.emoji ?? '🤖'}</span>
-                </div>
-                <div class="qz-match-info">
-                  <div class="qz-match-name-row">
-                    <h3 class="qz-match-name">${esc(tool.name)}</h3>
-                    <span class="qz-pricing-pill" style="background:${badge.bg};color:${badge.color}">${badge.label}</span>
-                  </div>
-                  <span class="qz-match-cat">${cat?.emoji ?? ''} ${esc(cat?.name ?? '')}</span>
-                </div>
-                <div class="qz-match-pct">
-                  <span class="qz-pct-num">${tool.matchPct}%</span>
-                  <span class="qz-pct-label">match</span>
-                </div>
-              </div>
-              <div class="qz-match-bar-wrap">
-                <div class="qz-match-bar" style="--pct:${tool.matchPct}%"></div>
-              </div>
-              <p class="qz-match-desc">${esc(tool.description)}</p>
-              ${reason ? `<div class="qz-match-reason">✓ ${esc(reason)}</div>` : ''}
-              <span class="qz-match-cta">Explore ${esc(tool.name)} →</span>
-            </a>
-          `;
-        }).join('')}
-      </div>
+		function updateShare(url: string, name: string) {
+			const bar = root.querySelector<HTMLElement>('[data-qz-share] [data-share]');
+			if (!bar) return;
+			const text = `My AI tool match: ${name}. Find yours in five questions.`;
+			bar.dataset.shareUrl = url;
+			bar.dataset.shareText = text;
+			bar.dataset.shareTitle = text;
+			bar.querySelector('[data-copy]')?.setAttribute('data-copy', url);
+			const t = encodeURIComponent(text);
+			const u = encodeURIComponent(url);
+			const hrefs: Record<string, string> = {
+				X: `https://twitter.com/intent/tweet?text=${t}&url=${u}&via=getaibriefs`,
+				LinkedIn: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
+				WhatsApp: `https://wa.me/?text=${t}%20${u}`,
+				Reddit: `https://www.reddit.com/submit?url=${u}&title=${t}`,
+			};
+			bar.querySelectorAll<HTMLAnchorElement>('[data-share-net]').forEach((el) => {
+				const h = hrefs[el.dataset.shareNet ?? ''];
+				if (h) el.href = h;
+			});
+		}
 
-      ${alsoConsider.length > 0 ? `
-        <div class="qz-also">
-          <h2 class="qz-also__title">Also worth considering</h2>
-          <div class="qz-also-grid">
-            ${alsoConsider.map(tool => {
-              const cat = getCategoryOf(tool);
-              const badge = pricingBadge(tool.pricing);
-              const favicon = faviconUrl(tool.url);
-              return `
-                <a href="/tools/${tool.id}/" class="qz-also-card" target="_self">
-                  <div class="qz-also-head">
-                    <div class="qz-also-logo">
-                      <img src="${favicon}" alt="${esc(tool.name)}" width="32" height="32" loading="lazy"
-                        class="qz-favicon" />
-                      <span class="qz-also-logo-fb" style="display:none">${cat?.emoji ?? '🤖'}</span>
-                    </div>
-                    <div>
-                      <div class="qz-also-name">${esc(tool.name)}</div>
-                      <span class="qz-pricing-pill" style="background:${badge.bg};color:${badge.color};font-size:0.6rem">${badge.label}</span>
-                    </div>
-                    <span class="qz-also-pct">${tool.matchPct}%</span>
-                  </div>
-                  <p class="qz-also-desc">${esc(tool.description)}</p>
-                </a>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      ` : ''}
+		function renderResults(a: CompleteAnswers) {
+			const results = scoreTools(TOOLS, a);
+			const eligible = TOOLS.filter((t) => (PRICING_FILTER[a.budget] ?? PRICING_FILTER.any).includes(t.pricing)).length;
+			const title = root.querySelector<HTMLElement>('[data-qz-title]')!;
+			const lead = root.querySelector<HTMLElement>('[data-qz-lead]')!;
+			const chips = root.querySelector<HTMLElement>('[data-qz-answers]')!;
+			const body = root.querySelector<HTMLElement>('[data-qz-body]')!;
+			const shareWrap = root.querySelector<HTMLElement>('[data-qz-share]')!;
+			const ogWrap = root.querySelector<HTMLElement>('[data-qz-og-wrap]')!;
+			const og = root.querySelector<HTMLImageElement>('[data-qz-og]')!;
 
-      <div class="qz-results-actions">
-        <button class="qz-retake-btn" id="qz-retake">↺ Retake Quiz</button>
-        <button class="qz-share-btn" id="qz-share" data-url="${shareUrl}">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share Results
-        </button>
-        <a href="/tools/" class="qz-browse-btn">Browse All Tools →</a>
-      </div>
+			chips.innerHTML = answerChips(a);
 
-      <p class="qz-disclaimer">Results are personalised based on your answers. <a href="/rating-methodology/">How we rate tools.</a></p>
-    </div>
-  `;
-}
+			if (!results.length) {
+				title.innerHTML = 'Nothing scored high enough.';
+				lead.textContent = 'That combination is unusually narrow. Widen the budget, or browse the toolbox by category.';
+				body.innerHTML = `<div class="qz-empty">${ico('boxes', 22)}<p>No tool cleared the bar for these answers.</p><a class="btn btn--accent" href="/tools/">Browse the toolbox ${ico('arrow-right', 16, 'icon--arrow')}</a></div>`;
+				shareWrap.hidden = true;
+				return null;
+			}
+			shareWrap.hidden = false;
 
-/* ─── TRANSITIONS ─────────────────────────────────────────────── */
+			const top = results[0];
+			const runners = results.slice(1, 3);
+			const also = results.slice(3);
 
-function mount(html, direction = 'forward') {
-  const app = document.getElementById('quiz-app');
-  if (!app) return;
+			title.innerHTML = `Start with <em class="serif">${esc(top.name)}</em>.`;
+			lead.textContent = `We scored ${eligible} tools that fit your budget against your five answers. Here is the best fit, why it fits, and what else is worth opening.`;
 
-  const incoming = document.createElement('div');
-  incoming.className = `qz-screen qz-screen--${direction === 'forward' ? 'enter-right' : 'enter-left'}`;
-  incoming.innerHTML = html;
+			body.innerHTML = topCard(top, a)
+				+ (runners.length
+					? `<section class="qz-block"><h3 class="qz-block__title">Close behind</h3><div class="qz-runs">${runners.map((t, i) => runnerCard(t, a, i)).join('')}</div></section>`
+					: '')
+				+ (also.length
+					? `<section class="qz-block"><h3 class="qz-block__title">Also worth a look</h3><ul class="qz-also" role="list">${also.map((t, i) => alsoRow(t, i)).join('')}</ul></section>`
+					: '');
 
-  const current = app.querySelector('.qz-screen');
-  if (current) {
-    current.classList.add(direction === 'forward' ? 'qz-screen--exit-left' : 'qz-screen--exit-right');
-    setTimeout(() => current.remove(), 280);
-  }
+			const r = encodeAnswers(a);
+			updateShare(`${location.origin}/tools/quiz/?r=${encodeURIComponent(r)}`, top.name);
+			ogWrap.hidden = false;
+			og.alt = `${top.name} share card`;
+			og.onerror = () => { ogWrap.hidden = true; };
+			og.src = `/og/tools/${top.slug}.png`;
 
-  app.appendChild(incoming);
-  // Trigger reflow then animate in
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      incoming.classList.remove('qz-screen--enter-right', 'qz-screen--enter-left');
-      incoming.classList.add('qz-screen--active');
-    });
-  });
+			try { localStorage.setItem('aib-quiz-result', JSON.stringify({ slug: top.slug, name: top.name, r, at: Date.now() })); } catch {}
+			paintSaved();
+			(window as any).__aib?.init?.();
+			return top;
+		}
 
-  bindEvents();
-}
+		function finish() {
+			const a = answers as CompleteAnswers;
+			const url = new URL(location.href);
+			url.searchParams.set('r', encodeAnswers(a));
+			history.replaceState(null, '', url.toString());
+			renderResults(a);
+			showStep(QUESTIONS.length + 1);
+			(window as any).gtag?.('event', 'quiz_complete', { content_id: encodeAnswers(a) });
+		}
 
-/* ─── EVENT BINDING ───────────────────────────────────────────── */
+		/* ── save (same contract as ToolCard; this page has no card) ─── */
+		const SAVE_KEY = 'aib-saved';
+		const savedMap = (): Record<string, string> => {
+			try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); } catch { return {}; }
+		};
+		function paintSaved() {
+			const s = savedMap();
+			document.querySelectorAll<HTMLButtonElement>('[data-save]').forEach((b) => b.setAttribute('aria-pressed', String(!!s[b.dataset.save!])));
+			document.querySelectorAll<HTMLElement>('[data-saved-count]').forEach((el) => {
+				const n = Object.keys(s).length;
+				el.textContent = String(n);
+				el.toggleAttribute('hidden', n === 0);
+			});
+		}
+		function bindSave() {
+			if ((document as any).__saveBound) { paintSaved(); return; }
+			(document as any).__saveBound = true;
+			document.addEventListener('click', (e) => {
+				const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-save]');
+				if (!b) return;
+				e.preventDefault();
+				const s = savedMap();
+				const slug = b.dataset.save!;
+				const on = !s[slug];
+				if (on) s[slug] = b.dataset.saveName || slug; else delete s[slug];
+				try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch {}
+				b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop');
+				paintSaved();
+				(window as any).__aib?.toast(on ? `Saved ${b.dataset.saveName} · view in My tools` : 'Removed from saved');
+				document.dispatchEvent(new CustomEvent('aib:saved-change', { detail: s }));
+			});
+			document.addEventListener('astro:page-load', paintSaved);
+			paintSaved();
+		}
 
-function bindEvents() {
-  const app = document.getElementById('quiz-app');
-  if (!app) return;
-  // Always bind to the last (newest) screen so old exiting screens don't intercept
-  const root = app.lastElementChild || app;
+		/* ── events ─────────────────────────────────────────────────── */
+		root.addEventListener('click', (e) => {
+			const el = e.target as HTMLElement;
 
-  // Favicon error fallback
-  root.querySelectorAll('.qz-favicon').forEach(img => {
-    img.addEventListener('error', () => {
-      img.style.display = 'none';
-      const fb = img.nextElementSibling;
-      if (fb) fb.style.display = 'flex';
-    }, { once: true });
-  });
+			if (el.closest('[data-qz-start]')) { showStep(1); return; }
 
-  // Start button
-  root.querySelector('#qz-start')?.addEventListener('click', () => {
-    state.step = 1;
-    mount(renderQuestion(QUESTIONS[0], state.answers['goal']));
-  });
+			const opt = el.closest<HTMLButtonElement>('[data-qz-opt]');
+			if (opt) { choose(opt.dataset.qzQ as QuestionId, opt.dataset.qzOpt!); return; }
 
-  // Option selection
-  root.querySelector('#qz-options')?.addEventListener('click', e => {
-    const btn = e.target.closest('.qz-option');
-    if (!btn) return;
-    const val = btn.dataset.value;
-    const qId = QUESTIONS[state.step - 1].id;
-    state.answers[qId] = val;
+			if (el.closest('[data-qz-back]')) { showStep(step - 1, 'back'); return; }
 
-    // Update UI without full re-render
-    root.querySelectorAll('.qz-option').forEach(b => {
-      const sel = b.dataset.value === val;
-      b.classList.toggle('selected', sel);
-      b.setAttribute('aria-pressed', sel ? 'true' : 'false');
-    });
-    const nextBtn = root.querySelector('#qz-next');
-    if (nextBtn) { nextBtn.disabled = false; nextBtn.classList.remove('disabled'); }
-  });
+			const edit = el.closest<HTMLElement>('[data-qz-edit]');
+			if (edit) { editing = true; showStep(Number(edit.dataset.qzEdit), 'back'); return; }
 
-  // Next button
-  root.querySelector('#qz-next')?.addEventListener('click', () => {
-    const qId = QUESTIONS[state.step - 1].id;
-    if (!state.answers[qId]) return;
-    if (state.step < 5) {
-      state.step++;
-      mount(renderQuestion(QUESTIONS[state.step - 1], state.answers[QUESTIONS[state.step - 1].id]));
-    } else {
-      // Go to calculating → results
-      state.step = 6;
-      mount(renderCalculating());
-      // Animate calculating steps
-      let s = 1;
-      const iv = setInterval(() => {
-        if (s > 3) { clearInterval(iv); return; }
-        document.getElementById(`cs${s}`)?.classList.add('done');
-        s++;
-        if (s <= 3) document.getElementById(`cs${s}`)?.classList.add('active');
-      }, 350);
-      setTimeout(() => {
-        state.results = scoreTools(state.answers);
-        state.step = 7;
-        // Update URL for sharing
-        const url = new URL(window.location.href);
-        url.searchParams.set('r', encodeAnswers(state.answers));
-        history.replaceState(null, '', url.toString());
-        mount(renderResults(state.results, state.answers));
-        // Animate match bars
-        setTimeout(() => {
-          document.querySelectorAll('.qz-match-bar').forEach(bar => {
-            bar.classList.add('animated');
-          });
-        }, 100);
-      }, 1400);
-    }
-  });
+			if (el.closest('[data-qz-retake]')) {
+				for (const k of QUESTION_IDS) delete answers[k];
+				QUESTION_IDS.forEach(paintSelection);
+				editing = false;
+				history.replaceState(null, '', location.pathname);
+				showStep(0, 'back');
+			}
+		});
 
-  // Back button
-  root.querySelector('#qz-back')?.addEventListener('click', () => {
-    if (state.step > 1) {
-      state.step--;
-      mount(renderQuestion(QUESTIONS[state.step - 1], state.answers[QUESTIONS[state.step - 1].id]), 'back');
-    }
-  });
+		document.addEventListener('keydown', (e) => {
+			if (step < 1 || step > QUESTIONS.length) return;
+			if (e.metaKey || e.ctrlKey || e.altKey) return;
+			const t = e.target as HTMLElement;
+			if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+			const q = QUESTIONS[step - 1];
+			const n = Number(e.key);
+			if (n >= 1 && n <= q.options.length) { e.preventDefault(); choose(q.id, q.options[n - 1].id); return; }
+			if (e.key === 'Backspace' || e.key === 'ArrowLeft') { e.preventDefault(); showStep(step - 1, 'back'); }
+		});
 
-  // Retake
-  root.querySelector('#qz-retake')?.addEventListener('click', () => {
-    state.step = 0;
-    state.answers = {};
-    state.results = [];
-    history.replaceState(null, '', window.location.pathname);
-    mount(renderIntro(), 'back');
-  });
-
-  // Share
-  root.querySelector('#qz-share')?.addEventListener('click', async function() {
-    const url = this.dataset.url;
-    try {
-      await navigator.clipboard.writeText(url);
-      this.textContent = '✓ Link copied!';
-      this.style.background = 'var(--primary)';
-      this.style.color = '#fff';
-      setTimeout(() => {
-        this.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Results`;
-        this.style.background = '';
-        this.style.color = '';
-      }, 2500);
-    } catch {
-      prompt('Copy this link:', url);
-    }
-  });
-}
-
-/* ─── INIT ────────────────────────────────────────────────────── */
-
-function initQuiz() {
-  const app = document.getElementById('quiz-app');
-  if (!app) return;
-  // If a previous mount left content (e.g. on SPA re-entry), clear and reset state.
-  app.innerHTML = '';
-  state.step = 0;
-  state.answers = {};
-  state.results = [];
-
-  // Check for shared results in URL
-  const params = new URLSearchParams(window.location.search);
-  const shared = params.get('r');
-  const decoded = shared ? decodeAnswers(decodeURIComponent(shared)) : null;
-
-  if (decoded) {
-    state.answers = decoded;
-    state.results = scoreTools(decoded);
-    state.step = 7;
-    const screen = document.createElement('div');
-    screen.className = 'qz-screen qz-screen--active';
-    screen.innerHTML = renderResults(state.results, decoded);
-    app.appendChild(screen);
-    bindEvents();
-    setTimeout(() => {
-      document.querySelectorAll('.qz-match-bar').forEach(b => b.classList.add('animated'));
-    }, 200);
-  } else {
-    const screen = document.createElement('div');
-    screen.className = 'qz-screen qz-screen--active';
-    screen.innerHTML = renderIntro();
-    app.appendChild(screen);
-    bindEvents();
-  }
-}
-
-// Run now if the DOM is already parsed (true for body-placed scripts on initial
-// load, and true on Astro ClientRouter re-execution since DOMContentLoaded
-// already fired on the original page). Otherwise wait for it.
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initQuiz);
-} else {
-  initQuiz();
-}
-
+		/* ── boot: a shared ?r= jumps straight to the same result ───── */
+		bindSave();
+		const shared = decodeAnswers(new URLSearchParams(location.search).get('r'));
+		if (shared) {
+			Object.assign(answers, shared);
+			QUESTION_IDS.forEach(paintSelection);
+			renderResults(shared);
+			step = QUESTIONS.length + 1;
+			const intro = screens.get('intro');
+			const res = screens.get('results');
+			if (intro) intro.hidden = true;
+			if (res) { res.hidden = false; current = res; }
+			paintRail(0);
+		}
+	}
 </script>
 
 <style is:global>
-/* ─── PAGE SHELL ─────────────────────────────────────────────── */
-.quiz-page #quiz-main {
-  min-height: 80vh;
-  background: linear-gradient(160deg, var(--primary-light) 0%, #f8fffe 35%, var(--bg) 100%);
-}
+	/* ── shell ───────────────────────────────────────────────────────── */
+	.qz { position: relative; }
+	.qz-glow { top: -180px; left: 50%; width: min(760px, 90vw); height: 420px; transform: translateX(-50%); opacity: 0.5; }
+	.qz-screen { transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); }
+	.qz-screen--pane {
+		display: grid; align-content: center;
+		min-height: min(660px, calc(100svh - var(--header-h, 64px) - 24px));
+		padding-block: var(--s-8) var(--s-16);
+	}
+	.qz-enter-r { opacity: 0; transform: translateX(26px); transition: none; }
+	.qz-enter-l { opacity: 0; transform: translateX(-26px); transition: none; }
+	.qz-leave-l { opacity: 0; transform: translateX(-26px); }
+	.qz-leave-r { opacity: 0; transform: translateX(26px); }
 
-#quiz-app {
-  position: relative;
-  overflow: hidden;
-  min-height: 80vh;
-}
+	/* ── progress rail ───────────────────────────────────────────────── */
+	.qz-rail { padding-top: var(--s-6); }
+	.qz-rail__steps { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-3); }
+	.qz-rail__step { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-4); transition: color var(--dur-3) var(--ease-out); min-width: 0; }
+	.qz-rail__ico {
+		display: grid; place-items: center; width: 24px; height: 24px; flex-shrink: 0;
+		border: 1px solid var(--line-2); border-radius: 50%; background: var(--surface);
+		transition: color var(--dur-3), border-color var(--dur-3), background-color var(--dur-3);
+	}
+	.qz-rail__label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+	.qz-rail__step.is-done { color: var(--ink-3); }
+	.qz-rail__step.is-done .qz-rail__ico { color: var(--accent-ink); border-color: var(--accent-soft-2); background: var(--accent-soft); }
+	.qz-rail__step.is-now { color: var(--ink); }
+	.qz-rail__step.is-now .qz-rail__ico { color: var(--on-accent); background: var(--accent); border-color: transparent; }
+	.qz-rail__track { height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; }
+	.qz-rail__fill {
+		display: block; height: 100%; border-radius: 2px; background: var(--accent);
+		transform-origin: left; transform: scaleX(0.02);
+		transition: transform var(--dur-4) var(--ease-out);
+	}
+	@media (max-width: 720px) {
+		.qz-rail__label { display: none; }
+		.qz-rail__steps { justify-content: flex-start; gap: var(--s-3); }
+	}
 
-.noscript-msg { padding: 4rem; text-align: center; color: rgb(var(--gray)); }
+	/* ── start screen ────────────────────────────────────────────────── */
+	.qz-crumbs { margin-bottom: var(--s-6); }
+	.qz-intro { max-width: 46rem; }
+	.qz-intro__title { font-size: var(--text-4xl); margin: var(--s-4) 0 var(--s-5); }
+	.qz-intro__lead { max-width: 54ch; }
+	.qz-intro__cta { display: flex; align-items: center; gap: var(--s-5); flex-wrap: wrap; margin-top: var(--s-8); }
+	.qz-intro__browse { color: var(--ink-3); }
+	.qz-facts { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-6); margin-top: var(--s-8); }
+	.qz-fact { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-sm); color: var(--ink-3); }
+	.qz-fact .icon { color: var(--accent); flex-shrink: 0; }
+	.qz-noscript { margin-top: var(--s-5); font-size: var(--text-sm); color: var(--ink-2); }
+	.qz-intro-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr); gap: var(--s-16); align-items: center; }
+	.qz-plan { padding: var(--s-6); }
+	.qz-plan__title { margin-bottom: var(--s-2); color: var(--ink-3); font-size: 0.6875rem; letter-spacing: 0.12em; font-weight: 500; }
+	.qz-plan__row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+	.qz-plan__row:last-child { border-bottom: 0; }
+	.qz-plan__n { font-size: 0.625rem; color: var(--ink-4); letter-spacing: 0.14em; }
+	.qz-plan__ico { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: var(--r-xs); background: var(--surface-2); color: var(--accent-ink); }
+	.qz-plan__label { font-size: var(--text-sm); font-weight: 600; letter-spacing: -0.01em; }
+	.qz-plan__foot { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); font-size: var(--text-xs); color: var(--ink-3); line-height: 1.55; }
+	@media (max-width: 1000px) { .qz-intro-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-10); } .qz-plan { max-width: 46rem; } }
 
-/* ─── SCREEN TRANSITIONS ─────────────────────────────────────── */
-.qz-screen {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: translateX(60px);
-  transition: opacity 0.28s ease, transform 0.28s ease;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1.25rem 3rem;
-}
-.qz-screen--active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-  position: relative;
-}
-.qz-screen--enter-right  { opacity: 0; transform: translateX(60px); }
-.qz-screen--enter-left   { opacity: 0; transform: translateX(-60px); }
-.qz-screen--exit-left    { opacity: 0; transform: translateX(-60px); pointer-events: none; }
-.qz-screen--exit-right   { opacity: 0; transform: translateX(60px); pointer-events: none; }
+	/* ── question screen ─────────────────────────────────────────────── */
+	.qz-q__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-6); }
+	.qz-back {
+		display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 var(--s-3);
+		margin-left: calc(var(--s-3) * -1); border-radius: var(--r-full);
+		font-size: var(--text-sm); font-weight: 600; color: var(--ink-3);
+		transition: color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+	}
+	.qz-back:hover { color: var(--ink); background: var(--surface-2); }
+	.qz-q__count { color: var(--ink-3); font-size: var(--text-xs); }
+	.qz-q__of { color: var(--ink-4); }
+	.qz-q__title { font-size: var(--text-3xl); max-width: 22ch; }
+	.qz-q__title:focus { outline: none; }
+	.qz-q__sub { margin-top: var(--s-3); color: var(--ink-3); font-size: var(--text-base); max-width: 56ch; }
+	.qz-opts { display: grid; gap: var(--s-3); margin-top: var(--s-8); }
+	.qz-opts--1 { grid-template-columns: minmax(0, 1fr); }
+	.qz-opts--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.qz-opts--odd > :last-child { grid-column: 1 / -1; }
+	.qz-opt {
+		position: relative; display: flex; align-items: center; gap: var(--s-4);
+		width: 100%; padding: var(--s-4); text-align: left;
+		background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+		box-shadow: var(--shadow-sm);
+		transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+	}
+	.qz-opt:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: var(--shadow-md); }
+	.qz-opt__ico {
+		display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0;
+		border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2);
+		transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+	}
+	.qz-opt:hover .qz-opt__ico { background: var(--accent-soft); color: var(--accent-ink); }
+	.qz-opt__txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+	.qz-opt__label { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.012em; line-height: 1.3; }
+	.qz-opt__sub { font-size: var(--text-xs); color: var(--ink-3); line-height: 1.4; }
+	.qz-opt__mark { position: relative; width: 24px; height: 24px; flex-shrink: 0; }
+	.qz-opt__key { position: absolute; inset: 0; width: 24px; transition: opacity var(--dur-2) var(--ease-out); }
+	.qz-opt__tick {
+		position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%;
+		background: var(--accent); color: var(--on-accent);
+		opacity: 0; transform: scale(0.55);
+		transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-spring);
+	}
+	.qz-opt.is-on { border-color: var(--accent); background: var(--accent-soft); box-shadow: none; }
+	.qz-opt.is-on .qz-opt__ico { background: var(--accent); color: var(--on-accent); }
+	.qz-opt.is-on .qz-opt__key { opacity: 0; }
+	.qz-opt.is-on .qz-opt__tick { opacity: 1; transform: none; }
+	.qz-hint { margin-top: var(--s-5); color: var(--ink-4); font-size: 0.6875rem; letter-spacing: 0.1em; }
+	@media (hover: none) { .qz-opt__key, .qz-hint { display: none; } }
+	@media (max-width: 680px) {
+		.qz-opts--2 { grid-template-columns: minmax(0, 1fr); }
+		.qz-opts--odd > :last-child { grid-column: auto; }
+		.qz-q__title { font-size: var(--text-2xl); max-width: none; }
+	}
 
-/* ─── INTRO ───────────────────────────────────────────────────── */
-.qz-intro {
-  max-width: 560px;
-  width: 100%;
-  text-align: center;
-  margin: 0 auto;
-  padding: 3rem 0;
-}
-.qz-intro__icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
-.qz-intro__title {
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  font-weight: 800;
-  color: rgb(var(--black));
-  margin-bottom: 0.75rem;
-  line-height: 1.15;
-}
-.qz-intro__sub { font-size: 1.05rem; color: rgb(var(--gray-dark)); line-height: 1.65; margin-bottom: 1.25rem; }
-.qz-intro__stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: 2rem;
-}
-.qz-start-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2.5rem;
-  background: var(--primary);
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 20px rgba(0,135,90,0.3);
-  font-family: inherit;
-}
-.qz-start-btn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(0,135,90,0.4);
-}
-.qz-intro__privacy { font-size: 0.75rem; color: rgb(var(--gray)); margin-top: 1rem; }
+	/* ── results ─────────────────────────────────────────────────────── */
+	.qz-res { padding-block: var(--s-10) var(--s-16); }
+	.qz-res__head { max-width: 62rem; }
+	.qz-res__title { font-size: var(--text-4xl); margin: var(--s-4) 0 var(--s-4); }
+	.qz-res__title:focus { outline: none; }
+	.qz-res__lead { max-width: 58ch; }
+	.qz-answers { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-6); }
+	.qz-chip { height: 32px; padding: 0 var(--s-3); font-size: var(--text-xs); gap: 6px; }
+	.qz-chip .icon { color: var(--ink-3); }
+	.qz-chip:hover .icon { color: var(--accent-ink); }
+	.qz-res__body { margin-top: var(--s-10); display: grid; gap: var(--s-12); }
+	.qz-res__body > *, .qz-run, .qz-alsoRow {
+		animation: fade-up var(--dur-4) var(--ease-out) both;
+		animation-delay: calc(var(--i, 0) * 45ms);
+	}
+	.qz-block__title {
+		font-size: var(--text-xs); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em;
+		color: var(--ink-3); font-weight: 500; margin-bottom: var(--s-5);
+		padding-bottom: var(--s-3); border-bottom: 1px solid var(--line);
+	}
 
-/* ─── QUESTION SCREEN ─────────────────────────────────────────── */
-.qz-question {
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem 0;
-}
+	/* top match */
+	.qz-top {
+		position: relative; display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+		background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--r-lg);
+		box-shadow: var(--shadow-lg); overflow: hidden;
+	}
+	.qz-top--flat { grid-template-columns: minmax(0, 1fr); }
+	.qz-top__media { display: block; background: var(--surface-2); border-right: 1px solid var(--line); overflow: hidden; }
+	.qz-top__media img { width: 100%; height: 100%; object-fit: cover; object-position: top left; transition: transform var(--dur-5) var(--ease-out); }
+	.qz-top:hover .qz-top__media img { transform: scale(1.03); }
+	.qz-tier {
+		display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 0.6em; border-radius: var(--r-full);
+		font-family: var(--font-mono); font-size: 0.625rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+		background: var(--surface-2); color: var(--ink-3); white-space: nowrap;
+	}
+	.qz-tier--best { align-self: flex-start; background: var(--accent); color: var(--on-accent); }
+	.qz-top__body { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-6); }
+	.qz-top__id { display: flex; align-items: center; gap: var(--s-4); }
+	.qz-top__names { display: grid; gap: 6px; min-width: 0; flex: 1; }
+	.qz-top__name { display: flex; align-items: center; gap: 6px; font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+	.qz-verified { color: var(--info); display: inline-flex; flex-shrink: 0; }
+	.qz-meta { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+	.qz-meta__cat { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-xs); color: var(--ink-3); }
+	.qz-top__desc { font-size: var(--text-base); color: var(--ink-2); line-height: 1.55; }
+	.qz-why { display: grid; gap: 7px; }
+	.qz-why li { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-sm); color: var(--ink-2); line-height: 1.4; }
+	.qz-why .icon { color: var(--good); flex-shrink: 0; margin-top: 2px; }
+	.qz-top__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; margin-top: auto; padding-top: var(--s-2); }
+	.qz-save {
+		width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
+		color: var(--ink-3); background: var(--surface); border: 1px solid var(--line);
+		transition: color var(--dur-2), border-color var(--dur-2), transform var(--dur-2) var(--ease-spring), background-color var(--dur-2);
+	}
+	.qz-save:hover { color: var(--ink); border-color: var(--line-strong); transform: scale(1.08); }
+	.qz-save[aria-pressed='true'] { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+	.qz-save[aria-pressed='true'] svg { fill: currentColor; }
+	.qz-save.is-pop { animation: save-pop 420ms var(--ease-spring); }
+	@keyframes save-pop { 40% { transform: scale(1.28); } }
 
-.qz-progress {
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-}
-.qz-progress__bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), #00c896);
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
+	/* runners-up */
+	.qz-runs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); }
+	.qz-run {
+		position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+		box-shadow: var(--shadow-sm);
+		transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), border-color var(--dur-3) var(--ease-out);
+	}
+	.qz-run:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--line-2); }
+	.qz-run__link { display: grid; gap: var(--s-4); padding: var(--s-5); }
+	.qz-run__head { display: flex; align-items: center; gap: var(--s-3); padding-right: 40px; }
+	.qz-run__names { display: grid; gap: 5px; min-width: 0; }
+	.qz-run__name { display: flex; align-items: center; gap: 5px; font-size: var(--text-base); font-weight: 600; letter-spacing: -0.015em; }
+	.qz-run .qz-tier { position: absolute; top: var(--s-5); right: 52px; }
+	.qz-run__desc { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+	.qz-run__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+	.qz-run__go { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); transition: color var(--dur-2) var(--ease-out), gap var(--dur-2) var(--ease-out); }
+	.qz-run:hover .qz-run__go { color: var(--accent-ink); gap: 7px; }
+	.qz-run > .qz-save { position: absolute; top: var(--s-5); right: var(--s-5); }
+	@media (max-width: 820px) {
+		.qz-runs { grid-template-columns: minmax(0, 1fr); }
+		.qz-top { grid-template-columns: minmax(0, 1fr); }
+		.qz-top__media { aspect-ratio: 1200 / 630; border-right: 0; border-bottom: 1px solid var(--line); }
+		.qz-top__body { padding: var(--s-5); }
+	}
 
-.qz-q-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.6rem;
-}
-.qz-step { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); }
-.qz-back-btn {
-  background: none; border: none;
-  font-size: 0.82rem; color: rgb(var(--gray));
-  cursor: pointer; font-family: inherit;
-  padding: 0.2rem 0;
-  transition: color 0.15s;
-}
-.qz-back-btn:hover { color: rgb(var(--black)); }
+	/* also worth a look */
+	.qz-also { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+	.qz-alsoRow + .qz-alsoRow { border-top: 1px solid var(--line); }
+	.qz-alsoRow__link {
+		display: flex; align-items: center; gap: var(--s-4); padding: var(--s-3) var(--s-5);
+		transition: background-color var(--dur-2) var(--ease-out);
+	}
+	.qz-alsoRow__link:hover { background: var(--surface-2); }
+	.qz-alsoRow__txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+	.qz-alsoRow__name { font-size: var(--text-sm); font-weight: 600; letter-spacing: -0.01em; }
+	.qz-alsoRow__desc { font-size: var(--text-xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.qz-alsoRow__go { color: var(--ink-4); flex-shrink: 0; transition: color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+	.qz-alsoRow__link:hover .qz-alsoRow__go { color: var(--accent-ink); transform: translate(2px, -2px); }
+	@media (max-width: 560px) { .qz-alsoRow__desc { display: none; } }
 
-.qz-q-title {
-  font-size: clamp(1.3rem, 3.5vw, 1.85rem);
-  font-weight: 800;
-  color: rgb(var(--black));
-  line-height: 1.25;
-  margin-bottom: 0.4rem;
-}
-.qz-q-sub { font-size: 0.9rem; color: rgb(var(--gray)); margin-bottom: 1.75rem; }
+	/* stars (client-rendered twin of <Stars>) */
+	.qz-rate { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--text-sm); }
+	.qz-stars { position: relative; display: inline-block; line-height: 0; }
+	.qz-stars__row { display: flex; gap: 2px; color: var(--ink-4); }
+	.qz-stars__row svg { flex: 0 0 auto; fill: currentColor; opacity: 0.35; }
+	.qz-stars__on { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: var(--accent); }
+	.qz-stars__on svg { opacity: 1; }
+	.qz-rate__num { font-weight: 700; }
+	.qz-rate__c { font-size: var(--text-xs); color: var(--ink-3); }
+	.qz-unrated { font-size: var(--text-xs); color: var(--ink-4); }
+	.qz-letter {
+		display: grid; place-items: center; width: 100%; height: 100%;
+		background: hsl(var(--lm-h, 20) 60% 92%); color: hsl(var(--lm-h, 20) 55% 32%);
+		font-family: var(--font-serif); font-style: italic; font-weight: 400;
+		font-size: calc(var(--mark, 44px) * 0.5); line-height: 1;
+	}
+	:root[data-theme='dark'] .qz-letter { background: hsl(var(--lm-h, 20) 30% 18%); color: hsl(var(--lm-h, 20) 70% 78%); }
 
-/* Option grids */
-.qz-options--large {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.65rem;
-}
-.qz-options--small {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.65rem;
-}
+	/* empty state */
+	.qz-empty { display: grid; justify-items: start; gap: var(--s-4); padding: var(--s-10); border: 1px dashed var(--line-2); border-radius: var(--r-lg); color: var(--ink-3); }
 
-.qz-option {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-  padding: 1rem 1.1rem;
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
-}
-.qz-option:hover {
-  border-color: rgba(0,135,90,0.4);
-  background: var(--primary-light);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 12px rgba(0,135,90,0.1);
-}
-.qz-option.selected {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: 0 0 0 1px var(--primary), 0 4px 16px rgba(0,135,90,0.15);
-}
-.qz-option__emoji { font-size: 1.4rem; margin-bottom: 0.2rem; }
-.qz-option__label { font-size: 0.9rem; font-weight: 700; color: rgb(var(--black)); }
-.qz-option__sub { font-size: 0.75rem; color: rgb(var(--gray)); line-height: 1.4; }
-.qz-option__check {
-  position: absolute;
-  top: 0.6rem; right: 0.75rem;
-  width: 20px; height: 20px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.qz-option.selected .qz-option__check { opacity: 1; }
+	/* share block */
+	.qz-share {
+		display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr); gap: var(--s-8);
+		align-items: center; padding: var(--s-8); margin-top: var(--s-12);
+	}
+	.qz-share__title { font-size: var(--text-2xl); }
+	.qz-share__text { margin-top: var(--s-2); font-size: var(--text-sm); max-width: 40ch; }
+	.qz-share__bar { margin-top: var(--s-5); }
+	.qz-share__actions { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-6); }
+	.qz-share__card { display: grid; gap: var(--s-2); }
+	.qz-share__og { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); box-shadow: var(--shadow-md); }
+	.qz-share__card figcaption { color: var(--ink-4); font-size: 0.625rem; letter-spacing: 0.12em; }
+	@media (max-width: 820px) { .qz-share { grid-template-columns: minmax(0, 1fr); padding: var(--s-6); } }
 
-.qz-nav { margin-top: 1.75rem; display: flex; justify-content: flex-end; }
-.qz-next-btn {
-  padding: 0.85rem 2.25rem;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 50px;
-  font-size: 0.97rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-  box-shadow: 0 4px 16px rgba(0,135,90,0.25);
-}
-.qz-next-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0,135,90,0.35);
-}
-.qz-next-btn.disabled, .qz-next-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* ─── CALCULATING ─────────────────────────────────────────────── */
-.qz-calculating {
-  text-align: center;
-  padding: 4rem 1rem;
-  max-width: 400px;
-  margin: 0 auto;
-}
-.qz-calc-spinner {
-  width: 56px; height: 56px;
-  border: 4px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: qz-spin 0.8s linear infinite;
-  margin: 0 auto 1.5rem;
-}
-@keyframes qz-spin { to { transform: rotate(360deg); } }
-.qz-calculating h2 { font-size: 1.5rem; margin-bottom: 0.4rem; }
-.qz-calculating p { color: rgb(var(--gray)); font-size: 0.9rem; margin-bottom: 1.5rem; }
-.qz-calc-steps { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
-.qz-calc-step { font-size: 0.82rem; color: rgb(var(--gray)); transition: color 0.3s; }
-.qz-calc-step.active { color: var(--primary); font-weight: 600; }
-.qz-calc-step.done::before { content: '✓ '; }
-.qz-calc-step.done { color: var(--primary); }
-
-/* ─── RESULTS ─────────────────────────────────────────────────── */
-.qz-results {
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem 0 3rem;
-}
-.qz-results__hero { text-align: center; margin-bottom: 2.5rem; }
-.qz-results__badge {
-  display: inline-block;
-  background: var(--primary);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.25rem 0.9rem;
-  border-radius: 99px;
-  margin-bottom: 0.75rem;
-}
-.qz-results__title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 0.6rem; }
-.qz-results__sub { font-size: 0.95rem; color: rgb(var(--gray-dark)); max-width: 560px; margin: 0 auto; line-height: 1.65; }
-
-/* Top 3 match cards */
-.qz-top-matches {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-}
-@media (min-width: 700px) {
-  .qz-top-matches { grid-template-columns: repeat(3, 1fr); }
-}
-
-.qz-match-card--top {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 1.4rem 1.35rem;
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  color: inherit;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  position: relative;
-}
-.qz-match-card--top:first-child {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px rgba(0,135,90,0.15), 0 8px 28px rgba(0,135,90,0.12);
-}
-.qz-match-card--top:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0,135,90,0.15);
-  border-color: rgba(0,135,90,0.45);
-}
-.qz-match-card__rank { font-size: 1.4rem; margin-bottom: 0.1rem; }
-.qz-match-card__head { display: flex; align-items: center; gap: 0.65rem; }
-.qz-match-logo {
-  width: 46px; height: 46px;
-  background: var(--primary-light);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; overflow: hidden;
-}
-.qz-match-logo img { width: 34px; height: 34px; object-fit: contain; }
-.qz-match-logo-fb { font-size: 1.3rem; }
-.qz-match-info { flex: 1; min-width: 0; }
-.qz-match-name-row { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.15rem; }
-.qz-match-name { font-size: 0.97rem; font-weight: 700; margin: 0; }
-.qz-match-card--top:hover .qz-match-name { color: var(--primary); }
-.qz-match-cat { font-size: 0.7rem; color: rgb(var(--gray)); }
-.qz-pricing-pill { font-size: 0.63rem; font-weight: 700; padding: 0.12rem 0.45rem; border-radius: 99px; flex-shrink: 0; }
-
-.qz-match-pct { text-align: right; flex-shrink: 0; }
-.qz-pct-num { display: block; font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1; }
-.qz-pct-label { font-size: 0.65rem; color: rgb(var(--gray)); text-transform: uppercase; letter-spacing: 0.06em; }
-
-.qz-match-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.qz-match-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), #00c896);
-  border-radius: 3px;
-  width: 0;
-  transition: width 0.8s ease;
-}
-.qz-match-bar.animated { width: var(--pct); }
-
-.qz-match-desc { font-size: 0.8rem; color: rgb(var(--gray-dark)); margin: 0; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.qz-match-reason { font-size: 0.73rem; color: var(--primary); font-weight: 600; background: var(--primary-light); padding: 0.25rem 0.6rem; border-radius: 99px; width: fit-content; }
-.qz-match-cta { font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-top: auto; }
-
-/* Also consider */
-.qz-also { margin-bottom: 2.5rem; }
-.qz-also__title { font-size: 1rem; font-weight: 700; color: rgb(var(--gray)); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.85rem; }
-.qz-also-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; }
-.qz-also-card {
-  padding: 0.9rem 1rem;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: inherit;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.qz-also-card:hover { border-color: rgba(0,135,90,0.3); transform: translateY(-1px); }
-.qz-also-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
-.qz-also-logo {
-  width: 34px; height: 34px;
-  background: var(--primary-light);
-  border-radius: 7px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; overflow: hidden;
-}
-.qz-also-logo img { width: 24px; height: 24px; object-fit: contain; }
-.qz-also-logo-fb { font-size: 1rem; }
-.qz-also-name { font-size: 0.87rem; font-weight: 700; }
-.qz-also-card:hover .qz-also-name { color: var(--primary); }
-.qz-also-pct { margin-left: auto; font-size: 0.82rem; font-weight: 700; color: var(--primary); }
-.qz-also-desc { font-size: 0.77rem; color: rgb(var(--gray)); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-/* Action buttons */
-.qz-results-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.25rem;
-}
-.qz-retake-btn {
-  padding: 0.65rem 1.3rem;
-  background: var(--bg-alt);
-  border: 1.5px solid var(--border);
-  border-radius: 50px;
-  font-size: 0.87rem; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  color: rgb(var(--gray-dark));
-  transition: all 0.15s;
-}
-.qz-retake-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-.qz-share-btn {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  padding: 0.65rem 1.3rem;
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 50px;
-  font-size: 0.87rem; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  color: rgb(var(--gray-dark));
-  transition: all 0.15s;
-}
-.qz-share-btn:hover { border-color: var(--primary); color: var(--primary); }
-.qz-browse-btn {
-  display: inline-flex; align-items: center;
-  padding: 0.65rem 1.3rem;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 50px;
-  font-size: 0.87rem; font-weight: 700;
-  transition: background 0.15s;
-  margin-left: auto;
-}
-.qz-browse-btn:hover { background: var(--primary-dark); color: #fff; }
-
-.qz-disclaimer { font-size: 0.75rem; color: rgb(var(--gray)); }
-.qz-disclaimer a { color: var(--primary); }
-
-@media (prefers-reduced-motion: reduce) {
-  .qz-screen { transition: none; }
-  .qz-calc-spinner { animation: none; border-top-color: var(--primary); }
-  .qz-match-bar { transition: none; }
-}
+	.qz-note { margin-top: var(--s-8); font-size: var(--text-sm); color: var(--ink-3); max-width: 60ch; }
+	.qz-nl { margin-top: var(--s-16); }
 </style>
-
-</body>
-</html>

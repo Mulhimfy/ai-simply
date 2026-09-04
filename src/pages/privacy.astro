@@ -1,106 +1,211 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Toc from '../components/Toc.astro';
+import Icon from '../components/Icon.astro';
 import { SITE_TITLE, SITE_URL } from '../consts';
-import Breadcrumb from '../components/Breadcrumb.astro';
+
+const updated = '4 September 2026';
+
+/** Hand-written because the sections are hand-written; must match the <h2> ids below. */
+const headings = [
+	{ depth: 2, slug: 'overview', text: 'Overview' },
+	{ depth: 2, slug: 'collect', text: 'What we collect' },
+	{ depth: 2, slug: 'use', text: 'How we use it' },
+	{ depth: 2, slug: 'analytics', text: 'Analytics and cookies' },
+	{ depth: 2, slug: 'storage', text: 'What your browser stores' },
+	{ depth: 2, slug: 'third-party', text: 'Third parties' },
+	{ depth: 2, slug: 'security', text: 'Data security' },
+	{ depth: 2, slug: 'choices', text: 'Your choices' },
+	{ depth: 2, slug: 'changes', text: 'Changes to this policy' },
+	{ depth: 2, slug: 'contact', text: 'Contact' },
+];
+
+const ld = {
+	'@context': 'https://schema.org',
+	'@type': 'WebPage',
+	name: `Privacy Policy | ${SITE_TITLE}`,
+	url: `${SITE_URL}/privacy/`,
+	dateModified: '2026-09-04',
+};
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title="Privacy Policy"
-		description={`Privacy policy for ${SITE_TITLE}. Learn how we handle your data and protect your privacy.`}
-	/>
-</head>
-<body>
-	<Header />
-	<main>
-		<section class="page-header">
-			<div class="container">
-				<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Privacy Policy' }]} />
-				<h1>Privacy Policy</h1>
-				<p>Last updated: February 28, 2026</p>
+<Base
+	title={`Privacy Policy | ${SITE_TITLE}`}
+	description={`How ${SITE_TITLE} handles your data: what we collect, what we don't, the analytics we run, and what stays in your own browser.`}
+	noNudge
+>
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(ld)} />
+
+	<PageHero
+		crumbs={[{ name: 'Privacy Policy' }]}
+		eyebrow="Legal"
+		title="Privacy *policy*"
+		lead="The short version: you can read this whole site without an account, and we never sell anything about you. Here is the long version."
+	>
+		<p class="hero-meta meta"><Icon name="calendar" size={13} /> Last updated {updated}</p>
+	</PageHero>
+
+	<div class="container legal">
+		<article class="prose legal__body">
+			<div class="tldr">
+				<p class="tldr__title"><Icon name="info" size={15} /> In one paragraph</p>
+				<p>
+					We ask for your email only if you subscribe to the brief. We run Google Analytics, which sets cookies
+					and counts page views. Your saved tools, chosen angles and theme live in your own browser, not on our
+					servers. We don't sell or rent personal information, and there is no advertising network on this site.
+				</p>
 			</div>
-		</section>
 
-		<article class="container policy-content">
-			<h2>Overview</h2>
+			<h2 id="overview">Overview</h2>
 			<p>
-				This page informs you of our policies regarding the collection, use, and disclosure
-				of personal information when you use our website.
-			</p>
-
-			<h2>Information We Collect</h2>
-			<p>
-				<strong>Email address:</strong> If you voluntarily subscribe to our newsletter,
-				we collect your email address solely for the purpose of sending you our AI newsletter,
-				articles, and updates. You can unsubscribe at any time.
+				This page explains what happens to information when you use <strong>{SITE_TITLE}</strong>
+				(<a href={SITE_URL}>{SITE_URL}</a>) — what we collect, why, who else can see it, and how to get rid of it.
+				It applies to the whole site, including the brief, the Toolbox, the newsletter and our forms.
 			</p>
 			<p>
-				<strong>Usage data:</strong> We may collect anonymous usage data such as pages
-				visited, time spent on site, and referring URLs. This data is aggregated and cannot
-				be used to identify you personally.
+				{SITE_TITLE} is a static website. There is no login, no user account and no profile attached to you.
 			</p>
 
-			<h2>How We Use Your Information</h2>
+			<h2 id="collect">What we collect</h2>
+			<p><strong>Email address.</strong> If you subscribe to the newsletter, we collect the email address you type in,
+				solely to send you the brief and related updates. Subscription is handled by our email provider, and every
+				email carries a one-click unsubscribe link.</p>
+			<p><strong>What you send us in a form.</strong> If you contact us or submit a tool, we receive whatever you put in
+				the form — typically your name, your email address and your message — so that we can reply and, in the case
+				of a listing, review the tool.</p>
+			<p><strong>Payment details for a listing.</strong> We never see or store card numbers. Listing payments are taken by
+				Polar, our merchant of record; we receive a confirmation containing the checkout reference and the email you
+				paid with.</p>
+			<p><strong>Usage data.</strong> We collect aggregate analytics about pages visited, approximate location at country
+				level, referring URLs and device type. This is used in aggregate to see which pages are worth keeping, and it
+				is not used to build a profile of you.</p>
+			<p>We do not ask for, and have no use for, your date of birth, your phone number or your address.</p>
+
+			<h2 id="use">How we use it</h2>
 			<ul>
-				<li>To send newsletter emails you have subscribed to</li>
-				<li>To understand how visitors use our site so we can improve content</li>
-				<li>To maintain and improve site performance</li>
+				<li>To send the newsletter you asked for, and nothing else you didn't.</li>
+				<li>To reply to messages and review tools submitted for listing.</li>
+				<li>To understand which briefs, explainers and tool pages people actually read, so we can write more of what works.</li>
+				<li>To keep the site up, fast and free of abuse.</li>
 			</ul>
-
-			<h2>Cookies</h2>
 			<p>
-				This website is a static site and does not use cookies for tracking or advertising.
-				If we add analytics in the future, we will use privacy-respecting tools that do not
-				require cookies or personal data collection.
+				We do not sell, rent or trade personal information. We do not run an advertising network, and nothing on this
+				site retargets you elsewhere.
 			</p>
 
-			<h2>Third-Party Services</h2>
+			<h2 id="analytics">Analytics and cookies</h2>
 			<p>
-				We do not sell, trade, or share your personal information with third parties.
-				Our newsletter may be delivered through a third-party email service provider,
-				which processes your email address solely for the purpose of delivering our emails.
+				This site runs <strong>Google Analytics 4</strong> (measurement ID <code>G-XP68CXTJCM</code>) on every page.
+				Google Analytics sets its own cookies in your browser and records a page view, the referring page, your
+				device type and an approximate location derived from your IP address. Earlier versions of this policy said
+				the site used no cookies; that was inaccurate, and this section replaces it.
+			</p>
+			<p>
+				We use the reports in aggregate only — we never attempt to identify an individual reader, and we do not
+				upload email addresses or any other personal identifiers to Google Analytics.
+			</p>
+			<p>
+				If you would rather not be counted, you can block analytics with a content blocker or your browser's tracking
+				protection, use Google's <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">opt-out add-on</a>,
+				or enable "Do Not Track". Blocking analytics does not break anything on this site.
 			</p>
 
-			<h2>Data Security</h2>
+			<h2 id="storage">What your browser stores</h2>
 			<p>
-				We take reasonable measures to protect your personal information. However, no method
-				of transmission over the Internet is 100% secure.
+				A few small things are kept in your own browser's local storage so the site remembers your preferences between
+				visits. They never leave your device, we cannot read them, and clearing your site data removes them:
+			</p>
+			<ul>
+				<li>your light/dark theme choice;</li>
+				<li>the tools you have saved, and any comparison you have started;</li>
+				<li>the brief angles you picked, your reading streak and the date of your last visit;</li>
+				<li>whether you have already subscribed, so we stop nudging you.</li>
+			</ul>
+			<p>
+				A tool submission is also held briefly in your browser's session storage between the form and the payment step,
+				so that the details survive the trip to the checkout page. It is discarded when you close the tab.
 			</p>
 
-			<h2>Changes to This Policy</h2>
+			<h2 id="third-party">Third parties</h2>
+			<p>Only these services receive data, and only for what they do:</p>
+			<ul>
+				<li><strong>Beehiiv</strong> — delivers the newsletter, and stores your email address for that purpose.</li>
+				<li><strong>Formspree</strong> — passes contact and submission forms to our inbox.</li>
+				<li><strong>Polar</strong> — takes listing payments as merchant of record and handles cancellations.</li>
+				<li><strong>Google Analytics</strong> — aggregate traffic measurement, as described above.</li>
+				<li><strong>Vercel</strong> — hosts and serves the site, and keeps standard server logs.</li>
+			</ul>
 			<p>
-				We may update this privacy policy from time to time. Changes will be posted
-				on this page with an updated revision date.
+				Each of these processes data under its own privacy policy. We link out to hundreds of AI tools; once you follow
+				a link, that site's own policy applies and this one no longer does.
 			</p>
 
-			</article>
-	</main>
-	<Footer />
-</body>
-</html>
+			<h2 id="security">Data security</h2>
+			<p>
+				The site is served over HTTPS, and we take reasonable measures to protect the limited information we hold.
+				No method of transmission or storage over the internet is completely secure, so we cannot promise absolute
+				security — which is also why we deliberately collect as little as possible.
+			</p>
+
+			<h2 id="choices">Your choices</h2>
+			<ul>
+				<li><strong>Unsubscribe</strong> from any newsletter email, in one click.</li>
+				<li><strong>Ask for a copy</strong> of what we hold about you, or ask us to delete it, by emailing us. We will action it within 30 days.</li>
+				<li><strong>Opt out of analytics</strong> using the methods above.</li>
+				<li><strong>Clear your site data</strong> in your browser to wipe everything stored locally.</li>
+			</ul>
+			<p>
+				This site is not directed at children under 13, and we do not knowingly collect information from them.
+			</p>
+
+			<h2 id="changes">Changes to this policy</h2>
+			<p>
+				We may update this policy from time to time. When we do, we revise the "last updated" date at the top of this
+				page. Material changes — like the analytics disclosure above — are described in the section they affect rather
+				than quietly edited in.
+			</p>
+
+			<h2 id="contact">Contact</h2>
+			<p>
+				Questions about any of this, or a request about your data: use the
+				<a href="/contact/">contact form</a> or email <a href="mailto:hello@getaibriefs.com">hello@getaibriefs.com</a>.
+				See also our <a href="/terms/">Terms of Service</a>.
+			</p>
+		</article>
+
+		<aside class="legal__aside">
+			<Toc headings={headings} title="On this page" />
+		</aside>
+	</div>
+</Base>
 
 <style>
-	.policy-content {
-		max-width: 720px;
-		padding: 2.5rem 1.25rem 3rem;
+	.hero-meta { display: inline-flex; align-items: center; gap: 6px; }
+
+	.legal {
+		display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: var(--s-16);
+		align-items: start;
+		padding-block: clamp(2rem, 1.6rem + 2.4vw, 3.5rem) var(--section);
+	}
+	.legal__body { max-width: 68ch; }
+	.legal__aside { position: sticky; top: calc(var(--header-h, 64px) + 32px); }
+	@media (max-width: 1040px) {
+		.legal { grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+		.legal__aside { position: static; order: -1; padding-bottom: var(--s-4); border-bottom: 1px solid var(--line); }
 	}
 
-	.policy-content h2 {
-		margin-top: 2rem;
-		font-size: 1.4rem;
+	.tldr {
+		background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md);
+		padding: var(--s-5); font-size: var(--text-base); line-height: 1.65;
 	}
+	.tldr__title {
+		display: flex; align-items: center; gap: 6px; margin-bottom: var(--s-2);
+		font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;
+		font-weight: 600; color: var(--accent-ink);
+	}
+	.tldr p:last-child { color: var(--ink-2); margin: 0; }
 
-	.policy-content ul {
-		padding-left: 1.25rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.policy-content li {
-		margin-bottom: 0.6rem;
-		line-height: 1.6;
-	}
+	.prose h2 { font-size: var(--text-xl); padding-top: var(--s-2); }
+	.prose code { font-size: 0.85em; }
 </style>

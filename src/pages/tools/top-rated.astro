@@ -1,167 +1,176 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE } from '../../consts';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import ToolLogo from '../../components/ToolLogo.astro';
+import Stars from '../../components/Stars.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SITE_TITLE, SITE_URL } from '../../consts';
+import { PRICING_LABELS } from '../../lib/tools';
 
 const tools = (await getCollection('tools'))
-	.filter(t => t.data.rating)
-	.sort((a, b) => (b.data.rating ?? 0) - (a.data.rating ?? 0));
+	.filter((t) => t.data.rating)
+	.sort((a, b) =>
+		(b.data.rating ?? 0) - (a.data.rating ?? 0) ||
+		(b.data.ratingCount ?? 0) - (a.data.ratingCount ?? 0) ||
+		a.data.name.localeCompare(b.data.name)
+	);
 
-function stars(score: number) {
-	const full = Math.floor(score);
-	const half = score - full >= 0.5 ? '½' : '';
-	const empty = 5 - full - (half ? 1 : 0);
-	return '★'.repeat(full) + half + '☆'.repeat(empty);
-}
+const catName = (slug: string) => TOOL_CATEGORIES.find((c) => c.slug === slug)?.name ?? slug;
+const withCount = tools.filter((t) => t.data.ratingCount).length;
+const avg = tools.length ? tools.reduce((s, t) => s + (t.data.rating ?? 0), 0) / tools.length : 0;
+
+const itemListSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'ItemList',
+	name: 'Top rated AI tools',
+	description: 'AI tools ranked by our editorial rating.',
+	numberOfItems: tools.length,
+	itemListElement: tools.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.data.name, url: `${SITE_URL}/tools/${t.id}/` })),
+};
 ---
+<Base
+	title={`Top rated AI tools — the toolbox, ranked | ${SITE_TITLE}`}
+	description="Every tool we have rated, ordered by score. Editorial ratings out of 5, from hands-on testing against the same five criteria."
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`Top Rated AI Tools (2026) — Best AI Apps by Rating | ${SITE_TITLE}`}
-		description="The highest-rated AI tools ranked by user reviews and our editorial scores. Find the best AI tools across every category."
-	/>
-</head>
-<body>
-<Header />
+	noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
+	</Fragment>
 
-<div class="page-header">
-	<div class="container">
-		<div class="header-badge">Community Rated</div>
-		<h1>Top Rated AI Tools</h1>
-		<p>Ranked by user ratings and editorial scores — the best AI tools across every category.</p>
-	</div>
-</div>
-
-<main class="container top-body">
-	<div class="ranked-list">
-		{tools.map((tool, i) => {
-			const cat = TOOL_CATEGORIES.find(c => c.slug === tool.data.category);
-			const domain = new URL(tool.data.url).hostname;
-			const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-			const badge = PRICING_BADGE[tool.data.pricing];
-			const score = tool.data.rating!;
-			const count = tool.data.ratingCount ?? 500;
-			return (
-				<a href={`/tools/${tool.id}/`} class="rank-row">
-					<span class={`rank-num ${i < 3 ? 'rank-top' : ''}`}>#{i + 1}</span>
-					<div class="rank-logo">
-						<img src={favicon} alt={tool.data.name} width="36" height="36" loading="lazy"
-							class="js-favicon" />
-						<span class="rank-logo-fb" style="display:none">{cat?.emoji ?? '🤖'}</span>
+	<section class="tr-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: 'Top rated' }]} />
+			<div class="tr-hero__in">
+				<div class="tr-hero__copy">
+					<span class="eyebrow">Toolbox · {tools.length} tools rated</span>
+					<h1 class="tr-hero__title">The toolbox, <em class="serif">ranked</em>.</h1>
+					<p class="lead">Every score comes from hands-on testing against the same five criteria. We only rank what we've used, so this list is short on purpose.</p>
+					<div class="row tr-hero__links">
+						<a href="/rating-methodology/" class="btn btn--ghost btn--sm"><Icon name="scale" /> How we rate</a>
+						<a href="/reviews/" class="link-arrow">Read the reviews <Icon name="arrow-right" size={16} /></a>
 					</div>
-					<div class="rank-info">
-						<h3>{tool.data.name}</h3>
-						<p>{tool.data.description}</p>
-						<div class="rank-tags">
-							<span class="cat-tag">{cat?.emoji} {cat?.name}</span>
-							<span class="pricing-pill" style={`background:${badge.bg};color:${badge.text}`}>{badge.label}</span>
+				</div>
+				<dl class="tr-hero__stats">
+					<div><dt class="mono">Rated</dt><dd class="tnum">{tools.length}</dd></div>
+					<div><dt class="mono">Average</dt><dd class="tnum">{avg.toFixed(1)}<span class="tr-hero__of">/5</span></dd></div>
+					<div><dt class="mono">Top score</dt><dd class="tnum">{(tools[0]?.data.rating ?? 0).toFixed(1)}</dd></div>
+				</dl>
+			</div>
+		</div>
+	</section>
+
+	<section class="container tr-list-wrap">
+		<div class="tr-cols mono" aria-hidden="true">
+			<span>#</span><span>Tool</span><span>Rating</span><span>Why it ranks</span><span></span>
+		</div>
+		<ol class="tr" role="list" data-stagger>
+			{tools.map((t, i) => {
+				const d = t.data;
+				const href = d.affiliateUrl ?? d.url;
+				const pros = (d.pros ?? []).slice(0, 2);
+				const podium = i < 3;
+				return (
+					<li class:list={['tr__row', { 'tr__row--podium': podium, 'tr__row--p1': i === 0 }]}>
+						<span class="tr__rank serif tnum" aria-label={`Rank ${i + 1}`}>{i + 1}</span>
+						<a href={`/tools/${t.id}/`} class="tr__id">
+							<ToolLogo slug={t.id} name={d.name} size={podium ? 56 : 48} />
+							<span class="tr__name-wrap">
+								<span class="tr__name">{d.name} {d.verified && <Icon name="badge-check" size={15} class="tr__verified" title="Tested by AI Briefs" />}</span>
+								<span class="tr__meta">
+									<span class="tr__cat"><Icon name={CATEGORY_ICONS[d.category] ?? 'boxes'} size={12} /> {catName(d.category)}</span>
+									{d.subcategory && d.subcategory !== catName(d.category) && <span class="tr__sub">· {d.subcategory}</span>}
+									<span class:list={['pill', `pill--${d.pricing}`]}>{PRICING_LABELS[d.pricing]}</span>
+								</span>
+							</span>
+						</a>
+						<div class="tr__rating">
+							<span class="tr__score tnum">{(d.rating ?? 0).toFixed(1)}</span>
+							<Stars rating={d.rating ?? 0} count={d.ratingCount} size={13} showNumber={false} />
 						</div>
-					</div>
-					<div class="rank-score">
-						<span class="score-num">{score.toFixed(1)}</span>
-						<span class="stars">{stars(score)}</span>
-						<span class="count">{count.toLocaleString()} reviews</span>
-					</div>
-				</a>
-			);
-		})}
-	</div>
-</main>
+						<ul class="tr__pros" role="list">
+							{pros.length ? pros.map((p) => <li><Icon name="check" size={13} /> <span>{p}</span></li>) : <li class="muted">{d.description}</li>}
+						</ul>
+						<div class="tr__actions">
+							<a href={href} target="_blank" rel={d.affiliateUrl ? 'sponsored noopener' : 'noopener'} class="btn btn--sm" data-track="visit" data-tool={t.id}>Visit <Icon name="arrow-up-right" /></a>
+							<a href={`/tools/${t.id}/`} class="btn btn--ghost btn--sm">Details</a>
+						</div>
+					</li>
+				);
+			})}
+		</ol>
+		<p class="tr-note muted">
+			<Icon name="info" size={14} /> Scores are editorial ratings out of 5, from our own testing{withCount ? '. Any count beside the stars came with the listing — we do not collect reader ratings' : ''}. Tools without a score aren't ranked; they simply haven't been rated yet.
+		</p>
+	</section>
 
-<Footer />
-</body>
-</html>
+	<Newsletter variant="band" heading="New scores, as they *land*." text="When a tool earns a score — or loses one — it goes in the brief: three minutes a day, free." />
+</Base>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 3rem 0 2rem;
-	text-align: center;
-}
-.header-badge {
-	display: inline-block;
-	background: #f59e0b;
-	color: #fff;
-	font-size: 0.7rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	padding: 0.25rem 0.75rem;
-	border-radius: 99px;
-	margin-bottom: 0.75rem;
-}
-.page-header h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 0.5rem; }
-.page-header p { color: rgb(var(--gray)); max-width: 480px; margin: 0 auto; }
+	.tr-hero { padding: var(--s-8) 0 var(--s-10); }
+	.tr-hero__in { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--s-10); align-items: end; margin-top: var(--s-6); }
+	.tr-hero__copy { display: grid; gap: var(--s-5); justify-items: start; }
+	.tr-hero__title { font-size: var(--text-5xl); max-width: 14ch; text-wrap: balance; }
+	.tr-hero__links { gap: var(--s-5); }
+	.tr-hero__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+	.tr-hero__stats > div { background: var(--surface); padding: var(--s-5); display: grid; gap: var(--s-1); }
+	.tr-hero__stats dd { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+	.tr-hero__of { font-size: var(--text-sm); color: var(--ink-4); font-weight: 500; margin-left: 2px; }
 
-.top-body { padding: 2.5rem 0 4rem; }
+	.tr-list-wrap { padding-bottom: var(--s-16); }
+	.tr-cols { display: grid; grid-template-columns: 64px minmax(0, 1.4fr) 150px minmax(0, 1.6fr) 190px; gap: var(--s-5); padding: 0 var(--s-5) var(--s-3); border-bottom: 1px solid var(--line); }
+	.tr { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+	.tr__row {
+		display: grid; grid-template-columns: 64px minmax(0, 1.4fr) 150px minmax(0, 1.6fr) 190px; gap: var(--s-5); align-items: center;
+		padding: var(--s-4) var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+		transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), border-color var(--dur-3);
+	}
+	.tr__row:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--line-2); }
+	.tr__rank { font-size: 2.6rem; line-height: 1; color: var(--ink-3); text-align: center; letter-spacing: -0.03em; }
+	.tr__row--podium .tr__rank { color: var(--accent); font-size: 3.2rem; }
+	.tr__row--podium { background: linear-gradient(100deg, var(--accent-soft) 0%, var(--surface) 38%); border-color: var(--accent-soft-2); }
+	.tr__row--p1 { padding-block: var(--s-5); }
+	.tr__id { display: flex; align-items: center; gap: var(--s-4); min-width: 0; color: inherit; }
+	.tr__name-wrap { display: grid; gap: 4px; min-width: 0; }
+	.tr__name { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: var(--text-md); letter-spacing: -0.015em; line-height: 1.2; }
+	.tr__row--podium .tr__name { font-size: var(--text-lg); }
+	.tr__id:hover .tr__name { color: var(--accent-ink); }
+	/* Icon renders its own <svg>; a child component's root never carries this file's
+	   scope id, so every rule that targets one has to be :global(). */
+	.tr__name :global(.tr__verified) { color: var(--info); flex-shrink: 0; }
+	.tr__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font-size: var(--text-xs); color: var(--ink-3); }
+	.tr__cat { display: inline-flex; align-items: center; gap: 4px; }
+	.tr__rating { display: grid; gap: 3px; justify-items: start; }
+	.tr__score { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+	.tr__rating :global(.rating) { color: var(--warn); }
+	.tr__pros { display: grid; gap: 4px; font-size: var(--text-sm); color: var(--ink-2); min-width: 0; }
+	.tr__pros li { display: flex; gap: var(--s-2); align-items: flex-start; }
+	.tr__pros li span { display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+	.tr__pros :global(.icon) { color: var(--good); flex-shrink: 0; margin-top: 3px; }
+	.tr__actions { display: flex; gap: var(--s-2); justify-content: flex-end; }
+	.tr-note { display: flex; gap: var(--s-2); align-items: flex-start; font-size: var(--text-xs); margin-top: var(--s-6); max-width: 70ch; }
+	.tr-note :global(.icon) { flex-shrink: 0; margin-top: 2px; }
 
-.ranked-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-.rank-row {
-	display: grid;
-	grid-template-columns: 2.5rem 52px 1fr auto;
-	align-items: center;
-	gap: 1rem;
-	padding: 1rem 1.25rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	color: inherit;
-	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
-.rank-row:hover {
-	transform: translateY(-2px);
-	border-color: rgba(0,200,150,0.35);
-	box-shadow: 0 4px 16px rgba(0,200,150,0.1);
-}
-
-.rank-num {
-	font-size: 1.1rem;
-	font-weight: 800;
-	color: rgb(var(--gray));
-	text-align: center;
-}
-.rank-top { color: #f59e0b; }
-
-.rank-logo {
-	width: 48px; height: 48px;
-	background: var(--primary-light);
-	border-radius: var(--radius);
-	display: flex; align-items: center; justify-content: center;
-	overflow: hidden; flex-shrink: 0;
-}
-.rank-logo img { width: 36px; height: 36px; object-fit: contain; }
-.rank-logo-fb { font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
-
-.rank-info h3 { font-size: 1rem; margin: 0 0 0.2rem; }
-.rank-row:hover h3 { color: var(--primary); }
-.rank-info p { font-size: 0.83rem; color: rgb(var(--gray)); margin: 0 0 0.4rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-.rank-tags { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.cat-tag { font-size: 0.72rem; color: rgb(var(--gray)); }
-.pricing-pill { font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 99px; }
-
-.rank-score { text-align: right; flex-shrink: 0; }
-.score-num { display: block; font-size: 1.5rem; font-weight: 800; color: rgb(var(--black)); line-height: 1; }
-.stars { display: block; color: #f59e0b; font-size: 0.75rem; margin: 0.2rem 0; }
-.count { display: block; font-size: 0.7rem; color: rgb(var(--gray)); }
-
-@media (max-width: 600px) {
-	.rank-row { grid-template-columns: 2rem 44px 1fr; }
-	.rank-score { display: none; }
-}
+	@media (max-width: 1100px) {
+		.tr-cols { display: none; }
+		.tr__row { grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: 'rank id rating' 'rank pros pros' 'rank actions actions'; row-gap: var(--s-3); }
+		.tr__rank { grid-area: rank; align-self: start; }
+		.tr__id { grid-area: id; }
+		.tr__rating { grid-area: rating; justify-items: end; }
+		.tr__pros { grid-area: pros; }
+		.tr__actions { grid-area: actions; justify-content: flex-start; }
+	}
+	@media (max-width: 720px) {
+		.tr-hero__in { grid-template-columns: 1fr; gap: var(--s-6); }
+		.tr-hero__title { font-size: var(--text-4xl); }
+		.tr-hero__stats > div { padding: var(--s-4); }
+		.tr-hero__stats dd { font-size: var(--text-2xl); }
+		.tr__row { grid-template-columns: 40px minmax(0, 1fr); grid-template-areas: 'rank id' 'rating rating' 'pros pros' 'actions actions'; padding: var(--s-4); }
+		.tr__rank { font-size: 2rem; text-align: left; }
+		.tr__row--podium .tr__rank { font-size: 2.4rem; }
+		.tr__rating { justify-items: start; grid-auto-flow: column; align-items: center; gap: var(--s-3); }
+		.tr__actions .btn { flex: 1; }
+	}
 </style>
-
-<script data-astro-rerun>
-document.querySelectorAll('.js-favicon').forEach(img => {
-	img.addEventListener('error', () => {
-		img.style.display = 'none';
-		const fb = img.nextElementSibling;
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-});
-</script>

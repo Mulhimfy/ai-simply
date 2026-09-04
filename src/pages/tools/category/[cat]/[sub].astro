@@ -1,10 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../../../../components/BaseHead.astro';
-import Header from '../../../../components/Header.astro';
-import Footer from '../../../../components/Footer.astro';
-import ToolCard from '../../../../components/ToolCard.astro';
-import { TOOL_CATEGORIES, SUBCATEGORY_INTROS, SITE_TITLE } from '../../../../consts';
+import Base from '../../../../layouts/Base.astro';
+import Breadcrumb from '../../../../components/Breadcrumb.astro';
+import ToolListing from '../../../../components/ToolListing.astro';
+import Newsletter from '../../../../components/Newsletter.astro';
+import Icon from '../../../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SUBCATEGORY_INTROS, SITE_TITLE } from '../../../../consts';
+import { lowerKeepAI, pricingBreakdown, countBy, subcategoryFallbackIntro, plural } from '../../../../lib/tools';
 
 export async function getStaticPaths() {
 	function toSlug(str: string) {
@@ -18,7 +20,7 @@ export async function getStaticPaths() {
 		for (const subName of category.subcategories) {
 			const subSlug = toSlug(subName);
 			const tools = allTools.filter(
-				t => t.data.category === category.slug && t.data.subcategory === subName
+				(t) => t.data.category === category.slug && t.data.subcategory === subName
 			);
 			if (tools.length > 0) {
 				paths.push({
@@ -32,434 +34,128 @@ export async function getStaticPaths() {
 	return paths;
 }
 
-function toSlug(str: string) {
-	return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
 const { category, subName, tools, allTools } = Astro.props;
 const introText = SUBCATEGORY_INTROS[subName] ?? '';
+const intro = introText || subcategoryFallbackIntro(subName, category.name, tools.length);
+const isEditorial = !!introText;
 
-// Subcategories in this category that actually have tools
-const activeSubs = new Set(
-	allTools
-		.filter((t: any) => t.data.category === category.slug)
-		.map((t: any) => t.data.subcategory)
-);
-
-const sorted = [...tools].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
-const free = sorted.filter(t => t.data.pricing === 'free').length;
-const freemium = sorted.filter(t => t.data.pricing === 'freemium').length;
-const paid = sorted.filter(t => t.data.pricing === 'paid').length;
+const sorted = [...tools].sort((a: any, b: any) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const { free, freemium, paid } = pricingBreakdown(sorted);
+const rated = sorted.filter((t: any) => t.data.rating).length;
+const icon = CATEGORY_ICONS[category.slug] ?? 'boxes';
 
 /**
  * A subcategory listing one or two tools has nothing a searcher can compare,
  * so it reads as thin content and competes with its own parent category page.
  * Below the threshold we keep the page (it is still a useful browse step) but
  * drop it from the index and the sitemap — it earns its way back in as soon
- * as a third tool is added.
+ * as a third tool is added. Kept in sync by hand with `astro.config.mjs`.
  */
 const MIN_TOOLS_FOR_INDEX = 3;
 const isThin = tools.length < MIN_TOOLS_FOR_INDEX;
 
-const year = new Date().getFullYear();
-const seoTitle = `Best ${subName} Tools (${year}) — Ranked & Reviewed`;
-// Lowercase for mid-sentence use, but keep the "AI" initialism capitalised.
-const subLower = subName.replace(/[A-Za-z]+/g, w => (w === 'AI' ? w : w.toLowerCase()));
-const seoDesc = `Discover the best ${subLower} tools in ${year}. Compare ${sorted.length} curated ${sorted.length === 1 ? 'option' : 'options'} with pricing, features, and ratings to find the right fit.`;
+const seoTitle = `${subName} tools — pricing, ratings and what each one does`;
+const subLower = lowerKeepAI(subName);
+const seoDesc = `${sorted.length} ${subLower} ${sorted.length === 1 ? 'tool' : 'tools'} in the toolbox, each filed with honest pricing, what it does well and where it falls short.`;
+
+// neighbours for the "keep browsing" strip
+const catCounts = countBy(allTools, (t: any) => t.data.category);
+const others = TOOL_CATEGORIES.filter((c) => c.slug !== category.slug && catCounts[c.slug])
+	.sort((a, b) => catCounts[b.slug] - catCounts[a.slug])
+	.slice(0, 4);
 ---
-
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead title={`${seoTitle} | ${SITE_TITLE}`} description={seoDesc} noindex={isThin} />
-	<script type="application/ld+json" set:html={JSON.stringify({
-		"@context": "https://schema.org",
-		"@type": "BreadcrumbList",
-		"itemListElement": [
-			{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getaibriefs.com/" },
-			{ "@type": "ListItem", "position": 2, "name": "AI Tools", "item": "https://getaibriefs.com/tools/" },
-			{ "@type": "ListItem", "position": 3, "name": category.name, "item": `https://getaibriefs.com/tools/category/${category.slug}/` },
-			{ "@type": "ListItem", "position": 4, "name": subName }
-		]
-	})} />
-</head>
-<body>
-<Header />
-
-<main>
-	<!-- Breadcrumb -->
-	<div class="breadcrumb-bar">
-		<div class="container">
-			<nav class="breadcrumbs" aria-label="Breadcrumb">
-				<a href="/">Home</a><span>/</span>
-				<a href="/tools/">AI Tools</a><span>/</span>
-				<a href={`/tools/category/${category.slug}/`}>{category.name}</a><span>/</span>
-				<span aria-current="page">{subName}</span>
-			</nav>
-		</div>
-	</div>
-
-	<!-- Hero -->
+<Base title={`${seoTitle} | ${SITE_TITLE}`} description={seoDesc} noindex={isThin} noNudge>
 	<section class="sub-hero">
-		<div class="container sub-hero__inner">
-			<div class="sub-hero__icon" aria-hidden="true">{category.emoji}</div>
-			<div>
-				<div class="sub-hero__parent">
-					<a href={`/tools/category/${category.slug}/`}>{category.name}</a>
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: category.name, href: `/tools/category/${category.slug}/` }, { name: subName }]} />
+			<div class="sub-hero__in">
+				<div class="sub-hero__copy">
+					<a class="eyebrow sub-hero__cat" href={`/tools/category/${category.slug}/`}>{category.name}</a>
+					<h1 class="sub-hero__title"><em class="serif">{subName.replace(/^AI /, '')}</em> tools</h1>
+					<p class="lead">{intro}</p>
+					<ul class="sub-hero__meta" role="list">
+						<li><b class="tnum">{sorted.length}</b> {sorted.length === 1 ? 'tool' : 'tools'}</li>
+						{rated > 0 && <li><Icon name="badge-check" size={14} /> <b class="tnum">{rated}</b> rated</li>}
+						{free > 0 && <li><span class="pill pill--free">Free</span><b class="tnum">{free}</b></li>}
+						{freemium > 0 && <li><span class="pill pill--freemium">Freemium</span><b class="tnum">{freemium}</b></li>}
+						{paid > 0 && <li><span class="pill pill--paid">Paid</span><b class="tnum">{paid}</b></li>}
+						{isEditorial && <li class="sub-hero__ed"><Icon name="pen-line" size={14} /> Editor's note</li>}
+					</ul>
 				</div>
-				<h1 class="sub-hero__name">Best {subName} Tools</h1>
-				<p class="sub-hero__desc">
-					{sorted.length > 0
-						? `${sorted.length} curated ${subName.toLowerCase()} tools — ranked by features, pricing, and user ratings.`
-						: `Discover the top ${subName.toLowerCase()} tools for ${year}.`
-					}
-				</p>
-				<div class="sub-hero__stats">
-					{sorted.length > 0 && <span class="stat"><strong>{sorted.length}</strong> tools</span>}
-					{free > 0 && <span class="stat stat--free"><strong>{free}</strong> free</span>}
-					{freemium > 0 && <span class="stat stat--freemium"><strong>{freemium}</strong> freemium</span>}
-					{paid > 0 && <span class="stat stat--paid"><strong>{paid}</strong> paid</span>}
-				</div>
+				<div class="sub-hero__icon" aria-hidden="true"><Icon name={icon} size={30} strokeWidth={1.5} /></div>
 			</div>
 		</div>
 	</section>
 
-	<!-- Editorial intro -->
-	{introText && (
-		<section class="intro-section">
-			<div class="container">
-				<p class="intro-text">{introText}</p>
+	<ToolListing tools={sorted} allTools={allTools} activeCategory={category.slug} activeSub={subName} showCategoryRail defaultSort="rating" />
+
+	{isThin && (
+		<section class="container sub-thin">
+			<div class="card card--sunk sub-thin__card">
+				<Icon name="inbox" size={18} />
+				<p>Only {sorted.length} {sorted.length === 1 ? 'tool' : 'tools'} here so far. Browse all <a class="link-u" href={`/tools/category/${category.slug}/`}>{category.name}</a> tools, or <a class="link-u" href="/submit/">suggest one</a> that belongs.</p>
 			</div>
 		</section>
 	)}
 
-	<!-- Other subcategories in this category -->
-	{category.subcategories.length > 1 && (
-		<div class="subcats-bar">
-			<div class="container subcats-inner">
-				{category.subcategories.filter(sub => activeSubs.has(sub)).map(sub => {
-					const slug = toSlug(sub);
-					const isActive = sub === subName;
-					return (
-						<a
-							href={`/tools/category/${category.slug}/${slug}/`}
-							class={`subcat-chip${isActive ? ' active' : ''}`}
-							aria-current={isActive ? 'page' : undefined}
-						>
-							{sub}
+	{others.length > 0 && (
+		<section class="section section--tight sub-others">
+			<div class="container">
+				<div class="section-head">
+					<div class="section-head__title">
+						<span class="eyebrow">Keep browsing</span>
+						<h2>Other categories</h2>
+					</div>
+					<a href="/tools/" class="link-arrow">All {allTools.length} tools <Icon name="arrow-right" size={16} /></a>
+				</div>
+				<div class="sub-others__grid" data-stagger>
+					{others.map((c) => (
+						<a href={`/tools/category/${c.slug}/`} class="cat-tile card card--hover">
+							<span class="cat-tile__icon"><Icon name={CATEGORY_ICONS[c.slug] ?? 'boxes'} size={20} /></span>
+							<span class="cat-tile__name">{c.name}</span>
+							<span class="cat-tile__count mono">{plural(catCounts[c.slug])}</span>
+							<Icon name="arrow-up-right" size={16} class="cat-tile__arrow" />
 						</a>
-					);
-				})}
+					))}
+				</div>
 			</div>
-		</div>
+		</section>
 	)}
 
-	<!-- Tools grid -->
-	<section class="tools-section">
-		<div class="container">
-			<>
-				<div class="toolbar">
-						<div class="toolbar__search">
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-							<input id="sub-search" type="search" placeholder={`Search ${subName} tools...`} autocomplete="off" aria-label="Search" />
-						</div>
-						<div class="toolbar__filters">
-							<button class="price-btn active" data-price="all">All</button>
-							<button class="price-btn" data-price="free" style="color:#00875A">Free</button>
-							<button class="price-btn" data-price="freemium" style="color:#3B5BDB">Freemium</button>
-							<button class="price-btn" data-price="paid" style="color:#E67700">Paid</button>
-						</div>
-					</div>
-					<p class="results-label" id="results-label">Showing all {sorted.length} tools</p>
-					<div class="tools-grid" id="tools-grid">
-						{sorted.map(tool => (
-							<ToolCard
-								name={tool.data.name}
-								description={tool.data.description}
-								category={tool.data.category}
-								subcategory={tool.data.subcategory}
-								pricing={tool.data.pricing}
-								url={tool.data.url}
-								slug={tool.id}
-								tags={tool.data.tags}
-								sponsored={tool.data.sponsored}
-								verified={tool.data.verified}
-							/>
-						))}
-					</div>
-					<p class="no-results" id="no-results" style="display:none">No tools match your filters.</p>
-				</>
-		</div>
-	</section>
-
-	<!-- Related subcategories -->
-	<section class="section section--alt">
-		<div class="container">
-			<h2 class="section-heading">More {category.name} Categories</h2>
-			<div class="other-cats">
-				{category.subcategories
-					.filter(sub => sub !== subName)
-					.slice(0, 10)
-					.map(sub => (
-						<a href={`/tools/category/${category.slug}/${toSlug(sub)}/`} class="other-cat">
-							{category.emoji} {sub}
-						</a>
-					))
-				}
-				<a href={`/tools/category/${category.slug}/`} class="other-cat other-cat--all">
-					View all {category.name} →
-				</a>
-			</div>
-		</div>
-	</section>
-</main>
-
-<Footer />
-</body>
-</html>
-
-<script data-astro-rerun>
-	let activePrice = 'all';
-	let searchQ = '';
-
-	const grid = document.getElementById('tools-grid');
-	const label = document.getElementById('results-label');
-	const noResults = document.getElementById('no-results');
-	const searchInput = document.getElementById('sub-search');
-
-	if (grid && label && noResults) {
-		const cards = Array.from(grid.querySelectorAll('.tool-card'));
-
-		function filter() {
-			let count = 0;
-			const q = searchQ.toLowerCase();
-			cards.forEach(card => {
-				const price = card.dataset.pricing ?? '';
-				const name = (card.dataset.name ?? '').toLowerCase();
-				const show = (activePrice === 'all' || price === activePrice)
-					&& (!q || name.includes(q));
-				card.style.display = show ? '' : 'none';
-				if (show) count++;
-			});
-			label.textContent = `Showing ${count} tool${count !== 1 ? 's' : ''}`;
-			noResults.style.display = count === 0 ? '' : 'none';
-		}
-
-		document.querySelectorAll('.price-btn').forEach(btn => {
-			btn.addEventListener('click', () => {
-				document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('active'));
-				btn.classList.add('active');
-				activePrice = btn.dataset.price ?? 'all';
-				filter();
-			});
-		});
-
-		if (searchInput) {
-			searchInput.addEventListener('input', () => {
-				searchQ = searchInput.value;
-				filter();
-			});
-		}
-	}
-</script>
+	<Newsletter variant="band" heading="Never miss a *better* option." text="We test new tools constantly, and the ones worth your time go straight into the brief. Three minutes a day, free." />
+</Base>
 
 <style>
-	.breadcrumb-bar {
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
-		padding: 0.75rem 0;
-	}
-	.breadcrumbs {
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		flex-wrap: wrap;
-	}
-	.breadcrumbs a { color: rgb(var(--gray)); }
-	.breadcrumbs a:hover { color: var(--primary); }
-	.breadcrumbs span[aria-current] { color: rgb(var(--gray-dark)); font-weight: 600; }
+	.sub-hero { padding: var(--s-8) 0; }
+	.sub-hero__in { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-8); margin-top: var(--s-6); }
+	.sub-hero__copy { display: grid; gap: var(--s-4); justify-items: start; max-width: 72ch; }
+	.sub-hero__cat { transition: color var(--dur-2); }
+	.sub-hero__cat:hover { color: var(--accent); }
+	.sub-hero__title { font-size: var(--text-5xl); text-wrap: balance; }
+	.sub-hero__meta { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); font-size: var(--text-sm); color: var(--ink-3); }
+	.sub-hero__meta li { display: inline-flex; align-items: center; gap: var(--s-2); }
+	.sub-hero__meta b { color: var(--ink); font-weight: 600; }
+	.sub-hero__ed { color: var(--accent-ink); }
+	.sub-hero__icon { flex-shrink: 0; width: 72px; height: 72px; display: grid; place-items: center; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); color: var(--accent); box-shadow: var(--shadow-sm); }
 
-	.sub-hero {
-		padding: 2.5rem 0 2rem;
-		border-bottom: 1px solid var(--border);
-	}
-	.sub-hero__inner {
-		display: flex;
-		align-items: flex-start;
-		gap: 1.25rem;
-	}
-	.sub-hero__icon {
-		width: 64px;
-		height: 64px;
-		background: var(--primary-light);
-		border-radius: 14px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 2rem;
-		flex-shrink: 0;
-	}
-	.sub-hero__parent {
-		font-size: 0.8rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 0.25rem;
-	}
-	.sub-hero__parent a { color: var(--primary); }
-	.sub-hero__parent a:hover { text-decoration: underline; }
-	.sub-hero__name { font-size: 2rem; margin: 0 0 0.35rem; }
-	.sub-hero__desc { font-size: 1rem; color: rgb(var(--gray)); margin: 0 0 0.75rem; }
-	.sub-hero__stats { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+	.sub-thin { padding-bottom: var(--s-8); margin-top: calc(var(--s-8) * -1); }
+	.sub-thin__card { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-4) var(--s-5); color: var(--ink-2); font-size: var(--text-sm); }
+	.sub-thin__card :global(.icon) { flex-shrink: 0; color: var(--ink-3); margin-top: 2px; }
 
-	.stat {
-		font-size: 0.82rem;
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		padding: 0.2rem 0.65rem;
-		border-radius: 50px;
-		color: rgb(var(--gray-dark));
-	}
-	.stat--free { background: #E0F5EE; border-color: #A3D9C4; color: #00875A; }
-	.stat--freemium { background: #EEF3FF; border-color: #BEC8F0; color: #3B5BDB; }
-	.stat--paid { background: #FFF4E6; border-color: #F0CFA0; color: #E67700; }
+	.sub-others { border-top: 1px solid var(--line); }
+	.sub-others__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); }
+	.cat-tile { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'icon name arrow' 'icon count arrow'; column-gap: var(--s-4); row-gap: 2px; align-items: center; padding: var(--s-4) var(--s-5); color: inherit; }
+	.cat-tile__icon { grid-area: icon; width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2); transition: color var(--dur-2), background-color var(--dur-2); }
+	.cat-tile:hover .cat-tile__icon { color: var(--accent); background: var(--accent-soft); }
+	.cat-tile__name { grid-area: name; font-weight: 600; font-size: var(--text-sm); letter-spacing: -0.01em; }
+	.cat-tile__count { grid-area: count; text-transform: none; letter-spacing: 0; }
+	.cat-tile :global(.cat-tile__arrow) { grid-area: arrow; color: var(--ink-4); opacity: 0; transform: translate(-4px, 4px); transition: opacity var(--dur-2), transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.cat-tile:hover :global(.cat-tile__arrow) { opacity: 1; transform: none; color: var(--ink); }
 
-	.intro-section {
-		padding: 1.5rem 0 0;
-	}
-	.intro-text {
-		font-size: 1rem;
-		line-height: 1.7;
-		color: rgb(var(--gray-dark));
-		max-width: 720px;
-	}
-
-	.subcats-bar {
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
-		padding: 0.75rem 0;
-		overflow-x: auto;
-	}
-	.subcats-inner {
-		display: flex;
-		gap: 0.4rem;
-		flex-wrap: nowrap;
-		min-width: max-content;
-	}
-	.subcat-chip {
-		padding: 0.32rem 0.75rem;
-		font-size: 0.78rem;
-		font-weight: 600;
-		border: 1px solid var(--border);
-		border-radius: 50px;
-		background: #fff;
-		cursor: pointer;
-		transition: all 0.15s;
-		white-space: nowrap;
-		color: rgb(var(--gray-dark));
-		text-decoration: none;
-	}
-	.subcat-chip:hover, .subcat-chip.active {
-		background: var(--primary);
-		color: #fff;
-		border-color: var(--primary);
-	}
-
-	.tools-section { padding: 1.5rem 0 3rem; }
-	.toolbar {
-		display: flex;
-		gap: 0.75rem;
-		margin-bottom: 1rem;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-	.toolbar__search {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex: 1;
-		min-width: 180px;
-		background: #fff;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 0 0.75rem;
-	}
-	.toolbar__search svg { color: rgb(var(--gray)); flex-shrink: 0; }
-	.toolbar__search input {
-		border: none;
-		padding: 0.55rem 0;
-		font-size: 0.88rem;
-		background: transparent;
-		outline: none;
-		width: 100%;
-	}
-	.toolbar__filters { display: flex; gap: 0.35rem; }
-	.price-btn {
-		padding: 0.42rem 0.85rem;
-		font-size: 0.78rem;
-		font-weight: 700;
-		border: 1px solid var(--border);
-		border-radius: 50px;
-		background: #fff;
-		cursor: pointer;
-		transition: all 0.15s;
-		font-family: inherit;
-	}
-	.price-btn:hover, .price-btn.active {
-		background: rgb(var(--black));
-		color: #fff;
-		border-color: rgb(var(--black));
-	}
-	.results-label {
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		margin-bottom: 1rem;
-	}
-	.tools-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
-	}
-	@media (min-width: 640px) { .tools-grid { grid-template-columns: repeat(3, 1fr); } }
-	@media (min-width: 1024px) { .tools-grid { grid-template-columns: repeat(4, 1fr); } }
-
-	.no-results { text-align: center; padding: 3rem; color: rgb(var(--gray)); }
-	.empty-state {
-		text-align: center;
-		padding: 4rem 0;
-		color: rgb(var(--gray));
-	}
-	.empty-state p { font-size: 1.1rem; margin-bottom: 1rem; }
-
-	.section { padding: 3rem 0; }
-	.section--alt { background: var(--bg-alt); padding: 3rem 0; }
-	.section-heading { font-size: 1.35rem; margin-bottom: 1.25rem; }
-
-	.other-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-	.other-cat {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.5rem 1rem;
-		background: #fff;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		font-size: 0.85rem;
-		font-weight: 600;
-		color: rgb(var(--gray-dark));
-		transition: all 0.15s;
-		text-decoration: none;
-	}
-	.other-cat:hover {
-		border-color: var(--primary);
-		color: var(--primary);
-		background: var(--primary-light);
-	}
-	.other-cat--all {
-		border-style: dashed;
-		color: var(--primary);
+	@media (max-width: 960px) { .sub-others__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+	@media (max-width: 640px) {
+		.sub-hero__icon { display: none; }
+		.sub-hero__title { font-size: var(--text-4xl); }
+		.sub-others__grid { grid-template-columns: 1fr; }
 	}
 </style>

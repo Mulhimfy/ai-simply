@@ -1,395 +1,380 @@
 ---
-import { getCollection, render } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+/**
+ * Tool review page. Preserves: SoftwareApplication+Product+editorial Review JSON-LD,
+ * BreadcrumbList (via <Breadcrumb>), affiliate rel="sponsored", data-track="visit" GA event,
+ * owner-claim link, alternatives link (nofollow), head-to-head links only to indexable vs pages.
+ */
+import { existsSync } from 'node:fs';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ToolHero from '../../components/ToolHero.astro';
+import Toc from '../../components/Toc.astro';
+import ProsCons from '../../components/ProsCons.astro';
 import ToolCard from '../../components/ToolCard.astro';
-import ShareButtons from '../../components/ShareButtons.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE, SITE_URL, DEFAULT_AUTHOR } from '../../consts';
+import ArticleCard from '../../components/ArticleCard.astro';
+import ShareBar from '../../components/ShareBar.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Stars from '../../components/Stars.astro';
+import Icon from '../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SITE_TITLE, SITE_URL } from '../../consts';
+import { RATING_CRITERIA } from '../../data/rating-criteria';
 import { relatedArticlesForTool } from '../../lib/related-articles';
+import { ogUrl } from '../../og/url';
+
+type Tool = CollectionEntry<'tools'>;
 
 export async function getStaticPaths() {
 	const tools = await getCollection('tools');
-	return tools.map(tool => ({
-		params: { slug: tool.id },
-		props: { tool },
-	}));
+	return tools.map((tool) => ({ params: { slug: tool.id }, props: { tool } }));
 }
 
-const { tool } = Astro.props;
-const { Content } = await render(tool);
+const { tool } = Astro.props as { tool: Tool };
+const d = tool.data;
+const { Content, headings } = await render(tool);
 
-const category = TOOL_CATEGORIES.find(c => c.slug === tool.data.category);
-const pb = PRICING_BADGE[tool.data.pricing] ?? PRICING_BADGE.freemium;
-const toolDomain = new URL(tool.data.url).hostname;
-const toolFavicon = `https://www.google.com/s2/favicons?domain=${toolDomain}&sz=128`;
-const visitUrl = tool.data.affiliateUrl ?? tool.data.url;
-const isAffiliate = !!tool.data.affiliateUrl;
+/* Same slug rule as tools/category/[cat]/[sub].astro */
+function toSlug(str: string) {
+	return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/** "AI Chatbot" → "AI chatbot": keep initialisms, lowercase the rest, so generated
+ *  sentences read like English instead of a database field. */
+const speak = (str: string) => str.split(' ').map((w) => (/^[A-Z0-9.]{2,}$/.test(w) ? w : w.toLowerCase())).join(' ');
+
+const category = TOOL_CATEGORIES.find((c) => c.slug === d.category);
+const subHref = d.subcategory && category?.subcategories.includes(d.subcategory)
+	? `/tools/category/${category.slug}/${toSlug(d.subcategory)}/`
+	: undefined;
+const visitUrl = d.affiliateUrl ?? d.url;
+const isAffiliate = !!d.affiliateUrl;
+const visitRel = `noopener noreferrer${isAffiliate ? ' sponsored' : ''}`;
+const shot = existsSync(`public/tools/${tool.id}.jpg`) ? `/tools/${tool.id}.jpg` : null;
+const logo = existsSync(`public/logos/${tool.id}.png`) ? `/logos/${tool.id}.png` : null;
+const pageUrl = `${SITE_URL}/tools/${tool.id}/`;
+const pricingLabel = { free: 'Free', freemium: 'Freemium', paid: 'Paid' }[d.pricing];
+const lastUpdated = d.updatedDate ?? d.pubDate;
 
 const allTools = await getCollection('tools');
-const related = allTools
-	.filter(t => t.id !== tool.id && t.data.category === tool.data.category)
-	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 4);
+const others = allTools.filter((t) => t.id !== tool.id);
+const byRank = (a: Tool, b: Tool) =>
+	(b.data.rating ?? 0) - (a.data.rating ?? 0) ||
+	Number(b.data.featured) - Number(a.data.featured) ||
+	b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+
+/* Alternatives: same subcategory first (top by rating), topped up from the category. */
+const sameSub = d.subcategory ? others.filter((t) => t.data.subcategory === d.subcategory).sort(byRank) : [];
+const sameCat = others.filter((t) => t.data.category === d.category).sort(byRank);
+const alternatives = [...sameSub, ...sameCat.filter((t) => !sameSub.includes(t))].slice(0, 4);
+const altIds = new Set(alternatives.map((t) => t.id));
+/* Alternatives page exists only when the tool has ≥ 2 category peers (mirrors its getStaticPaths). */
+const hasAlternativesPage = sameCat.length >= 2;
+
+/* "More in {category}": 4 cards, avoiding the ones already shown as alternatives when possible.
+ * ToolCard drops the media block when a tool has no screenshot, so a mixed row reads as
+ * broken — prefer tools that have one, and fall back to a uniform text-only row if not. */
+const hasShot = (t: Tool) => existsSync(`public/tools/${t.id}.jpg`);
+const morePool = sameCat.filter((t) => !altIds.has(t.id));
+const moreSource = morePool.length >= 4 ? morePool : sameCat;
+const moreIn = [...moreSource.filter(hasShot), ...moreSource.filter((t) => !hasShot(t))].slice(0, 4);
+const moreMedia = moreIn.every(hasShot);
+
+/**
+ * Editorial briefs that mention this tool (src/data/briefs/<date>.json → items[].tools).
+ * Item anchors follow the same id rule as src/lib/brief.ts (slugify of the headline),
+ * so each link lands on `/news/<date>/#<item id>`. Renders nothing when there is no match.
+ */
+type BriefItemFile = { headline: string; tools?: string[] };
+type BriefFile = { date: string; items?: BriefItemFile[] };
+const briefSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+const briefModules = import.meta.glob<{ default?: BriefFile } & BriefFile>('../../data/briefs/*.json', { eager: true });
+const briefMentions = Object.values(briefModules)
+	.map((m) => (m.default ?? m) as BriefFile)
+	.flatMap((b) => (b.items ?? [])
+		.filter((it) => (it.tools ?? []).includes(tool.id))
+		.map((it) => ({ date: b.date, headline: it.headline, id: briefSlug(it.headline) })))
+	.sort((x, y) => y.date.localeCompare(x.date))
+	.slice(0, 3);
+const briefDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
 const allPosts = await getCollection('blog');
 const relatedPosts = relatedArticlesForTool(tool, allPosts, 3);
 
 /**
  * Comparison pages are generated for every same-subcategory pair, but only the
- * rated ones are indexable (see src/pages/tools/vs/[slug].astro). Link to those
- * so they are reachable by crawl rather than sitemap alone — an indexable page
- * with no internal links pointing at it rarely gets picked up.
+ * rated ones are indexable (see src/pages/tools/vs/[slug].astro `isTestBatch`).
+ * Link to those so they are reachable by crawl rather than sitemap alone.
  */
-const sortedIds = allTools.map(t => t.id);
-const headToHead = tool.data.rating
-	? allTools
-		.filter(t =>
-			t.id !== tool.id &&
-			!!t.data.rating &&
-			(t.data.subcategory ?? t.data.category) === (tool.data.subcategory ?? tool.data.category),
-		)
-		.map(t => {
+const sortedIds = allTools.map((t) => t.id);
+const headToHead = d.rating
+	? others
+		.filter((t) => !!t.data.rating && (t.data.subcategory ?? t.data.category) === (d.subcategory ?? d.category))
+		.map((t) => {
 			// Pair slug order follows collection order, matching getStaticPaths.
-			const [first, second] = sortedIds.indexOf(tool.id) < sortedIds.indexOf(t.id)
-				? [tool.id, t.id]
-				: [t.id, tool.id];
-			return { name: t.data.name, href: `/tools/vs/${first}-vs-${second}/` };
+			const [first, second] = sortedIds.indexOf(tool.id) < sortedIds.indexOf(t.id) ? [tool.id, t.id] : [t.id, tool.id];
+			return { name: t.data.name, slug: t.id, href: `/tools/vs/${first}-vs-${second}/` };
 		})
 	: [];
 
-// SEO-optimised title and description
-const year = (tool.data.updatedDate ?? tool.data.pubDate).getFullYear();
-const seoTitle = `${tool.data.name} Review (${year}): Features, Pricing & Alternatives`;
-const pricingLabel = pb.label; // Free / Freemium / Paid
-const subcatLabel = tool.data.subcategory ?? category?.name ?? 'AI Tool';
-const seoDescription = `${tool.data.name} is a ${pricingLabel.toLowerCase()} ${subcatLabel.toLowerCase()}. ${tool.data.description} See features, pricing, pros & cons.`;
+/* SEO strings */
+const year = lastUpdated.getFullYear();
+const seoTitle = `${d.name} Review (${year}): Features, Pricing & Alternatives`;
+const subcatLabel = d.subcategory ?? category?.name ?? 'AI Tool';
+const seoDescription = `${d.name} is a ${pricingLabel.toLowerCase()} ${speak(subcatLabel)}. ${d.description} See features, pricing, pros & cons.`;
 
-// Rating helpers
-const rating = tool.data.rating;
-const fullStars = rating ? Math.floor(rating) : 0;
-const halfStar = rating ? (rating % 1 >= 0.5) : false;
-const emptyStars = rating ? 5 - fullStars - (halfStar ? 1 : 0) : 0;
-
-// Structured data — SoftwareApplication
-const offersMap: Record<string, { price: string; priceCurrency: string }> = {
-	free:     { price: '0', priceCurrency: 'USD' },
-	freemium: { price: '0', priceCurrency: 'USD' },
-	paid:     { price: '9.99', priceCurrency: 'USD' },
-};
-/** Turn a pros/cons array into the ItemList shape Google expects for pros & cons. */
+/* Structured data — SoftwareApplication + Product with an editorial Review */
 function notesList(items?: string[]) {
 	if (!items?.length) return undefined;
-	return {
-		'@type': 'ItemList',
-		itemListElement: items.map((name, i) => ({
-			'@type': 'ListItem',
-			position: i + 1,
-			name,
-		})),
-	};
+	return { '@type': 'ItemList', itemListElement: items.map((name, i) => ({ '@type': 'ListItem', position: i + 1, name })) };
 }
-
-const positiveNotes = notesList(tool.data.pros);
-const negativeNotes = notesList(tool.data.cons);
+const positiveNotes = notesList(d.pros);
+const negativeNotes = notesList(d.cons);
+const rating = d.rating;
 
 /**
  * Our scores are editorial (see /rating-methodology/), not visitor-submitted,
  * so they belong in a `Review` authored by AI Briefs — not `aggregateRating`,
  * which Google reserves for ratings a site actually collects from users.
- * The nested Review also carries pros & cons for the rich result.
  */
 const editorialReview = (rating || positiveNotes || negativeNotes) ? {
 	'@type': 'Review',
-	...(rating && {
-		reviewRating: {
-			'@type': 'Rating',
-			ratingValue: rating.toFixed(1),
-			bestRating: '5',
-			worstRating: '1',
-		},
-	}),
-	author: {
-		'@type': 'Organization',
-		name: SITE_TITLE,
-		url: SITE_URL,
-	},
-	publisher: {
-		'@type': 'Organization',
-		name: SITE_TITLE,
-		url: SITE_URL,
-	},
-	datePublished: tool.data.pubDate.toISOString(),
-	...(tool.data.updatedDate && { dateModified: tool.data.updatedDate.toISOString() }),
-	url: `${SITE_URL}/tools/${tool.id}/`,
+	...(rating && { reviewRating: { '@type': 'Rating', ratingValue: rating.toFixed(1), bestRating: '5', worstRating: '1' } }),
+	author: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+	publisher: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+	datePublished: d.pubDate.toISOString(),
+	...(d.updatedDate && { dateModified: d.updatedDate.toISOString() }),
+	url: pageUrl,
 	...(positiveNotes && { positiveNotes }),
 	...(negativeNotes && { negativeNotes }),
 } : null;
 
+/**
+ * Offer: free and freemium tiers genuinely start at 0. Paid tools have no single
+ * list price we can vouch for, so we omit `price` (never invent one) and mark the
+ * offer category instead.
+ */
+const offer = {
+	'@type': 'Offer',
+	priceCurrency: 'USD',
+	...(d.pricing === 'paid' ? { category: 'paid' } : { price: '0' }),
+	availability: 'https://schema.org/OnlineOnly',
+	url: pageUrl,
+};
+
 const softwareSchema: Record<string, unknown> = {
 	'@context': 'https://schema.org',
-	// Dual-typed so the page is eligible for Product review snippets
-	// (pros & cons, star rating) as well as software metadata.
+	// Dual-typed so the page is eligible for Product review snippets as well as software metadata.
 	'@type': ['SoftwareApplication', 'Product'],
-	name: tool.data.name,
-	description: tool.data.description,
-	url: tool.data.url,
+	name: d.name,
+	description: d.description,
+	url: d.url,
+	...(shot && { image: `${SITE_URL}${shot}` }),
 	applicationCategory: 'AIApplication',
 	operatingSystem: 'Web',
 	inLanguage: 'en-US',
-	datePublished: tool.data.pubDate.toISOString(),
-	...(tool.data.updatedDate && { dateModified: tool.data.updatedDate.toISOString() }),
-	offers: {
-		'@type': 'Offer',
-		...offersMap[tool.data.pricing],
-		availability: 'https://schema.org/OnlineOnly',
-		url: `${SITE_URL}/tools/${tool.id}/`,
-	},
+	datePublished: d.pubDate.toISOString(),
+	...(d.updatedDate && { dateModified: d.updatedDate.toISOString() }),
+	offers: offer,
 	...(editorialReview && { review: editorialReview }),
 };
 
-// Structured data — BreadcrumbList
-const breadcrumbSchema = {
-	'@context': 'https://schema.org',
-	'@type': 'BreadcrumbList',
-	itemListElement: [
-		{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-		{ '@type': 'ListItem', position: 2, name: 'AI Tools', item: `${SITE_URL}/tools/` },
-		...(category ? [{ '@type': 'ListItem', position: 3, name: category.name, item: `${SITE_URL}/tools/category/${category.slug}/` }] : []),
-		{ '@type': 'ListItem', position: category ? 4 : 3, name: tool.data.name, item: `${SITE_URL}/tools/${tool.id}/` },
-	],
-};
-
-// Date formatting
-const lastUpdated = tool.data.updatedDate ?? tool.data.pubDate;
-const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const crumbs = [
+	{ name: 'AI Tools', href: '/tools/' },
+	...(category ? [{ name: category.name, href: `/tools/category/${category.slug}/` }] : []),
+	{ name: d.name, href: `/tools/${tool.id}/` },
+];
+const updatedShort = lastUpdated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const cardProps = (t: Tool) => ({
+	slug: t.id, name: t.data.name, description: t.data.description, category: t.data.category, subcategory: t.data.subcategory,
+	pricing: t.data.pricing, rating: t.data.rating, ratingCount: t.data.ratingCount, tags: t.data.tags, featured: t.data.featured,
+	sponsored: t.data.sponsored, verified: t.data.verified, pubDate: t.data.pubDate,
+});
 ---
+<Base
+	title={seoTitle}
+	description={seoDescription}
+	image={ogUrl('tool', tool.id)}
+	type="website"
+	publishDate={d.pubDate}
+	updatedDate={d.updatedDate}
+	bodyClass="has-cta-bar"
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={seoTitle}
-		description={seoDescription}
-		type="website"
-		publishDate={tool.data.pubDate}
-		updatedDate={tool.data.updatedDate}
+	noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(softwareSchema)} />
+	</Fragment>
+
+	<ToolHero
+		slug={tool.id} name={d.name} description={d.description}
+		category={category && { slug: category.slug, name: category.name }}
+		subcategory={d.subcategory} subHref={subHref}
+		pricing={d.pricing} rating={d.rating} ratingCount={d.ratingCount}
+		verified={d.verified} featured={d.featured} sponsored={d.sponsored}
+		updated={lastUpdated} url={d.url} visitUrl={visitUrl} isAffiliate={isAffiliate}
+		shot={shot} logo={logo} shareUrl={pageUrl} crumbs={crumbs}
 	/>
-	<!-- SoftwareApplication schema -->
-	<script type="application/ld+json" set:html={JSON.stringify(softwareSchema)} />
-	<!-- BreadcrumbList schema -->
-	<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
-</head>
-<body>
-<Header />
 
-<main>
-	<!-- Breadcrumb -->
-	<div class="breadcrumb-bar">
-		<div class="container">
-			<nav class="breadcrumbs" aria-label="Breadcrumb">
-				<a href="/">Home</a><span>/</span>
-				<a href="/tools/">AI Tools</a><span>/</span>
-				{category && <><a href={`/tools/category/${category.slug}/`}>{category.name}</a><span>/</span></>}
-				<span aria-current="page">{tool.data.name}</span>
-			</nav>
-		</div>
-	</div>
-
-	<!-- Tool Header -->
-	<section class="tool-hero">
-		<div class="container tool-hero__inner">
-			<div class="tool-hero__logo" aria-hidden="true">
-				<img
-					src={toolFavicon}
-					alt={`${tool.data.name} logo`}
-					width="64"
-					height="64"
-					loading="eager"
-					id="tool-hero-favicon"
-				/>
-				<span class="tool-hero__logo-fallback" id="tool-hero-fallback" style="display:none">{category?.emoji ?? '🤖'}</span>
+	<div class="container tp">
+		<aside class="tp__rail" aria-label="Table of contents">
+			<div class="tp__rail-sticky">
+				<Toc headings={headings} />
 			</div>
-			<div class="tool-hero__info">
-				<div class="tool-hero__meta">
-					{category && (
-						<a href={`/tools/category/${category.slug}/`} class="tool-hero__cat">
-							{category.emoji} {category.name}
-						</a>
-					)}
-					{tool.data.subcategory && (
-						<span class="tool-hero__subcat">{tool.data.subcategory}</span>
-					)}
-					<span
-						class="tool-hero__pricing"
-						style={`background:${pb.bg};color:${pb.text}`}
-					>{pb.label}</span>
-				</div>
-				<h1 class="tool-hero__name">{tool.data.name}</h1>
-				<p class="tool-hero__desc">{tool.data.description}</p>
+		</aside>
 
-				{/* Rating stars */}
-				{rating && (
-					<div class="tool-hero__rating" aria-label={`Rated ${rating} out of 5`}>
-						<div class="stars" aria-hidden="true">
-							{Array.from({ length: fullStars }).map(() => <span class="star star--full">★</span>)}
-							{halfStar && <span class="star star--half">★</span>}
-							{Array.from({ length: emptyStars }).map(() => <span class="star star--empty">★</span>)}
-						</div>
-						<span class="rating-value">{rating.toFixed(1)}</span>
-						<a href="/rating-methodology/" class="rating-count">Editorial score</a>
-					</div>
-				)}
-
-				{tool.data.tags.length > 0 && (
-					<div class="tool-hero__tags">
-						{tool.data.tags.map(tag => (
-							<span class="tag">#{tag}</span>
-						))}
-					</div>
-				)}
-
-				<p class="tool-hero__updated">Last updated: <time datetime={lastUpdated.toISOString()}>{formattedDate}</time></p>
-				<ShareButtons url={`${SITE_URL}/tools/${tool.id}/`} title={`${tool.data.name} — ${SITE_TITLE}`} />
-			</div>
-			<div class="tool-hero__actions">
-				<a
-					href={visitUrl}
-					target="_blank"
-					rel={`noopener noreferrer${isAffiliate ? ' sponsored' : ''}`}
-					class="btn btn--primary tool-hero__visit"
-					data-track="visit"
-				>
-					Visit {tool.data.name}
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-				</a>
-				<a href="/tools/" class="btn btn--outline">← Back to Directory</a>
-			</div>
-		</div>
-	</section>
-
-	<!-- Content + Sidebar -->
-	<section class="tool-content">
-		<div class="container tool-content__inner">
-			<div class="tool-body prose">
+		<article class="tp__body">
+			{headings.some((h) => h.depth === 2) && (
+				<details class="tp__toc-mobile card">
+					<summary><Icon name="list" size={16} /> On this page <Icon name="chevron-down" size={16} class="tp__toc-chev" /></summary>
+					<Toc headings={headings} title="" backToTop={false} />
+				</details>
+			)}
+			<div class="prose tp__prose">
 				<Content />
 			</div>
 
-			<aside class="tool-sidebar">
-				<!-- Tool Info card -->
-				<div class="tool-sidebar__card">
-					<h3>Tool Info</h3>
-					<dl class="tool-info">
-						<div>
-							<dt>Category</dt>
-							<dd>{category?.name ?? tool.data.category}</dd>
-						</div>
-						{tool.data.subcategory && (
-							<div>
-								<dt>Type</dt>
-								<dd>{tool.data.subcategory}</dd>
-							</div>
-						)}
-						<div>
-							<dt>Pricing</dt>
-							<dd>
-								<span style={`background:${pb.bg};color:${pb.text};padding:0.15rem 0.5rem;border-radius:50px;font-size:0.8rem;font-weight:700`}>
-									{pb.label}
-								</span>
-							</dd>
-						</div>
-						{rating && (
-							<div>
-								<dt>Rating</dt>
-								<dd>{rating.toFixed(1)} / 5</dd>
-							</div>
-						)}
-					</dl>
-					<a
-						href={visitUrl}
-						target="_blank"
-						rel={`noopener noreferrer${isAffiliate ? ' sponsored' : ''}`}
-						data-track="visit"
-						class="btn btn--primary"
-						style="width:100%;justify-content:center;margin-top:1rem"
-					>
-						Visit Website →
-					</a>
-					<a
-						href={`/tools/alternatives/${tool.id}/`}
-						rel="nofollow"
-						class="btn btn--outline-sm"
-						style="width:100%;justify-content:center;margin-top:0.5rem"
-					>
-						See Alternatives →
-					</a>
-					<a
-						href={`/contact/?subject=claim&tool=${encodeURIComponent(tool.data.name)}`}
-						rel="nofollow"
-						class="tool-claim-link"
-					>
-						Are you the owner of this tool?
-					</a>
-				</div>
-
-				{/* Pros & Cons */}
-				{(tool.data.pros || tool.data.cons) && (
-					<div class="tool-sidebar__card pros-cons">
-						<h3>Pros &amp; Cons</h3>
-						{tool.data.pros && tool.data.pros.length > 0 && (
-							<div class="pros">
-								<p class="pros-cons__label pros-cons__label--pro">Pros</p>
-								<ul>
-									{tool.data.pros.map(p => <li>{p}</li>)}
-								</ul>
-							</div>
-						)}
-						{tool.data.cons && tool.data.cons.length > 0 && (
-							<div class="cons">
-								<p class="pros-cons__label pros-cons__label--con">Cons</p>
-								<ul>
-									{tool.data.cons.map(c => <li>{c}</li>)}
-								</ul>
-							</div>
-						)}
+			{rating && (
+				<aside class="tp__how card card--sunk" aria-label="How we rate">
+					<div class="tp__how-head">
+						<span class="meta">Editorial score</span>
+						<span class="tp__how-score"><Stars rating={rating} size={14} /></span>
 					</div>
-				)}
-			</aside>
-		</div>
-	</section>
+					<p class="tp__how-text">Scored on five weighted criteria after hands-on testing. Paid listings get no scoring advantage.</p>
+					<ul role="list" class="tp__how-list">
+						{RATING_CRITERIA.map((c) => (
+							<li><Icon name={c.icon} size={14} /><span>{c.name}</span><span class="tnum muted">{c.weight}%</span></li>
+						))}
+					</ul>
+					<a href="/rating-methodology/" class="link-arrow">How we rate <Icon name="arrow-right" /></a>
+				</aside>
+			)}
+		</article>
 
-	<!-- Head-to-head: only the indexable comparison pages, so they can be crawled -->
-	{headToHead.length > 0 && (
-		<section class="section">
+		<aside class="tp__side" data-sticky-side>
+			<!-- At a glance -->
+			<section class="card card--pad glance" aria-label="At a glance">
+				<h2 class="h4 glance__title">At a glance</h2>
+				<dl class="glance__list">
+					<div class="glance__row">
+						<dt>Category</dt>
+						<dd>{category ? <a href={`/tools/category/${category.slug}/`} class="glance__link"><Icon name={CATEGORY_ICONS[category.slug] ?? 'boxes'} size={14} /> {category.name}</a> : d.category}</dd>
+					</div>
+					{d.subcategory && (
+						<div class="glance__row">
+							<dt>Type</dt>
+							<dd>{subHref ? <a href={subHref} class="glance__link">{d.subcategory}</a> : d.subcategory}</dd>
+						</div>
+					)}
+					<div class="glance__row">
+						<dt>Pricing</dt>
+						<dd><span class:list={['pill', `pill--${d.pricing}`]}>{pricingLabel}</span></dd>
+					</div>
+					<div class="glance__row">
+						<dt>Rating</dt>
+						<dd>{rating ? <Stars rating={rating} size={13} /> : <span class="muted">Not yet rated</span>}</dd>
+					</div>
+					{d.pros?.[0] && (
+						<div class="glance__row glance__row--wrap">
+							<dt>Best for</dt>
+							<dd>{d.pros[0]}</dd>
+						</div>
+					)}
+					<div class="glance__row">
+						<dt>Updated</dt>
+						<dd><time datetime={lastUpdated.toISOString()}>{updatedShort}</time></dd>
+					</div>
+				</dl>
+				<div class="glance__actions">
+					<a href={visitUrl} target="_blank" rel={visitRel} class="btn btn--accent w-full" data-track="visit">Visit website <Icon name="arrow-up-right" class="icon--arrow" /></a>
+					{hasAlternativesPage && (
+						<a href={`/tools/alternatives/${tool.id}/`} rel="nofollow" class="btn btn--ghost w-full">See all alternatives</a>
+					)}
+				</div>
+				<a href={`/contact/?subject=claim&tool=${encodeURIComponent(d.name)}`} rel="nofollow" class="glance__claim">
+					<Icon name="badge-check" size={13} /> Are you the owner of this tool?
+				</a>
+			</section>
+
+			{briefMentions.length > 0 && (
+				<section class="card card--pad news" aria-label="In the brief">
+					<span class="eyebrow">In the brief</span>
+					<p class="news__sub muted">{d.name} came up in {briefMentions.length === 1 ? 'a recent daily brief' : `${briefMentions.length} recent daily briefs`}.</p>
+					<ul role="list" class="news__list">
+						{briefMentions.map((m) => (
+							<li>
+								<a href={`/news/${m.date}/#${m.id}`} class="news__item">
+									<time class="news__date mono" datetime={m.date}>{briefDate(m.date)}</time>
+									<span class="news__headline">{m.headline}</span>
+									<Icon name="arrow-right" size={14} class="news__arrow" />
+								</a>
+							</li>
+						))}
+					</ul>
+					<a href="/news/" class="link-arrow news__all">Today's brief <Icon name="arrow-right" /></a>
+				</section>
+			)}
+
+			<ProsCons pros={d.pros} cons={d.cons} />
+
+			{alternatives.length > 0 && (
+				<section class="card card--pad alts" aria-label="Alternatives">
+					<div class="between alts__head">
+						<h2 class="h4">Alternatives</h2>
+						{hasAlternativesPage && <a href={`/tools/alternatives/${tool.id}/`} rel="nofollow" class="link-arrow alts__all">See all <Icon name="arrow-right" /></a>}
+					</div>
+					<p class="alts__sub muted">{sameSub.length ? `Other ${d.subcategory} tools, ranked.` : `Other ${category?.name ?? 'AI'} tools, ranked.`}</p>
+					<div class="alts__list">
+						{alternatives.map((t) => <ToolCard {...cardProps(t)} variant="mini" />)}
+					</div>
+				</section>
+			)}
+
+			{headToHead.length > 0 && (
+				<section class="card card--pad h2h" aria-label="Head-to-head comparisons">
+					<h2 class="h4">Compare</h2>
+					<p class="alts__sub muted">Side-by-side with other rated {speak(d.subcategory ?? category?.name ?? 'AI')} tools.</p>
+					<div class="h2h__list">
+						{headToHead.map((h) => (
+							<a href={h.href} class="chip h2h__chip"><Icon name="git-compare" size={13} /> {d.name} vs {h.name}</a>
+						))}
+					</div>
+				</section>
+			)}
+
+			<Newsletter variant="card" heading="The tools worth *trying*." text="What changed in AI, why it matters, and what to do about it — in the brief, three minutes a day." id="newsletter-tool" />
+		</aside>
+	</div>
+
+	{moreIn.length > 0 && (
+		<section class="section section--tight tp__more">
 			<div class="container">
-				<h2 class="section-heading" style="margin-bottom:1rem">{tool.data.name} Head-to-Head</h2>
-				<div class="h2h-links">
-					{headToHead.map(h => (
-						<a href={h.href} class="h2h-link">{tool.data.name} vs {h.name}</a>
-					))}
+				<div class="section-head">
+					<div class="section-head__title">
+						<span class="eyebrow">Same category</span>
+						<h2>More in {category?.name ?? 'AI tools'}</h2>
+					</div>
+					{category && <a href={`/tools/category/${category.slug}/`} class="link-arrow">All {category.name.replace(/^AI /, '')} tools <Icon name="arrow-right" /></a>}
+				</div>
+				<div class="tp__grid" data-stagger>
+					{moreIn.map((t) => <ToolCard {...cardProps(t)} variant="grid" media={moreMedia} />)}
 				</div>
 			</div>
 		</section>
 	)}
 
-	<!-- Related Tools -->
-	{related.length > 0 && (
-		<section class="section section--alt">
+	{relatedPosts.length > 0 && (
+		<section class="section section--tight tp__articles">
 			<div class="container">
-				<h2 class="section-heading" style="margin-bottom:1.25rem">More {category?.name ?? 'AI'} Tools</h2>
-				<div class="related-grid">
-					{related.map(t => (
-						<ToolCard
-							name={t.data.name}
-							description={t.data.description}
-							category={t.data.category}
-							subcategory={t.data.subcategory}
-							pricing={t.data.pricing}
-							url={t.data.url}
-							slug={t.id}
-							tags={t.data.tags}
-							sponsored={t.data.sponsored}
-							verified={t.data.verified}
+				<div class="section-head">
+					<div class="section-head__title">
+						<span class="eyebrow">Go deeper</span>
+						<h2>Related articles</h2>
+					</div>
+					<a href="/blog/" class="link-arrow">All articles <Icon name="arrow-right" /></a>
+				</div>
+				<div class="tp__grid tp__grid--3" data-stagger>
+					{relatedPosts.map((p) => (
+						<ArticleCard
+							slug={p.id} title={p.data.title} description={p.data.description} category={p.data.category}
+							pubDate={p.data.pubDate} readingTime={p.data.readingTime} heroImage={p.data.heroImage} variant="grid"
 						/>
 					))}
 				</div>
@@ -397,347 +382,138 @@ const formattedDate = lastUpdated.toLocaleDateString('en-US', { year: 'numeric',
 		</section>
 	)}
 
-	<!-- Related Articles -->
-	{relatedPosts.length > 0 && (
-		<section class="section">
-			<div class="container">
-				<h2 class="section-heading" style="margin-bottom:1.25rem">Related Articles</h2>
-				<div class="related-articles">
-					{relatedPosts.map(p => (
-						<a href={`/blog/${p.id}/`} class="ra-card">
-							<span class="ra-badge">📝 {p.data.category.replace(/-/g, ' ')}</span>
-							<h3 class="ra-title">{p.data.title}</h3>
-							<p class="ra-desc">{p.data.description}</p>
-						</a>
-					))}
-				</div>
+	<section class="section section--tight tp__nl">
+		<div class="container">
+			<Newsletter variant="band" heading="New tools land in the *brief*." text="What changed in AI, why it matters, and the tools worth trying — three minutes a day, in plain English." id="newsletter-tool-band" />
+		</div>
+	</section>
+
+	<div class="container tp__share-wrap">
+		<div class="tp__share">
+			<div class="tp__share-copy">
+				<span class="meta">Share this review</span>
+				<p>Know someone weighing up {d.name}? Send them this page.</p>
 			</div>
-		</section>
-	)}
-</main>
+			<ShareBar title={`${d.name} review — ${SITE_TITLE}`} url={pageUrl} />
+		</div>
+	</div>
+</Base>
 
-<Footer />
-</body>
-</html>
-
-<style>
-	.breadcrumb-bar {
-		background: var(--bg-alt);
-		border-bottom: 1px solid var(--border);
-		padding: 0.75rem 0;
+<script>
+	/**
+	 * Sticky sidebar that is taller than the viewport: stick to the bottom edge
+	 * instead of clipping (top = viewport height − sidebar height).
+	 */
+	function stickySide() {
+		const side = document.querySelector<HTMLElement>('[data-sticky-side]');
+		if (!side) return;
+		const apply = () => {
+			const header = document.querySelector<HTMLElement>('.site-header');
+			const gap = (header?.offsetHeight ?? 64) + 24;
+			const h = side.offsetHeight;
+			const vh = window.innerHeight;
+			side.style.top = h + gap + 24 > vh ? `${Math.min(gap, vh - h - 24)}px` : `${gap}px`;
+		};
+		apply();
+		addEventListener('resize', apply, { passive: true });
+		if ('ResizeObserver' in window) new ResizeObserver(apply).observe(side);
 	}
+	stickySide();
+	document.addEventListener('astro:page-load', stickySide);
+</script>
 
-	.breadcrumbs {
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		flex-wrap: wrap;
+<style is:global>
+	/* room for the mobile sticky CTA bar; lift the compare tray and toasts above it */
+	@media (max-width: 860px) {
+		body.has-cta-bar { padding-bottom: 76px; }
+		body.has-cta-bar #compare-tray { bottom: 86px; }
+		body.has-cta-bar #toast-host { bottom: 92px; }
 	}
-
-	.breadcrumbs a { color: rgb(var(--gray)); transition: color 0.15s; }
-	.breadcrumbs a:hover { color: var(--primary); }
-	.breadcrumbs span[aria-current] { color: rgb(var(--gray-dark)); font-weight: 600; }
-
-	/* Tool Hero */
-	.tool-hero {
-		padding: 2.5rem 0 2rem;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.tool-hero__inner {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	.tool-hero__logo {
-		width: 72px;
-		height: 72px;
-		background: var(--primary-light);
-		border-radius: 16px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 2.2rem;
-		flex-shrink: 0;
-		overflow: hidden;
-	}
-
-	.tool-hero__logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
-	.tool-hero__logo-fallback { font-size: 2rem; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
-
-	.tool-hero__meta {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		margin-bottom: 0.5rem;
-	}
-
-	.tool-hero__cat {
-		font-size: 0.78rem;
-		font-weight: 700;
-		color: var(--primary);
-		background: var(--primary-light);
-		padding: 0.2rem 0.6rem;
-		border-radius: 50px;
-		text-decoration: none;
-	}
-
-	.tool-hero__subcat {
-		font-size: 0.75rem;
-		color: rgb(var(--gray));
-		background: var(--bg-alt);
-		padding: 0.2rem 0.6rem;
-		border-radius: 50px;
-	}
-
-	.tool-hero__pricing {
-		font-size: 0.72rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 0.2rem 0.6rem;
-		border-radius: 50px;
-	}
-
-	.tool-hero__name {
-		font-size: 2rem;
-		margin: 0 0 0.5rem;
-	}
-
-	.tool-hero__desc {
-		font-size: 1.05rem;
-		color: rgb(var(--gray));
-		margin: 0 0 0.75rem;
-		line-height: 1.6;
-	}
-
-	/* Rating */
-	.tool-hero__rating {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.stars { display: flex; gap: 1px; }
-
-	.star { font-size: 1.1rem; }
-	.star--full { color: #f59e0b; }
-	.star--half { color: #f59e0b; opacity: 0.6; }
-	.star--empty { color: #d1d5db; }
-
-	.rating-value { font-weight: 700; font-size: 0.95rem; color: rgb(var(--black)); }
-	.rating-count {
-		font-size: 0.82rem;
-		color: rgb(var(--gray));
-		text-decoration: underline;
-		text-decoration-style: dotted;
-		text-underline-offset: 2px;
-	}
-	.rating-count:hover { color: rgb(var(--black)); }
-
-	.tool-hero__tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.tag {
-		font-size: 0.75rem;
-		color: rgb(var(--gray));
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		padding: 0.18rem 0.55rem;
-		border-radius: 50px;
-	}
-
-	.tool-hero__updated {
-		font-size: 0.78rem;
-		color: rgb(var(--gray));
-		margin: 0;
-	}
-
-	.tool-hero__actions {
-		display: flex;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.tool-hero__visit {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	/* Content */
-	.tool-content { padding: 2.5rem 0 3rem; }
-
-	.tool-content__inner {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 2rem;
-	}
-
-	.tool-body { max-width: 100%; }
-
-	.prose h2 { font-size: 1.3rem; margin: 1.75rem 0 0.75rem; }
-	.prose h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
-	.prose p { color: rgb(var(--gray-dark)); line-height: 1.75; }
-	.prose ul { padding-left: 1.25rem; }
-	.prose li { margin-bottom: 0.35rem; color: rgb(var(--gray-dark)); }
-
-	/* Sidebar */
-	.tool-sidebar {
-		display: flex;
-		flex-direction: column;
-		gap: 1.25rem;
-	}
-
-	.tool-sidebar__card {
-		background: var(--bg-alt);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 1.25rem;
-		position: sticky;
-		top: 80px;
-	}
-
-	.tool-sidebar__card h3 {
-		font-size: 1rem;
-		margin-bottom: 1rem;
-	}
-
-	.tool-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.65rem;
-	}
-
-	.tool-info div {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		font-size: 0.88rem;
-	}
-
-	.tool-info dt { color: rgb(var(--gray)); }
-	.tool-info dd { font-weight: 600; color: rgb(var(--black)); margin: 0; }
-
-	/* Pros & Cons */
-	.pros-cons { position: static !important; }
-
-	.pros-cons__label {
-		font-size: 0.75rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 0.5rem !important;
-	}
-
-	.pros-cons__label--pro { color: #00875A; }
-	.pros-cons__label--con { color: #C0392B; }
-
-	.pros ul, .cons ul {
-		margin: 0 0 0.75rem;
-		padding-left: 1.1rem;
-	}
-
-	.pros li, .cons li {
-		font-size: 0.87rem;
-		margin-bottom: 0.3rem;
-		color: rgb(var(--gray-dark));
-	}
-
-	.pros li::marker { color: #00875A; }
-	.cons li::marker { color: #C0392B; }
-
-	.h2h-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-	.h2h-link {
-		display: inline-block;
-		padding: 0.45rem 0.9rem;
-		border: 1px solid rgb(var(--gray-light));
-		border-radius: 999px;
-		font-size: 0.88rem;
-		font-weight: 600;
-		color: rgb(var(--black));
-		text-decoration: none;
-	}
-	.h2h-link:hover { border-color: var(--primary); color: var(--primary); }
-
-	/* Related */
-	.section { padding: 3rem 0; }
-	.section--alt { background: var(--bg-alt); padding: 3rem 0; }
-	.section-heading { font-size: 1.35rem; }
-
-	.related-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
-	}
-
-	@media (min-width: 640px) {
-		.related-grid { grid-template-columns: repeat(3, 1fr); }
-	}
-
-	@media (min-width: 768px) {
-		.tool-hero__inner { flex-direction: row; align-items: flex-start; }
-		.tool-hero__info { flex: 1; }
-		.tool-hero__actions { flex-direction: column; align-items: flex-start; }
-		.tool-content__inner { grid-template-columns: 1fr 280px; }
-		.related-grid { grid-template-columns: repeat(4, 1fr); }
-	}
-
-	/* Claim link */
-	.tool-claim-link {
-		display: block; text-align: center; margin-top: 0.75rem;
-		font-size: 0.75rem; color: rgb(var(--gray)); text-decoration: underline;
-	}
-	.tool-claim-link:hover { color: var(--primary); }
-
-	/* Related Articles */
-	.related-articles {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1rem;
-	}
-	@media (min-width: 640px) { .related-articles { grid-template-columns: repeat(2, 1fr); } }
-	@media (min-width: 960px) { .related-articles { grid-template-columns: repeat(3, 1fr); } }
-	.ra-card {
-		display: flex; flex-direction: column; gap: 0.4rem;
-		padding: 1.25rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		background: var(--bg);
-		transition: border-color 0.2s, box-shadow 0.2s;
-		color: inherit;
-	}
-	.ra-card:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(0,135,90,0.1); }
-	.ra-badge { font-size: 0.7rem; text-transform: capitalize; color: var(--primary); font-weight: 600; }
-	.ra-title { font-size: 0.95rem; font-weight: 700; color: rgb(var(--black)); margin: 0; line-height: 1.35; }
-	.ra-desc { font-size: 0.82rem; color: rgb(var(--gray)); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 
-<script data-astro-rerun>
-const favicon = document.getElementById('tool-hero-favicon');
-if (favicon) {
-	favicon.addEventListener('error', () => {
-		favicon.style.display = 'none';
-		const fb = document.getElementById('tool-hero-fallback');
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-}
+<style>
+	.tp {
+		display: grid; grid-template-columns: 184px minmax(0, 1fr) 320px; column-gap: var(--s-12);
+		padding-block: var(--s-12) var(--s-16); align-items: start;
+	}
+	.tp__rail { display: block; }
+	.tp__rail-sticky { position: sticky; top: calc(var(--header-h, 64px) + 32px); }
+	.tp__body { min-width: 0; display: grid; gap: var(--s-10); }
+	.tp__prose { max-width: none; }
+	.tp__prose :global(h2:first-child) { margin-top: 0; }
+	.tp__toc-mobile { display: none; padding: 0; overflow: hidden; }
+	.tp__toc-mobile summary { display: flex; align-items: center; gap: 8px; padding: 14px 18px; font-weight: 600; font-size: var(--text-sm); cursor: pointer; list-style: none; }
+	.tp__toc-mobile summary::-webkit-details-marker { display: none; }
+	/* <Icon> roots never carry the parent scope — :global or the rule is dead. */
+	.tp__toc-mobile summary :global(.tp__toc-chev) { margin-left: auto; transition: transform var(--dur-2); }
+	.tp__toc-mobile[open] summary :global(.tp__toc-chev) { transform: rotate(180deg); }
+	.tp__toc-mobile > :global(.toc) { padding: 4px 18px 16px; border-top: 1px solid var(--line); }
+	.tp__toc-mobile > :global(.toc .toc__title) { display: none; }
 
-// Track outbound visit clicks via GA4
-document.querySelectorAll('[data-track="visit"]').forEach(link => {
-	link.addEventListener('click', () => {
-		if (typeof gtag === 'function') {
-			gtag('event', 'outbound_click', { url: link.href });
-		}
-	});
-});
-</script>
+	/* how we rate */
+	.tp__how { padding: var(--s-5) var(--s-6); display: grid; gap: var(--s-3); }
+	.tp__how-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
+	.tp__how-text { font-size: var(--text-sm); color: var(--ink-2); max-width: 60ch; }
+	.tp__how-list { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: var(--text-xs); color: var(--ink-2); }
+	.tp__how-list li { display: inline-flex; align-items: center; gap: 6px; }
+	.tp__how-list li :global(.icon) { color: var(--ink-3); }
+	.tp__how .link-arrow { font-size: var(--text-sm); }
+
+	/* sidebar */
+	.tp__side { display: grid; gap: var(--s-5); position: sticky; top: calc(var(--header-h, 64px) + 24px); }
+	.glance__title { margin-bottom: var(--s-4); }
+	.glance__list { display: grid; }
+	.glance__row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: 10px 0; border-top: 1px solid var(--line); font-size: var(--text-sm); }
+	.glance__row--wrap { flex-direction: column; align-items: flex-start; gap: 4px; }
+	.glance__row dt { color: var(--ink-3); white-space: nowrap; }
+	.glance__row dd { color: var(--ink); font-weight: 500; text-align: right; min-width: 0; }
+	.glance__row--wrap dd { text-align: left; font-weight: 500; line-height: 1.45; }
+	.glance__link { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color var(--dur-2); }
+	.glance__link:hover { text-decoration-color: var(--line-strong); }
+	.glance__actions { display: grid; gap: 8px; margin-top: var(--s-4); }
+	.glance__claim { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--s-4); font-size: var(--text-xs); color: var(--ink-3); transition: color var(--dur-2); }
+	.glance__claim:hover { color: var(--ink); }
+
+	.news .eyebrow { margin-bottom: var(--s-3); }
+	.news__sub { font-size: var(--text-sm); margin-bottom: var(--s-4); }
+	.news__list { display: grid; gap: 2px; margin: 0 calc(var(--s-3) * -1) var(--s-4); }
+	.news__item { display: grid; grid-template-columns: minmax(0, 1fr) 14px; align-items: start; column-gap: var(--s-3); row-gap: 4px; padding: 10px var(--s-3); border-radius: var(--r-sm); color: var(--ink); transition: background-color var(--dur-2); }
+	.news__item:hover { background: var(--surface-2); }
+	.news__date { grid-column: 1 / -1; font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+	.news__headline { font-size: var(--text-sm); font-weight: 500; line-height: 1.4; text-wrap: pretty; }
+	.news__item :global(.news__arrow) { color: var(--ink-4); margin-top: 3px; transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.news__item:hover :global(.news__arrow) { transform: translateX(2px); color: var(--ink); }
+	.news__all { font-size: var(--text-sm); }
+	.alts__head { margin-bottom: 4px; }
+	.alts__sub { font-size: var(--text-sm); margin-bottom: var(--s-4); }
+	.alts__all { font-size: var(--text-sm); }
+	.alts__list { display: grid; gap: 8px; }
+	.h2h__list { display: flex; flex-wrap: wrap; gap: 8px; }
+	.h2h__chip { height: auto; min-height: 36px; padding-block: 6px; white-space: normal; text-align: left; }
+
+	/* below-the-fold sections */
+	.tp__more, .tp__articles { border-top: 1px solid var(--line); }
+	.tp__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-5); }
+	.tp__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.tp__share-wrap { padding-bottom: var(--s-16); }
+	.tp__share { display: flex; align-items: center; justify-content: space-between; gap: var(--s-6); flex-wrap: wrap; padding: var(--s-6) 0; border-top: 1px solid var(--line); }
+	.tp__share-copy { display: grid; gap: 4px; }
+	.tp__share-copy p { font-size: var(--text-sm); color: var(--ink-2); }
+
+	@media (max-width: 1200px) {
+		.tp { grid-template-columns: minmax(0, 1fr) 300px; column-gap: var(--s-10); }
+		.tp__rail { display: none; }
+		.tp__toc-mobile { display: block; }
+		.tp__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.tp__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	}
+	@media (max-width: 900px) {
+		.tp { grid-template-columns: 1fr; row-gap: var(--s-10); padding-block: var(--s-8) var(--s-12); }
+		.tp__side { position: static; top: auto !important; }
+		.tp__grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	}
+	@media (max-width: 600px) {
+		.tp__grid, .tp__grid--3 { grid-template-columns: 1fr; }
+		.tp__share { flex-direction: column; align-items: flex-start; }
+	}
+</style>

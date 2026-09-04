@@ -2,7 +2,7 @@
 name: InsertChat
 description: Branded, no-code AI assistants trained on your approved website content, with lead capture, support routing, and white-label delivery.
 category: ai-chatbot
-subcategory: AI Chatbot Builder
+subcategory: AI Chatbot
 url: https://insertchat.com
 pricing: freemium
 tags: [chatbot, no-code, lead-capture, white-label, support, agencies]

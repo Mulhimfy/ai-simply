@@ -1,82 +1,114 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+/**
+ * `/author/` — who writes this. One house identity today; the page is built as a
+ * list so a second byline needs no redesign.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import Icon from '../../components/Icon.astro';
+import Newsletter from '../../components/Newsletter.astro';
 import { SITE_TITLE, DEFAULT_AUTHOR } from '../../consts';
 
-const authors = [DEFAULT_AUTHOR];
----
+const posts = await getCollection('blog');
+const tools = await getCollection('tools');
+const authors = [DEFAULT_AUTHOR].map((a) => ({
+	...a,
+	count: posts.filter((p) => (p.data.author ?? DEFAULT_AUTHOR.name) === a.name).length,
+}));
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`Authors — ${SITE_TITLE}`}
-		description={`Meet the writers behind ${SITE_TITLE}. We test AI tools hands-on and explain them in plain English.`}
-	/>
-</head>
-<body>
-	<Header />
-	<main id="main-content" class="container">
-		<section class="authors-page">
-			<h1>Our Writers</h1>
-			<p class="authors-intro">{SITE_TITLE} is written by people who actually test the tools we cover.</p>
-			<ul class="authors-grid">
-				{authors.map(a => (
-					<li>
-						<a href={`/author/${a.slug}/`}>
-							<img src={a.avatar} alt={a.name} width="56" height="56" class="authors-grid__avatar" />
-							<div>
-								<h2>{a.name}</h2>
-								<p class="authors-grid__role">{a.role}</p>
-								<p class="authors-grid__bio">{a.bio}</p>
-							</div>
-						</a>
-					</li>
-				))}
-			</ul>
-		</section>
-	</main>
-	<Footer />
-</body>
-</html>
+const rated = tools.filter((t) => t.data.rating).length;
+
+const principles = [
+	{ icon: 'hand', title: 'Hands on the keyboard', text: 'Every tool we rate has been used on real work, on the same free tier you get, before anyone writes a word about it.' },
+	{ icon: 'ban', title: 'Scores are not for sale', text: 'Paid listings are labelled and scored exactly like everything else. An affiliate link never changes a rating.' },
+	{ icon: 'pencil-line', title: 'We correct in public', text: 'When a tool changes or we get something wrong, the piece gets updated and the date on it changes with it.' },
+];
+---
+<Base
+	title={`Who writes AI Briefs | ${SITE_TITLE}`}
+	description={`Meet the people behind ${SITE_TITLE}. We test AI tools hands-on and explain what changed in plain English — no hype, no paid scores.`}
+
+	noNudge>
+	<section class="au-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Authors' }]} />
+			<div class="au-hero__in">
+				<span class="eyebrow">The masthead</span>
+				<h1 class="au-hero__title">Who writes <em class="serif">this</em>.</h1>
+				<p class="lead">A small editorial team that reads the AI news so you don't have to, and uses the tools before recommending any of them.</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="container au-list" aria-label="Authors">
+		{authors.map((a) => (
+			<article class="au-card card card--pad card--hover">
+				<a href={`/author/${a.slug}/`} class="au-card__link">
+					<img src={a.avatar} alt="" width="72" height="72" class="au-card__avatar" />
+					<div class="au-card__body">
+						<h2 class="au-card__name">{a.name}</h2>
+						<p class="au-card__role">{a.role}</p>
+						<p class="au-card__bio">{a.bio}</p>
+						<div class="au-card__stats">
+							<span><b class="tnum">{a.count}</b> explainers</span>
+							<span class="au-card__dot" aria-hidden="true">·</span>
+							<span><b class="tnum">{rated}</b> tools rated</span>
+						</div>
+						<span class="link-arrow au-card__go">Read their work <Icon name="arrow-right" size={16} /></span>
+					</div>
+				</a>
+			</article>
+		))}
+	</section>
+
+	<section class="container section--tight">
+		<div class="section-head">
+			<div class="section-head__title">
+				<span class="eyebrow">House rules</span>
+				<h2>How we <em class="serif">work</em>.</h2>
+			</div>
+			<a href="/rating-methodology/" class="link-arrow">How we rate <Icon name="arrow-right" size={16} /></a>
+		</div>
+		<div class="grid grid--3" data-stagger>
+			{principles.map((p) => (
+				<div class="au-p card card--pad">
+					<span class="au-p__icon"><Icon name={p.icon} size={18} /></span>
+					<h3 class="au-p__title">{p.title}</h3>
+					<p class="au-p__text">{p.text}</p>
+				</div>
+			))}
+		</div>
+	</section>
+
+	<Newsletter variant="band" />
+</Base>
 
 <style>
-	.authors-page { padding: 2.5rem 0 3rem; max-width: 800px; }
-	.authors-page h1 { font-size: 2rem; margin-bottom: 0.35rem; }
-	.authors-intro {
-		color: rgb(var(--gray));
-		font-size: 1rem;
-		margin-bottom: 2rem;
-	}
-	.authors-grid { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
-	.authors-grid a {
-		display: flex; gap: 1rem;
-		padding: 1.25rem 1.5rem;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		text-decoration: none;
-		color: inherit;
-	}
-	.authors-grid a:hover { border-color: var(--primary); }
-	.authors-grid__avatar {
-		flex-shrink: 0;
-		width: 56px; height: 56px;
-		border-radius: 50%;
-		display: block;
-	}
-	.authors-grid h2 {
-		font-size: 1.1rem;
-		margin: 0 0 0.25rem;
-	}
-	.authors-grid__role {
-		color: rgb(var(--gray));
-		font-size: 0.85rem;
-		margin: 0 0 0.5rem;
-	}
-	.authors-grid__bio {
-		font-size: 0.9rem;
-		color: rgb(var(--gray));
-		margin: 0;
+	.au-hero { padding: var(--s-8) 0 var(--s-10); }
+	.au-hero__in { display: grid; gap: var(--s-5); margin-top: var(--s-6); }
+	.au-hero__title { font-size: var(--text-5xl); max-width: 14ch; }
+
+	.au-list { display: grid; gap: var(--s-4); }
+	.au-card__link { display: flex; gap: var(--s-6); align-items: flex-start; color: inherit; }
+	.au-card__avatar { width: 72px; height: 72px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); flex-shrink: 0; }
+	.au-card__body { display: grid; gap: var(--s-2); justify-items: start; min-width: 0; }
+	.au-card__name { font-size: var(--text-xl); }
+	.au-card:hover .au-card__name { color: var(--accent-ink); }
+	.au-card__role { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+	.au-card__bio { color: var(--ink-2); line-height: 1.6; max-width: 62ch; font-size: var(--text-sm); }
+	.au-card__stats { display: flex; align-items: center; gap: var(--s-2); font-size: var(--text-sm); color: var(--ink-3); }
+	.au-card__stats b { color: var(--ink); font-weight: 600; }
+	.au-card__dot { color: var(--ink-4); }
+	.au-card__go { margin-top: var(--s-2); }
+
+	.au-p { display: grid; gap: var(--s-3); align-content: start; }
+	.au-p__icon { width: 38px; height: 38px; border-radius: var(--r-sm); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); }
+	.au-p__title { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.015em; }
+	.au-p__text { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.6; }
+
+	@media (max-width: 640px) {
+		.au-hero__title { font-size: var(--text-4xl); }
+		.au-card__link { flex-direction: column; gap: var(--s-4); }
 	}
 </style>

@@ -1,0 +1,252 @@
+---
+/**
+ * The raw wire: every headline a day's sources published, as a thin mono-railed timeline.
+ * Used for "Everything else today" on the home page and for the full snapshot on /news/<date>/.
+ *
+ * Props
+ *   items         NewsItem[]  raw snapshot stories (unsorted is fine — they are sorted here)
+ *   compact?      boolean     denser rows, smaller type (default false)
+ *   collapsible?  boolean     wrap in a <details> that opens on click (default false)
+ *   open?         boolean     when collapsible, start open (default false)
+ *   summary?      string      the <summary> text (default "Show the other N stories")
+ *   limit?        number      render at most N stories (default: all)
+ *   showDay?      boolean     insert a day heading whenever the date changes (default: auto —
+ *                             true when the stories span more than one day)
+ *   emptyText?    string      what to say when there is nothing left (default: a quiet line)
+ *   id?           string
+ *   class?        string
+ */
+import { toStories, type NewsItem } from '../lib/news';
+import Icon from './Icon.astro';
+
+interface Props {
+	items: NewsItem[];
+	compact?: boolean;
+	collapsible?: boolean;
+	open?: boolean;
+	summary?: string;
+	limit?: number;
+	showDay?: boolean;
+	emptyText?: string;
+	id?: string;
+	class?: string;
+}
+const {
+	items,
+	compact = false,
+	collapsible = false,
+	open = false,
+	summary,
+	limit,
+	showDay,
+	emptyText = 'Nothing else on the wire today.',
+	id,
+	class: className,
+} = Astro.props;
+
+const stories = toStories(items).slice(0, limit ?? undefined);
+const days = new Set(stories.map((s) => s.dayKey).filter(Boolean));
+const withDays = showDay ?? days.size > 1;
+const summaryText = summary ?? `Show the other ${stories.length} ${stories.length === 1 ? 'story' : 'stories'}`;
+
+let lastDay = '';
+const rows = stories.map((s) => {
+	const head = withDays && s.dayKey && s.dayKey !== lastDay ? s.dayLabel : null;
+	if (s.dayKey) lastDay = s.dayKey;
+	return { s, head };
+});
+
+const Wrapper = collapsible ? 'details' : 'div';
+---
+
+<Wrapper class:list={['nt', { 'nt--compact': compact, 'nt--collapsible': collapsible }, className]} id={id} open={collapsible && open ? true : undefined}>
+	{collapsible && (
+		<summary class="nt__summary">
+			<span class="nt__summary-text">{summaryText}</span>
+			<Icon name="chevron-down" size={16} class="nt__chev" />
+		</summary>
+	)}
+
+	{stories.length === 0 ? (
+		<p class="nt__empty">{emptyText}</p>
+	) : (
+		<ol class="nt__list" role="list">
+			{rows.map(({ s, head }) => (
+				<>
+					{head && <li class="nt__day" role="presentation">{head}</li>}
+					<li class="nt__row">
+						<a href={s.link} target="_blank" rel="noopener noreferrer" class="nt__link">
+							<span class="nt__time tnum" aria-hidden="true">{s.clock}</span>
+							<span class="nt__dot" aria-hidden="true"></span>
+							<span class="nt__main">
+								<span class="nt__title">{s.title}</span>
+								<span class="nt__src">
+									{s.source}
+									{s.hostLabel && <span class="nt__host"> · {s.hostLabel}</span>}
+								</span>
+							</span>
+							<Icon name="arrow-up-right" size={14} class="nt__arrow" />
+						</a>
+					</li>
+				</>
+			))}
+		</ol>
+	)}
+</Wrapper>
+
+<style>
+	.nt {
+		--nt-rail: 62px;
+	}
+
+	/* summary */
+	.nt__summary {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		height: 44px;
+		padding: 0 var(--s-5);
+		border: 1px solid var(--line-2);
+		border-radius: var(--r-full);
+		background: var(--surface);
+		font-size: var(--text-sm);
+		font-weight: 600;
+		color: var(--ink-2);
+		cursor: pointer;
+		list-style: none;
+		transition: color var(--dur-2), border-color var(--dur-2), background-color var(--dur-2);
+	}
+	.nt__summary::-webkit-details-marker {
+		display: none;
+	}
+	.nt__summary:hover {
+		color: var(--ink);
+		border-color: var(--line-strong);
+		background: var(--surface-2);
+	}
+	:global(.nt__chev) {
+		color: var(--ink-3);
+		transition: transform var(--dur-2) var(--ease-out);
+	}
+	.nt[open] > .nt__summary :global(.nt__chev) {
+		transform: rotate(180deg);
+	}
+	.nt[open] > .nt__summary {
+		margin-bottom: var(--s-5);
+	}
+
+	/* rows */
+	.nt__list {
+		display: grid;
+		border-top: 1px solid var(--line);
+	}
+	.nt__day {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+		padding: var(--s-5) 0 var(--s-2);
+		border-bottom: 1px solid var(--line);
+	}
+	.nt__row {
+		border-bottom: 1px solid var(--line);
+	}
+	.nt__link {
+		display: grid;
+		grid-template-columns: var(--nt-rail) 9px minmax(0, 1fr) 18px;
+		align-items: baseline;
+		gap: var(--s-3);
+		padding: var(--s-4) var(--s-2);
+		margin-inline: calc(var(--s-2) * -1);
+		border-radius: var(--r-sm);
+		color: inherit;
+		transition: background-color var(--dur-2);
+	}
+	.nt__link:hover {
+		background: var(--surface-2);
+	}
+	.nt__time {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		letter-spacing: 0.06em;
+		color: var(--ink-4);
+	}
+	.nt__dot {
+		position: relative;
+		top: -1px;
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: var(--line-strong);
+		transition: background-color var(--dur-2), transform var(--dur-2) var(--ease-out);
+		justify-self: center;
+	}
+	.nt__link:hover .nt__dot {
+		background: var(--accent);
+		transform: scale(1.4);
+	}
+	.nt__main {
+		display: grid;
+		gap: 3px;
+		min-width: 0;
+	}
+	.nt__title {
+		font-size: var(--text-sm);
+		font-weight: 500;
+		line-height: 1.45;
+		color: var(--ink);
+		text-wrap: pretty;
+	}
+	.nt__link:hover .nt__title {
+		color: var(--accent-ink);
+	}
+	.nt__src {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.nt__host {
+		color: var(--ink-4);
+	}
+	:global(.nt__arrow) {
+		color: var(--ink-4);
+		opacity: 0;
+		transform: translate(-2px, 2px);
+		transition: opacity var(--dur-2), transform var(--dur-2) var(--ease-out);
+		align-self: center;
+	}
+	.nt__link:hover :global(.nt__arrow),
+	.nt__link:focus-visible :global(.nt__arrow) {
+		opacity: 1;
+		transform: none;
+	}
+
+	.nt--compact .nt__link {
+		padding-block: var(--s-3);
+	}
+	.nt--compact .nt__title {
+		font-size: var(--text-sm);
+	}
+
+	.nt__empty {
+		padding: var(--s-6) 0;
+		font-size: var(--text-sm);
+		color: var(--ink-3);
+	}
+
+	@media (max-width: 640px) {
+		.nt {
+			--nt-rail: 46px;
+		}
+		.nt__link {
+			grid-template-columns: var(--nt-rail) minmax(0, 1fr) 16px;
+			gap: var(--s-2);
+		}
+		.nt__dot {
+			display: none;
+		}
+	}
+</style>

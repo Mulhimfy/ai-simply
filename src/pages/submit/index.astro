@@ -1,279 +1,304 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import Breadcrumb from '../../components/Breadcrumb.astro';
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Icon from '../../components/Icon.astro';
+import Faq from '../../components/Faq.astro';
 import { SITE_TITLE, TOOL_CATEGORIES, TOOL_LISTING } from '../../consts';
+
+const toolCount = (await getCollection('tools')).length;
+
+const included = [
+	{ icon: 'file-text', text: 'A permanent page for your tool, written to the same template we use for everything else' },
+	{ icon: 'layout-grid', text: `Listed in the Toolbox alongside ${toolCount} other tools` },
+	{ icon: 'folder-tree', text: 'Placement on your category and subcategory pages' },
+	{ icon: 'search', text: 'Included in site search, comparisons and alternatives' },
+	{ icon: 'link', text: 'A followed link to your site' },
+	{ icon: 'globe', text: 'Indexed in our sitemap' },
+];
+
+const criteria = [
+	{ ok: true, text: 'AI is a core feature, not a label' },
+	{ ok: true, text: 'A working product or public demo' },
+	{ ok: true, text: 'A clear, published pricing model' },
+	{ ok: false, text: 'No broken, parked or scam sites' },
+	{ ok: false, text: 'No pure white-label repackaging' },
+];
+
+const faq = [
+	{ q: 'Does paying change my rating?', a: 'No. A listing buys a page in the Toolbox, not a score, a ranking or a mention in the brief. Ratings come from hands-on testing — see the <a href="/rating-methodology/">rating methodology</a>.' },
+	{ q: 'When does my tool go live?', a: 'Usually within 48 hours. We check the tool works and meets the listing criteria first; if it does not, we cancel the subscription so you are not billed again.' },
+	{ q: 'How do I cancel?', a: `Any time, from the <a href="${TOOL_LISTING.portalUrl}" target="_blank" rel="noopener noreferrer">Polar customer portal</a> — sign in with the email you paid with. No minimum term, no cancellation fee.` },
+	{ q: 'What happens to the listing when I cancel?', a: `It stays live until the end of the ${TOOL_LISTING.interval} you have already paid for, then comes down automatically at the start of the next billing period.` },
+	{ q: 'Are payments refundable?', a: 'No. All listing payments are final and non-refundable, including part-months and unused time. Cancel before your renewal date to stop future charges.' },
+];
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`Submit a Tool | ${SITE_TITLE}`}
-		description={`List your AI tool in the AI Briefs directory alongside 200+ other tools. ${TOOL_LISTING.priceLabel}, cancel anytime.`}
-	/>
-</head>
-<body>
-<Header />
+<Base
+	title={`List your tool in the Toolbox | ${SITE_TITLE}`}
+	description={`Add your AI tool to the AI Briefs Toolbox — ${toolCount} tools we test and rate. ${TOOL_LISTING.priceLabel}, cancel any time.`}
+	noNudge
+>
+	<PageHero
+		crumbs={[{ name: 'Submit a tool' }]}
+		eyebrow="Toolbox listing"
+		title="Get your tool in the *Toolbox*."
+		lead={`The Toolbox is the reference section readers open when the brief mentions something worth trying. A listing puts your tool in it — ${TOOL_LISTING.priceLabel}, cancel any time.`}
+	>
+		<div class="hero-points">
+			<span><Icon name="check" size={15} /> Details first, payment second</span>
+			<span><Icon name="check" size={15} /> Reviewed by a human within 48h</span>
+			<span><Icon name="check" size={15} /> Never affects our ratings</span>
+		</div>
+	</PageHero>
 
-<section class="page-header">
-	<div class="container">
-		<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Submit a Tool' }]} />
-		<h1>Submit a Tool</h1>
-		<p>Get your AI tool listed alongside 200+ others. {TOOL_LISTING.priceLabel} — cancel anytime.</p>
-	</div>
-</section>
+	<div class="container submit-body">
+		<div class="submit-grid">
+			<div class="submit-col">
 
-<main class="container submit-body">
-	<div class="submit-grid">
+				<ol class="stepper" id="stepper" role="list">
+					<li class="stepper__item is-active" data-step="1"><span class="stepper__num">1</span> Your tool's details</li>
+					<li class="stepper__line" aria-hidden="true"></li>
+					<li class="stepper__item" data-step="2"><span class="stepper__num">2</span> Payment</li>
+				</ol>
 
-		<div class="submit-col">
+				<!-- ============ STEP 1 — details ============ -->
+				<section class="card card--pad panel" id="step-1" aria-label="Your tool's details">
+					<p class="panel__intro">
+						Tell us about your tool first — nothing is charged on this step. Once your details are saved
+						you'll see the price and go through to secure checkout.
+					</p>
 
-			<!-- Step indicator -->
-			<ol class="stepper" id="stepper">
-				<li class="stepper__item is-active" data-step="1"><span>1</span> Your tool's details</li>
-				<li class="stepper__item" data-step="2"><span>2</span> Payment</li>
-			</ol>
+					<div id="form-error" class="note note--bad" hidden>
+						<Icon name="triangle-alert" size={16} />
+						<span>Something went wrong saving your details. Please try again or <a href="/contact/">contact us</a> directly.</span>
+					</div>
 
-			<!-- ============ STEP 1 — details ============ -->
-			<div class="submit-card" id="step-1">
-				<p class="submit-intro">
-					Tell us about your tool first — nothing is charged on this step. Once your details are saved
-					you'll be shown the price and taken to secure checkout.
-				</p>
+					<form id="submit-form" action={TOOL_LISTING.formspreeUrl} method="POST" novalidate>
+						<input type="hidden" name="_subject" value="Tool submission — DETAILS SAVED (unpaid)" />
+						<input type="hidden" name="listing-ref" id="listing-ref" value="" />
+						<input type="hidden" name="payment-status" value="not paid yet — details step only" />
 
-				<div id="form-error" class="form-error" hidden>
-					Something went wrong saving your details. Please try again or <a href="/contact/">contact us</a> directly.
-				</div>
-
-				<form id="submit-form" action={TOOL_LISTING.formspreeUrl} method="POST" novalidate>
-					<input type="hidden" name="_subject" value="Tool submission — DETAILS SAVED (unpaid)" />
-					<input type="hidden" name="listing-ref" id="listing-ref" value="" />
-					<input type="hidden" name="payment-status" value="not paid yet — details step only" />
-
-					<div class="field-row">
-						<div class="field">
-							<label for="tool-name">Tool Name <span class="req">*</span></label>
-							<input type="text" id="tool-name" name="tool-name" required placeholder="e.g. My AI Tool" autocomplete="off" />
+						<div class="field-row">
+							<div class="field">
+								<label class="field__label" for="tool-name">Tool name <span class="req" aria-hidden="true">*</span></label>
+								<input class="input" type="text" id="tool-name" name="tool-name" required placeholder="e.g. My AI Tool" autocomplete="off" />
+							</div>
+							<div class="field">
+								<label class="field__label" for="tool-url">Website URL <span class="req" aria-hidden="true">*</span></label>
+								<input class="input" type="url" id="tool-url" name="tool-url" required placeholder="https://mytool.ai" />
+							</div>
 						</div>
+
 						<div class="field">
-							<label for="tool-url">Website URL <span class="req">*</span></label>
-							<input type="url" id="tool-url" name="tool-url" required placeholder="https://mytool.ai" />
+							<div class="field__top">
+								<label class="field__label" for="tool-description">Short description <span class="req" aria-hidden="true">*</span></label>
+								<span class="field__count mono" id="char-count">0 / 160</span>
+							</div>
+							<textarea
+								class="input"
+								id="tool-description"
+								name="tool-description"
+								required
+								maxlength="160"
+								rows="3"
+								placeholder="What does it do, and who is it for? Be specific."
+							></textarea>
 						</div>
-					</div>
 
-					<div class="field">
-						<label for="tool-description">
-							Short Description <span class="req">*</span>
-							<span class="char-count" id="char-count">0 / 160</span>
-						</label>
-						<textarea
-							id="tool-description"
-							name="tool-description"
-							required
-							maxlength="160"
-							rows="3"
-							placeholder="What does it do, and who is it for? Be specific. (max 160 characters)"
-						></textarea>
-					</div>
+						<div class="field-row">
+							<div class="field">
+								<label class="field__label" for="tool-category">Category <span class="req" aria-hidden="true">*</span></label>
+								<div class="select-wrap">
+									<select class="input" id="tool-category" name="tool-category" required>
+										<option value="">Select a category…</option>
+										{TOOL_CATEGORIES.map((cat) => <option value={cat.slug}>{cat.name}</option>)}
+									</select>
+									<Icon name="chevron-down" size={16} class="select-wrap__icon" />
+								</div>
+							</div>
+							<div class="field">
+								<label class="field__label" for="tool-pricing">Pricing model <span class="req" aria-hidden="true">*</span></label>
+								<div class="select-wrap">
+									<select class="input" id="tool-pricing" name="tool-pricing" required>
+										<option value="">Select pricing…</option>
+										<option value="free">Free</option>
+										<option value="freemium">Freemium (free + paid tiers)</option>
+										<option value="paid">Paid only</option>
+									</select>
+									<Icon name="chevron-down" size={16} class="select-wrap__icon" />
+								</div>
+							</div>
+						</div>
 
-					<div class="field-row">
 						<div class="field">
-							<label for="tool-category">Category <span class="req">*</span></label>
-							<select id="tool-category" name="tool-category" required>
-								<option value="">Select a category…</option>
-								{TOOL_CATEGORIES.map(cat => (
-									<option value={cat.slug}>{cat.emoji} {cat.name}</option>
-								))}
-							</select>
+							<label class="field__label" for="submitter-email">Your email <span class="req" aria-hidden="true">*</span></label>
+							<input class="input" type="email" id="submitter-email" name="submitter-email" required placeholder="you@example.com" autocomplete="email" />
+							<span class="field__hint">Use the same email at checkout so we can match your payment to this submission.</span>
 						</div>
+
 						<div class="field">
-							<label for="tool-pricing">Pricing Model <span class="req">*</span></label>
-							<select id="tool-pricing" name="tool-pricing" required>
-								<option value="">Select pricing…</option>
-								<option value="free">Free</option>
-								<option value="freemium">Freemium (free + paid tiers)</option>
-								<option value="paid">Paid only</option>
-							</select>
+							<label class="field__label" for="additional-info">Additional info <span class="field__opt">optional</span></label>
+							<textarea
+								class="input"
+								id="additional-info"
+								name="additional-info"
+								rows="2"
+								placeholder="Anything else we should know? Key features, launch date, special use cases…"
+							></textarea>
 						</div>
-					</div>
 
-					<div class="field">
-						<label for="submitter-email">Your Email <span class="req">*</span></label>
-						<input type="email" id="submitter-email" name="submitter-email" required placeholder="you@example.com" autocomplete="email" />
-						<span class="field-hint">Use the same email at checkout so we can match your payment to this submission.</span>
-					</div>
-
-					<div class="field">
-						<label for="additional-info">Additional Info <span class="optional">(optional)</span></label>
-						<textarea
-							id="additional-info"
-							name="additional-info"
-							rows="2"
-							placeholder="Anything else we should know? Key features, launch date, special use cases…"
-						></textarea>
-					</div>
-
-					<div class="field field--checkbox">
-						<label class="checkbox-label">
+						<label class="check">
 							<input type="checkbox" id="terms-check" name="terms-agreed" value="yes" required />
-							<span>I confirm this tool is real, working, and I'm authorised to submit it. I agree to the <a href="/terms/" target="_blank">Terms of Service</a>.</span>
+							<span class="check__box" aria-hidden="true"><Icon name="check" size={13} /></span>
+							<span class="check__text">I confirm this tool is real, working, and I'm authorised to submit it. I agree to the <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a>.</span>
+						</label>
+
+						<button type="submit" class="btn btn--accent btn--lg w-full" id="submit-btn">
+							Continue to payment <Icon name="arrow-right" class="icon--arrow" />
+						</button>
+						<p class="btn-sub">Step 1 of 2 — you won't be charged yet.</p>
+					</form>
+				</section>
+
+				<!-- ============ STEP 2 — payment ============ -->
+				<section class="card card--pad panel" id="step-2" hidden aria-label="Payment">
+					<div class="note note--good">
+						<Icon name="check" size={16} />
+						<span>Details saved for <strong id="saved-name">your tool</strong>. Reference <code id="saved-ref">—</code></span>
+					</div>
+
+					<h2 class="panel__title">Complete your listing</h2>
+
+					<div class="order">
+						<div class="order__row">
+							<div>
+								<strong>Toolbox listing</strong>
+								<span class="order__sub" id="order-sub">Listed among {toolCount} AI tools</span>
+							</div>
+							<div class="order__price">
+								<span class="order__amt tnum">{TOOL_LISTING.price}</span>
+								<span class="order__per">per {TOOL_LISTING.interval}</span>
+							</div>
+						</div>
+						<div class="order__total">
+							<span>Due today</span>
+							<strong class="tnum">{TOOL_LISTING.price} {TOOL_LISTING.currency}</strong>
+						</div>
+					</div>
+
+					<div class="terms-box">
+						<h3 class="terms-box__title"><Icon name="info" size={15} /> Before you pay — please read</h3>
+						<ul class="terms-box__list" role="list">
+							<li>
+								<strong>This is a recurring subscription.</strong> You are charged
+								{TOOL_LISTING.price} {TOOL_LISTING.currency} today and <strong>{TOOL_LISTING.price} every {TOOL_LISTING.interval} after that</strong>,
+								automatically, until you cancel.
+							</li>
+							<li>
+								<strong>All payments are non-refundable.</strong> We do not issue refunds or partial
+								refunds — including for unused time, part-months, or after a cancellation.
+							</li>
+							<li>
+								<strong>You can cancel any time</strong> from the Polar customer portal linked in your
+								receipt email. There is no minimum term and no cancellation fee.
+							</li>
+							<li>
+								<strong>Cancelling removes the listing.</strong> Your tool stays live until the end of the
+								{TOOL_LISTING.interval} you have already paid for, then it is automatically taken down from
+								the Toolbox at the start of the next billing period.
+							</li>
+						</ul>
+					</div>
+
+					<div class="ack-field">
+						<label class="check">
+							<input type="checkbox" id="billing-ack" />
+							<span class="check__box" aria-hidden="true"><Icon name="check" size={13} /></span>
+							<span class="check__text">
+								I understand this is a <strong>{TOOL_LISTING.price} {TOOL_LISTING.currency} subscription that renews
+								every {TOOL_LISTING.interval} until I cancel</strong>, and that <strong>all payments are non-refundable</strong>.
+							</span>
 						</label>
 					</div>
 
-					<button type="submit" class="btn btn--primary submit-btn" id="submit-btn">
-						Continue to payment →
-					</button>
-					<p class="btn-sub">Step 1 of 2 — you won't be charged yet.</p>
-				</form>
+					<a href="#" class="btn btn--accent btn--lg w-full pay-btn is-disabled" id="pay-btn" aria-disabled="true">
+						Pay {TOOL_LISTING.price} and continue <Icon name="arrow-right" class="icon--arrow" />
+					</a>
+					<p class="btn-sub"><Icon name="lock" size={12} /> Secure checkout by Polar. Card details never touch our servers.</p>
+
+					<button type="button" class="link-back" id="back-btn"><Icon name="arrow-left" size={14} /> Edit my details</button>
+				</section>
 			</div>
 
-			<!-- ============ STEP 2 — payment ============ -->
-			<div class="submit-card pay-card" id="step-2" hidden>
-				<div class="saved-note">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><path d="M20 6L9 17l-5-5"/></svg>
-					<span>Details saved for <strong id="saved-name">your tool</strong>. Reference <code id="saved-ref">—</code></span>
+			<!-- Sidebar -->
+			<aside class="submit-side">
+				<div class="card card--pad side side--price">
+					<span class="meta">What it costs</span>
+					<p class="side__price"><span class="side__amt tnum">{TOOL_LISTING.price}</span><span class="side__per">/ {TOOL_LISTING.interval}</span></p>
+					<p class="side__note">Renews automatically. Cancel any time — payments are non-refundable.</p>
 				</div>
 
-				<h2 class="pay-title">Complete your listing</h2>
-
-				<div class="order-box">
-					<div class="order-row">
-						<div>
-							<strong>AI Briefs directory listing</strong>
-							<span class="order-sub" id="order-sub">Listed among 200+ AI tools</span>
-						</div>
-						<div class="order-price">
-							<span class="amt">{TOOL_LISTING.price}</span>
-							<span class="per">per {TOOL_LISTING.interval}</span>
-						</div>
-					</div>
-					<div class="order-total">
-						<span>Due today</span>
-						<strong>{TOOL_LISTING.price} {TOOL_LISTING.currency}</strong>
-					</div>
-				</div>
-
-				<div class="terms-box">
-					<h3>Before you pay — please read</h3>
-					<ul>
-						<li>
-							<strong>This is a recurring subscription.</strong> You are charged
-							{TOOL_LISTING.price} {TOOL_LISTING.currency} today and <strong>{TOOL_LISTING.price} every {TOOL_LISTING.interval} after that</strong>,
-							automatically, until you cancel.
-						</li>
-						<li>
-							<strong>All payments are non-refundable.</strong> We do not issue refunds or partial
-							refunds — including for unused time, part-months, or after a cancellation.
-						</li>
-						<li>
-							<strong>You can cancel any time</strong> from the Polar customer portal linked in your
-							receipt email. There is no minimum term and no cancellation fee.
-						</li>
-						<li>
-							<strong>Cancelling removes the listing.</strong> Your tool stays live until the end of the
-							{TOOL_LISTING.interval} you have already paid for, then it is automatically taken down from
-							the directory at the start of the next billing period.
-						</li>
+				<div class="card card--pad side">
+					<h2 class="side__title">What you get</h2>
+					<ul class="ilist" role="list">
+						{included.map((i) => (
+							<li><Icon name={i.icon} size={15} /><span>{i.text}</span></li>
+						))}
 					</ul>
 				</div>
 
-				<div class="field field--checkbox ack-field">
-					<label class="checkbox-label">
-						<input type="checkbox" id="billing-ack" />
-						<span>
-							I understand this is a <strong>{TOOL_LISTING.price} {TOOL_LISTING.currency} subscription that renews
-							every {TOOL_LISTING.interval} until I cancel</strong>, and that <strong>all payments are non-refundable</strong>.
-						</span>
-					</label>
+				<div class="card card--pad side side--sunk">
+					<h2 class="side__title">What happens next</h2>
+					<ol class="steps" role="list">
+						<li>
+							<span class="steps__num tnum">1</span>
+							<div><strong>You pay and we review</strong><p>We check the tool is working, legitimate, and meets our listing criteria.</p></div>
+						</li>
+						<li>
+							<span class="steps__num tnum">2</span>
+							<div><strong>Your tool goes live</strong><p>Usually within 48 hours. You'll get an email with the link to your listing.</p></div>
+						</li>
+						<li>
+							<span class="steps__num tnum">3</span>
+							<div><strong>It stays live while subscribed</strong><p>Cancel whenever you like — the listing runs to the end of the paid period, then comes down automatically.</p></div>
+						</li>
+					</ol>
 				</div>
 
-				<a href="#" class="btn btn--primary submit-btn pay-btn is-disabled" id="pay-btn" aria-disabled="true">
-					Pay {TOOL_LISTING.price} and continue →
-				</a>
-				<p class="btn-sub">Secure checkout by Polar. Card details never touch our servers.</p>
+				<div class="card card--pad side">
+					<h2 class="side__title">Listing criteria</h2>
+					<ul class="ilist" role="list">
+						{criteria.map((c) => (
+							<li class:list={{ 'is-no': !c.ok }}><Icon name={c.ok ? 'check' : 'x'} size={15} /><span>{c.text}</span></li>
+						))}
+					</ul>
+				</div>
 
-				<button type="button" class="link-back" id="back-btn">← Edit my details</button>
-			</div>
-
+				<div class="card card--pad side">
+					<h2 class="side__title">Already listed?</h2>
+					<p class="side__body">
+						To cancel or change your card, use the
+						<a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener noreferrer" class="link-u">Polar customer portal</a> —
+						sign in with the email you paid with. To edit your tool's details,
+						<a href="/contact/" class="link-u">contact us</a> with "Update Listing" as the subject.
+					</p>
+				</div>
+			</aside>
 		</div>
 
-		<!-- Sidebar -->
-		<aside class="submit-sidebar">
-			<div class="info-block info-block--price">
-				<h3>What it costs</h3>
-				<div class="side-price"><span class="amt">{TOOL_LISTING.price}</span><span class="per">/ {TOOL_LISTING.interval}</span></div>
-				<p class="side-note">Renews automatically. Cancel any time — non-refundable.</p>
+		<section class="section--tight submit-faq" aria-label="Listing questions">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Before you buy</span>
+					<h2>Questions people ask</h2>
+				</div>
+				<a href="/pricing/" class="link-arrow">All pricing questions <Icon name="arrow-right" size={16} /></a>
 			</div>
-
-			<div class="info-block">
-				<h3>What you get</h3>
-				<ul class="criteria-list">
-					<li>✓ A permanent page for your tool</li>
-					<li>✓ Listed among 200+ AI tools</li>
-					<li>✓ Shown on your category pages</li>
-					<li>✓ Included in search &amp; comparisons</li>
-					<li>✓ Indexed in our sitemap</li>
-					<li>✓ Followed link to your site</li>
-				</ul>
-			</div>
-
-			<div class="info-block info-block--alt">
-				<h3>What happens next?</h3>
-				<ol class="steps-list">
-					<li>
-						<span class="step-num">1</span>
-						<div>
-							<strong>You pay and we review</strong>
-							<p>We check the tool is working, legitimate, and meets our listing criteria.</p>
-						</div>
-					</li>
-					<li>
-						<span class="step-num">2</span>
-						<div>
-							<strong>Your tool goes live</strong>
-							<p>Usually within 48 hours. You'll get an email with the link to your listing.</p>
-						</div>
-					</li>
-					<li>
-						<span class="step-num">3</span>
-						<div>
-							<strong>It stays live while subscribed</strong>
-							<p>Cancel whenever you like — the listing runs to the end of the paid period, then comes down automatically.</p>
-						</div>
-					</li>
-				</ol>
-			</div>
-
-			<div class="info-block">
-				<h3>Listing criteria</h3>
-				<ul class="criteria-list">
-					<li>✓ Must use AI as a core feature</li>
-					<li>✓ Must have a working product or demo</li>
-					<li>✓ Must have a clear pricing model</li>
-					<li>✗ No broken, parked, or scam sites</li>
-					<li>✗ No pure white-label repackaging</li>
-				</ul>
-			</div>
-
-			<div class="info-block">
-				<h3>Already listed?</h3>
-				<p>
-					To cancel or change your card, use the
-					<a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener noreferrer">Polar customer portal</a> —
-					sign in with the email you paid with. To edit your tool's details,
-					<a href="/contact/">contact us</a> with "Update Listing" as the subject.
-				</p>
-			</div>
-		</aside>
-
+			<Faq items={faq} heading={false} jsonld={false} />
+		</section>
 	</div>
-</main>
-
-<Footer />
-</body>
-</html>
+</Base>
 
 <script define:vars={{ CHECKOUT_URL: TOOL_LISTING.checkoutUrl }} data-astro-rerun>
 // ---- Character counter -------------------------------------------------
@@ -282,7 +307,7 @@ const counter = document.getElementById('char-count');
 textarea?.addEventListener('input', () => {
 	const len = textarea.value.length;
 	counter.textContent = `${len} / 160`;
-	counter.style.color = len > 140 ? '#e53e3e' : 'rgb(var(--gray))';
+	counter.classList.toggle('is-near', len > 140);
 });
 
 // ---- Elements ----------------------------------------------------------
@@ -317,6 +342,9 @@ function showStep(n) {
 form?.addEventListener('submit', async (e) => {
 	e.preventDefault();
 
+	// Validation styling only appears once someone has tried to submit.
+	form.classList.add('was-validated');
+
 	const urlInput = document.getElementById('tool-url');
 	try { new URL(urlInput.value); } catch {
 		urlInput.setCustomValidity('Please enter a valid URL including https://');
@@ -329,6 +357,7 @@ form?.addEventListener('submit', async (e) => {
 	const ref = makeRef();
 	document.getElementById('listing-ref').value = ref;
 
+	const btnLabel = btn.innerHTML; // keep the icon: restoring text alone loses it
 	btn.disabled = true;
 	btn.textContent = 'Saving…';
 	errorEl.hidden = true;
@@ -369,7 +398,7 @@ form?.addEventListener('submit', async (e) => {
 		errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	} finally {
 		btn.disabled = false;
-		btn.textContent = 'Continue to payment →';
+		btn.innerHTML = btnLabel;
 	}
 });
 
@@ -391,220 +420,148 @@ backBtn?.addEventListener('click', () => showStep(1));
 </script>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 2.5rem 0 2rem;
-}
-.page-header h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0.5rem 0 0.4rem; }
-.page-header p { color: rgb(var(--gray)); }
+	.hero-points { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); margin-top: var(--s-2); }
+	.hero-points span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--ink-3); }
+	.hero-points :global(.icon) { color: var(--accent); }
 
-.submit-body { padding: 2.5rem 0 5rem; }
+	.submit-body { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) var(--section); }
+	.submit-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); align-items: start; }
+	@media (min-width: 960px) { .submit-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s-10); } }
+	.submit-col { min-width: 0; display: grid; gap: var(--s-6); }
 
-.submit-grid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 2rem;
-}
-@media (min-width: 900px) {
-	.submit-grid { grid-template-columns: 1fr 300px; align-items: start; }
-}
-.submit-col { min-width: 0; }
+	/* ── Stepper ── */
+	.stepper { display: flex; align-items: center; gap: var(--s-3); list-style: none; padding: 0; flex-wrap: wrap; }
+	.stepper__item {
+		display: inline-flex; align-items: center; gap: var(--s-2);
+		font-size: var(--text-sm); font-weight: 600; color: var(--ink-4);
+		transition: color var(--dur-2) var(--ease-out);
+	}
+	.stepper__num {
+		display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+		font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+		background: var(--surface-2); color: var(--ink-3); border: 1px solid var(--line);
+		transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+	}
+	.stepper__item.is-active { color: var(--ink); }
+	.stepper__item.is-active .stepper__num { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+	.stepper__item.is-done .stepper__num { background: var(--ink); color: var(--bg); border-color: transparent; }
+	.stepper__line { flex: 1; min-width: 24px; height: 1px; background: var(--line-2); list-style: none; }
 
-/* Stepper */
-.stepper {
-	list-style: none; padding: 0; margin: 0 0 1.25rem;
-	display: flex; gap: 0.5rem; flex-wrap: wrap;
-}
-.stepper__item {
-	display: flex; align-items: center; gap: 0.5rem;
-	font-size: 0.82rem; font-weight: 600;
-	color: rgb(var(--gray));
-	padding: 0.45rem 0.9rem 0.45rem 0.45rem;
-	border: 1px solid var(--border);
-	border-radius: 999px;
-	background: var(--bg);
-}
-.stepper__item span {
-	width: 22px; height: 22px; flex-shrink: 0;
-	border-radius: 50%;
-	display: flex; align-items: center; justify-content: center;
-	font-size: 0.72rem; font-weight: 800;
-	background: var(--bg-alt); color: rgb(var(--gray));
-}
-.stepper__item.is-active { color: rgb(var(--black)); border-color: var(--primary); }
-.stepper__item.is-active span { background: var(--primary); color: #fff; }
-.stepper__item.is-done span { background: var(--primary); color: #06231a; }
+	/* ── Panels ── */
+	.panel { padding: clamp(1.25rem, 1rem + 2vw, 2.25rem); }
+	.panel__intro { color: var(--ink-3); font-size: var(--text-base); margin-bottom: var(--s-6); max-width: 60ch; }
+	.panel__title { font-size: var(--text-xl); margin-bottom: var(--s-5); }
 
-/* Cards */
-.submit-card {
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	padding: 2rem;
-}
-.submit-intro { color: rgb(var(--gray)); font-size: 0.93rem; margin-bottom: 1.5rem; line-height: 1.65; }
+	.note {
+		display: flex; align-items: flex-start; gap: var(--s-2);
+		padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
+		font-size: var(--text-sm); margin-bottom: var(--s-5); line-height: 1.5;
+	}
+	.note :global(.icon) { flex-shrink: 0; margin-top: 3px; }
+	.note--bad { background: var(--bad-soft); color: var(--bad); }
+	.note--bad :global(a) { color: inherit; font-weight: 600; text-decoration: underline; }
+	.note--good { background: var(--good-soft); color: var(--good); }
+	.note--good code { font-family: var(--font-mono); font-size: 0.8em; background: rgba(0, 0, 0, 0.08); padding: 0.1em 0.4em; border-radius: 5px; }
+	:root[data-theme='dark'] .note--good code { background: rgba(255, 255, 255, 0.1); }
 
-.form-error {
-	background: rgba(239, 68, 68, 0.1); color: #fca5a5;
-	border: 1px solid rgba(239, 68, 68, 0.3);
-	border-radius: var(--radius);
-	padding: 0.85rem 1rem;
-	font-size: 0.9rem;
-	margin-bottom: 1.25rem;
-}
-.form-error a { color: #fca5a5; font-weight: 600; }
+	/* ── Fields ── */
+	.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4); }
+	@media (max-width: 640px) { .field-row { grid-template-columns: 1fr; } }
+	.field { display: grid; gap: var(--s-2); margin-bottom: var(--s-5); align-content: start; }
+	.field__top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+	.field__label { font-size: var(--text-sm); font-weight: 600; color: var(--ink); }
+	.field__opt { font-weight: 400; color: var(--ink-4); font-size: var(--text-xs); margin-left: 4px; }
+	.field__hint { font-size: var(--text-xs); color: var(--ink-3); }
+	.field__count { color: var(--ink-4); }
+	.field__count.is-near { color: var(--accent-ink); }
+	.req { color: var(--accent); }
+	textarea.input { min-height: 96px; }
 
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-@media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
+	.select-wrap { position: relative; }
+	.select-wrap select.input { appearance: none; -webkit-appearance: none; padding-right: 44px; cursor: pointer; }
+	:global(.select-wrap__icon) { position: absolute; right: 14px; top: 50%; translate: 0 -50%; pointer-events: none; color: var(--ink-3); }
 
-.field { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
-.field label { font-size: 0.85rem; font-weight: 700; color: rgb(var(--black)); display: flex; align-items: center; justify-content: space-between; }
-.req { color: #e53e3e; }
-.optional { font-weight: 400; color: rgb(var(--gray)); font-size: 0.78rem; }
-.char-count { font-size: 0.75rem; font-weight: 400; color: rgb(var(--gray)); }
-.field-hint { font-size: 0.75rem; color: rgb(var(--gray)); margin-top: 0.1rem; }
+	/* validation only after a submit attempt */
+	.was-validated .input:invalid { border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+	.was-validated .check input:invalid + .check__box { border-color: var(--bad); }
 
-.field input,
-.field select,
-.field textarea {
-	padding: 0.65rem 0.9rem;
-	border: 1.5px solid var(--border);
-	border-radius: var(--radius);
-	font-size: 0.9rem;
-	font-family: inherit;
-	background: var(--bg);
-	color: rgb(var(--black));
-	transition: border-color 0.15s;
-	width: 100%;
-}
-.field input:focus,
-.field select:focus,
-.field textarea:focus { outline: none; border-color: var(--primary); }
-.field textarea { resize: vertical; min-height: 80px; }
+	/* ── Checkbox ── */
+	.check { display: flex; align-items: flex-start; gap: var(--s-3); cursor: pointer; margin-bottom: var(--s-5); }
+	.check input { position: absolute; opacity: 0; width: 0; height: 0; }
+	.check__box {
+		flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px;
+		border: 1.5px solid var(--line-strong); border-radius: 6px;
+		display: grid; place-items: center; color: transparent;
+		transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+	}
+	.check:hover .check__box { border-color: var(--accent); }
+	.check input:checked + .check__box { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+	.check input:focus-visible + .check__box { outline: 2px solid var(--accent); outline-offset: 3px; }
+	.check__text { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.55; }
+	.check__text :global(a) { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 0.18em; }
 
-.field--checkbox { flex-direction: row; align-items: flex-start; gap: 0; }
-.checkbox-label {
-	display: flex; align-items: flex-start; gap: 0.6rem;
-	font-size: 0.83rem; color: rgb(var(--gray-dark));
-	cursor: pointer; line-height: 1.55;
-}
-.checkbox-label input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; accent-color: var(--primary); cursor: pointer; }
-.checkbox-label a { color: var(--primary); }
+	.btn-sub { display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center; font-size: var(--text-xs); color: var(--ink-3); margin-top: var(--s-3); }
 
-.submit-btn {
-	width: 100%; padding: 0.9rem;
-	font-size: 1rem; cursor: pointer;
-	margin-top: 0.25rem;
-}
-.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-sub { text-align: center; font-size: 0.76rem; color: rgb(var(--gray)); margin: 0.6rem 0 0; }
+	/* ── Order summary ── */
+	.order { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; margin-bottom: var(--s-5); }
+	.order__row { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-4); padding: var(--s-4) var(--s-5); }
+	.order__row strong { display: block; font-size: var(--text-base); }
+	.order__sub { display: block; font-size: var(--text-sm); color: var(--ink-3); margin-top: 2px; }
+	.order__price { text-align: right; white-space: nowrap; }
+	.order__amt { display: block; font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.02em; }
+	.order__per { font-size: var(--text-xs); color: var(--ink-3); }
+	.order__total { display: flex; justify-content: space-between; align-items: center; padding: var(--s-3) var(--s-5); background: var(--surface-2); border-top: 1px solid var(--line); font-size: var(--text-sm); }
 
-/* ---- Payment step ---- */
-.saved-note {
-	/* The message is one span, not loose text nodes: as flex items the sentence would break
-	   apart and orphan its full stop onto a line of its own. */
-	display: flex; align-items: flex-start; gap: 0.5rem;
-	background: rgba(52, 211, 153, 0.1); color: #6ee7b7;
-	border: 1px solid rgba(52, 211, 153, 0.3);
-	border-radius: var(--radius);
-	padding: 0.75rem 1rem;
-	font-size: 0.85rem; font-weight: 600;
-	margin-bottom: 1.5rem;
-}
-.saved-note code { background: rgba(52, 211, 153, 0.16); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
+	.terms-box { background: var(--warn-soft); border-radius: var(--r-md); padding: var(--s-5); margin-bottom: var(--s-5); border-left: 3px solid var(--warn); }
+	.terms-box__title { display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--warn); margin-bottom: var(--s-3); }
+	.terms-box__list { display: grid; gap: var(--s-3); padding-left: 1.1em; }
+	.terms-box__list li { font-size: var(--text-sm); line-height: 1.6; color: var(--ink-2); }
+	.terms-box__list li::marker { color: var(--warn); }
+	.terms-box__list strong { color: var(--ink); }
 
-.pay-title { font-size: 1.25rem; margin: 0 0 1rem; }
+	.ack-field { border-radius: var(--r-md); }
+	.ack-field.shake { animation: shake 0.4s; }
+	@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+	@media (prefers-reduced-motion: reduce) { .ack-field.shake { animation: none; } }
 
-.order-box {
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	overflow: hidden;
-	margin-bottom: 1.25rem;
-}
-.order-row {
-	display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
-	padding: 1rem 1.1rem;
-}
-.order-row strong { display: block; font-size: 0.92rem; }
-.order-sub { display: block; font-size: 0.8rem; color: rgb(var(--gray)); margin-top: 0.15rem; }
-.order-price { text-align: right; white-space: nowrap; }
-.order-price .amt { display: block; font-size: 1.15rem; font-weight: 800; }
-.order-price .per { font-size: 0.75rem; color: rgb(var(--gray)); }
-.order-total {
-	display: flex; justify-content: space-between; align-items: center;
-	padding: 0.85rem 1.1rem;
-	background: var(--bg-alt);
-	border-top: 1px solid var(--border);
-	font-size: 0.9rem;
-}
-.order-total strong { font-size: 1rem; }
+	.pay-btn.is-disabled { opacity: 0.45; cursor: not-allowed; }
+	.pay-btn.is-disabled:hover { transform: none; box-shadow: none; }
 
-.terms-box {
-	background: rgba(251, 146, 60, 0.07);
-	border: 1px solid rgba(251, 146, 60, 0.28);
-	border-left: 3px solid #fb923c;
-	border-radius: var(--radius);
-	padding: 1.1rem 1.25rem;
-	margin-bottom: 1.25rem;
-}
-.terms-box h3 { font-size: 0.9rem; margin: 0 0 0.7rem; color: #fdba74; }
-.terms-box ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.55rem; }
-.terms-box li { font-size: 0.86rem; line-height: 1.65; color: rgb(var(--gray-dark)); }
-.terms-box a { color: #fdba74; font-weight: 600; }
+	.link-back {
+		display: inline-flex; align-items: center; gap: 6px; margin: var(--s-4) auto 0;
+		color: var(--ink-3); font-size: var(--text-sm); font-weight: 500;
+		transition: color var(--dur-2) var(--ease-out);
+	}
+	.link-back:hover { color: var(--ink); }
 
-.ack-field { margin-bottom: 1.1rem; border-radius: var(--radius); }
-.ack-field.shake { animation: shake 0.4s; }
-@keyframes shake {
-	0%, 100% { transform: translateX(0); }
-	25% { transform: translateX(-5px); }
-	75% { transform: translateX(5px); }
-}
+	/* ── Sidebar ── */
+	.submit-side { display: grid; gap: var(--s-4); }
+	@media (min-width: 960px) { .submit-side { position: sticky; top: calc(var(--header-h, 64px) + 24px); } }
+	.side { padding: var(--s-5) var(--s-6); }
+	.side--sunk { background: var(--surface-2); box-shadow: none; }
+	.side--price { border-color: var(--accent-soft-2); background: linear-gradient(180deg, var(--accent-soft) 0%, var(--surface) 60%); }
+	.side__title { font-size: var(--text-base); margin-bottom: var(--s-4); }
+	.side__price { display: flex; align-items: baseline; gap: var(--s-2); margin-top: var(--s-2); }
+	.side__amt { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.035em; color: var(--ink); }
+	.side__per { font-size: var(--text-sm); color: var(--ink-3); }
+	.side__note { font-size: var(--text-xs); color: var(--ink-3); margin-top: var(--s-2); line-height: 1.5; }
+	.side__body { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.6; }
 
-.pay-btn { display: block; text-align: center; text-decoration: none; }
-.pay-btn.is-disabled { opacity: 0.5; cursor: not-allowed; }
+	.ilist { display: grid; gap: var(--s-3); }
+	.ilist li { display: flex; align-items: flex-start; gap: var(--s-3); font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
+	.ilist :global(.icon) { flex-shrink: 0; margin-top: 3px; color: var(--good); }
+	.ilist li.is-no :global(.icon) { color: var(--ink-4); }
 
-.link-back {
-	display: block; margin: 1.1rem auto 0;
-	background: none; border: none;
-	color: rgb(var(--gray)); font-size: 0.83rem;
-	cursor: pointer; font-family: inherit;
-	text-decoration: underline;
-}
+	.steps { display: grid; gap: var(--s-4); }
+	.steps li { display: flex; align-items: flex-start; gap: var(--s-3); }
+	.steps__num {
+		flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+		background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; margin-top: 1px;
+	}
+	.steps strong { display: block; font-size: var(--text-sm); margin-bottom: 2px; }
+	.steps p { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.5; }
 
-/* Sidebar */
-.submit-sidebar { display: flex; flex-direction: column; gap: 1rem; }
-.info-block {
-	padding: 1.25rem 1.4rem;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	background: var(--bg);
-}
-.info-block--alt { background: var(--bg-alt); }
-.info-block--price { border-color: var(--primary); }
-.info-block h3 { font-size: 0.95rem; margin-bottom: 0.85rem; }
-.info-block p { font-size: 0.83rem; color: rgb(var(--gray-dark)); margin: 0; line-height: 1.6; }
-.info-block a { color: var(--primary); font-weight: 600; }
-
-.side-price { display: flex; align-items: baseline; gap: 0.35rem; margin-bottom: 0.4rem; }
-.side-price .amt { font-size: 1.75rem; font-weight: 800; color: rgb(var(--black)); }
-.side-price .per { font-size: 0.85rem; color: rgb(var(--gray)); }
-.side-note { font-size: 0.78rem !important; color: rgb(var(--gray)) !important; }
-
-.steps-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.85rem; }
-.steps-list li { display: flex; align-items: flex-start; gap: 0.75rem; }
-.step-num {
-	width: 24px; height: 24px;
-	background: var(--primary);
-	color: #fff;
-	border-radius: 50%;
-	display: flex; align-items: center; justify-content: center;
-	font-size: 0.75rem; font-weight: 800;
-	flex-shrink: 0; margin-top: 1px;
-}
-.steps-list strong { display: block; font-size: 0.85rem; margin-bottom: 0.2rem; }
-.steps-list p { font-size: 0.8rem; color: rgb(var(--gray)); margin: 0; line-height: 1.55; }
-
-.criteria-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
-.criteria-list li { font-size: 0.83rem; color: rgb(var(--gray-dark)); }
+	/* line the questions up with the form column above them, not to an arbitrary width */
+	.submit-faq { max-width: 820px; }
+	@media (min-width: 960px) { .submit-faq { max-width: calc(100% - 340px - var(--s-10)); } }
 </style>

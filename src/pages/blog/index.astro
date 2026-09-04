@@ -1,258 +1,217 @@
 ---
-import { Image } from 'astro:assets';
+/**
+ * `/blog/` — Explainers: the depth behind the daily brief.
+ * Feature card + category chips (client-side, URL-synced) + one card design.
+ */
 import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import Newsletter from '../../components/Newsletter.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
+import Base from '../../layouts/Base.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
-import { CATEGORY_COLORS, SITE_TITLE } from '../../consts';
+import ArticleCard from '../../components/ArticleCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import Icon from '../../components/Icon.astro';
+import { SITE_TITLE, SITE_URL, BLOG_CATEGORIES } from '../../consts';
+import { byNewest, categoryName, categoryIcon, countWords } from '../../lib/articles';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+/* Reading time is measured, not asserted. */
+const readTime = (body?: string) => `${Math.max(1, Math.round(countWords(body ?? '') / 200))} min read`;
 
-const categories = [
-	{ slug: 'all', label: 'All Articles' },
-	{ slug: 'ai-explained', label: 'AI Explained' },
-	{ slug: 'future-of-work', label: 'Future of Work' },
-	{ slug: 'how-ai-works', label: 'How AI Works' },
-	{ slug: 'comparisons', label: 'Comparisons' },
-	{ slug: 'guides', label: 'Guides' },
-];
+const posts = byNewest(await getCollection('blog'));
+const [feature, ...rest] = posts;
+
+const counts = new Map<string, number>();
+for (const p of posts) counts.set(p.data.category, (counts.get(p.data.category) ?? 0) + 1);
+const categories = Object.keys(BLOG_CATEGORIES)
+	.filter((slug) => counts.has(slug))
+	.map((slug) => ({ slug, name: categoryName(slug), icon: categoryIcon(slug), count: counts.get(slug)! }));
+
+const description = 'Explainers from AI Briefs: the concepts, comparisons and how-tos behind the daily brief, in plain English. No jargon, no hype.';
+
+const collectionSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'CollectionPage',
+	name: 'Explainers',
+	description,
+	url: `${SITE_URL}/blog/`,
+	isPartOf: { '@type': 'WebSite', name: SITE_TITLE, url: SITE_URL },
+	mainEntity: {
+		'@type': 'ItemList',
+		numberOfItems: posts.length,
+		itemListElement: posts.map((p, i) => ({
+			'@type': 'ListItem', position: i + 1, name: p.data.title, url: `${SITE_URL}/blog/${p.id}/`,
+		})),
+	},
+};
 ---
+<Base title={`Explainers — the depth behind the brief | ${SITE_TITLE}`} {description} noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+	</Fragment>
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`AI Articles & Guides | ${SITE_TITLE}`}
-		description="Browse all AI Briefs articles: AI explained, future of work, tool comparisons, how-to guides. AI made simple for everyone."
-	/>
-</head>
-<body>
-	<Header />
-	<main>
-
-		<!-- Page header -->
-		<section class="page-header">
-			<div class="container">
-				<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Articles' }]} />
-				<h1>Latest Articles</h1>
-				<p>AI explained clearly — no jargon, no hype. <span class="post-count">{posts.length} articles</span></p>
-			</div>
-		</section>
-
-		<!-- Category filter tabs -->
-		<div class="cat-tabs-wrap">
-			<div class="container">
-				<div class="cat-tabs" id="cat-tabs" role="tablist">
-					{categories.map((cat, i) => (
-						<button
-							class={`cat-tab${i === 0 ? ' active' : ''}`}
-							data-cat={cat.slug}
-							role="tab"
-							aria-selected={i === 0 ? 'true' : 'false'}
-						>
-							{cat.label}
-						</button>
-					))}
+	<section class="ex-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Explainers' }]} />
+			<div class="ex-hero__in">
+				<div class="ex-hero__copy">
+					<span class="eyebrow">Explainers · {posts.length} pieces</span>
+					<h1 class="ex-hero__title">The depth behind the <em class="serif">brief</em>.</h1>
+					<p class="lead">The brief tells you what changed today. These go one level down: what the words mean, which tool actually wins, and how to do the thing — written the way you'd explain it to a friend.</p>
 				</div>
+				<nav class="ex-hero__links" aria-label="Related sections">
+					<a class="chip" href="/tutorials/"><Icon name="compass" size={15} /> Tutorials</a>
+					<a class="chip" href="/reviews/"><Icon name="star" size={15} /> Reviews</a>
+					<a class="chip" href="/news/"><Icon name="newspaper" size={15} /> Today's brief</a>
+				</nav>
 			</div>
 		</div>
+	</section>
 
-		<div class="container articles-section">
-			<p class="results-label" id="results-label">{posts.length} articles</p>
-			<div class="post-list" id="post-list">
-				{posts.map((post) => (
-					<a
-						href={`/blog/${post.id}/`}
-						class="post-item"
-						data-cat={post.data.category}
-					>
-						<div class="post-item__img" style={`background:${CATEGORY_COLORS[post.data.category] ?? 'var(--primary-light)'}`}>
-							{post.data.heroImage ? (
-								<Image width={200} height={130} src={post.data.heroImage} alt={post.data.title} loading="lazy" />
-							) : (
-								<span aria-hidden="true">🤖</span>
-							)}
-						</div>
-						<div class="post-item__body">
-							<div class="post-item__meta">
-								<span class="badge">{post.data.category.replace(/-/g, ' ')}</span>
-								<span class="meta-sep">·</span>
-								<span class="meta-date"><FormattedDate date={post.data.pubDate} /></span>
-								{post.data.readingTime && <><span class="meta-sep">·</span><span class="meta-date">{post.data.readingTime}</span></>}
-							</div>
-							<h2 class="post-item__title">{post.data.title}</h2>
-							<p class="post-item__excerpt">{post.data.description}</p>
-							<span class="post-item__cta">Read article →</span>
-						</div>
-					</a>
-				))}
-			</div>
-			<p class="no-results" id="no-results" style="display:none">
-				No articles in this category yet.
-				<a href="/blog/">See all articles</a>
-			</p>
+	{feature && (
+		<section class="container ex-feature" data-feature aria-labelledby="ex-feature-h">
+			<h2 class="sr-only" id="ex-feature-h">Latest explainer</h2>
+			<span class="meta ex-feature__label">Latest</span>
+			<ArticleCard
+				slug={feature.id}
+				title={feature.data.title}
+				description={feature.data.description}
+				category={feature.data.category}
+				pubDate={feature.data.pubDate}
+				readingTime={readTime(feature.body)}
+				heroImage={feature.data.heroImage}
+				author={feature.data.author}
+				variant="feature"
+				eager
+			/>
+		</section>
+	)}
+
+	<section class="container ex-list section--tight" data-list aria-labelledby="ex-all-h">
+		<div class="ex-list__head">
+			<h2 id="ex-all-h">Everything else</h2>
+			<p class="ex-list__count muted tnum" data-count>{rest.length} explainers</p>
 		</div>
 
-		<Newsletter />
-	</main>
-	<Footer />
-</body>
-</html>
+		<div class="ex-chips scroll-x" role="group" aria-label="Filter by topic">
+			<button type="button" class="chip" data-cat="" aria-pressed="true">All <span class="chip__count">{posts.length}</span></button>
+			{categories.map((c) => (
+				<button type="button" class="chip" data-cat={c.slug} aria-pressed="false">
+					<Icon name={c.icon} size={15} /> {c.name} <span class="chip__count">{c.count}</span>
+				</button>
+			))}
+		</div>
 
-<script data-astro-rerun>
-const tabs = document.querySelectorAll('.cat-tab');
-const posts = document.querySelectorAll('.post-item');
-const label = document.getElementById('results-label');
-const noResults = document.getElementById('no-results');
+		<div class="grid grid--3 ex-grid" data-grid data-stagger>
+			{rest.map((p) => (
+				<ArticleCard
+					slug={p.id}
+					title={p.data.title}
+					description={p.data.description}
+					category={p.data.category}
+					pubDate={p.data.pubDate}
+					readingTime={readTime(p.body)}
+					heroImage={p.data.heroImage}
+				/>
+			))}
+		</div>
 
-tabs.forEach(tab => {
-	tab.addEventListener('click', () => {
-		tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-		tab.classList.add('active');
-		tab.setAttribute('aria-selected', 'true');
+		<p class="ex-empty muted" data-empty hidden>Nothing filed under that yet. <button type="button" class="btn btn--link link-u" data-clear>Show everything</button></p>
+	</section>
 
-		const cat = tab.dataset.cat;
-		let visible = 0;
-		posts.forEach(post => {
-			const match = cat === 'all' || post.dataset.cat === cat;
-			post.style.display = match ? '' : 'none';
-			if (match) visible++;
-		});
-		label.textContent = `${visible} article${visible !== 1 ? 's' : ''}`;
-		noResults.style.display = visible === 0 ? '' : 'none';
-	});
-});
+	<Newsletter variant="band" />
+</Base>
+
+<script>
+	/* Category filter: instant, shareable (?c=slug), and it never leaves a card
+	   stuck mid-reveal — anything we hide is marked revealed first. */
+	function bindExplainers() {
+		const root = document.querySelector<HTMLElement>('[data-list]');
+		if (!root || root.dataset.bound) return;
+		root.dataset.bound = '1';
+
+		const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+		const cards = Array.from(grid.children) as HTMLElement[];
+		const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cat]'));
+		const countEl = root.querySelector<HTMLElement>('[data-count]')!;
+		const emptyEl = root.querySelector<HTMLElement>('[data-empty]')!;
+		const featureWrap = document.querySelector<HTMLElement>('[data-feature]');
+		const featureCat = featureWrap?.querySelector<HTMLElement>('[data-category]')?.dataset.category ?? '';
+		const valid = new Set(chips.map((c) => c.dataset.cat).filter(Boolean));
+		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		const fromUrl = new URLSearchParams(location.search).get('c') ?? '';
+		let active = valid.has(fromUrl) ? fromUrl : '';
+
+		function apply(animate: boolean) {
+			const shown: HTMLElement[] = [];
+			cards.forEach((c) => {
+				const on = !active || c.dataset.category === active;
+				if (on) shown.push(c);
+				else { c.classList.add('is-in'); c.hidden = true; }
+			});
+			shown.forEach((c, i) => {
+				const was = c.hidden;
+				c.hidden = false;
+				if (animate && (was || active)) {
+					c.style.setProperty('--i', String(Math.min(i, 8)));
+					c.classList.remove('is-in');
+				}
+			});
+			if (animate && shown.length) {
+				void grid.offsetWidth;
+				const show = () => shown.forEach((c) => c.classList.add('is-in'));
+				reduced ? show() : requestAnimationFrame(show);
+			}
+
+			const featureOn = !active || featureCat === active;
+			if (featureWrap) featureWrap.hidden = !featureOn;
+			const total = shown.length + (featureOn ? 1 : 0);
+			countEl.textContent = `${total} explainer${total === 1 ? '' : 's'}`;
+			emptyEl.hidden = total > 0;
+			chips.forEach((c) => c.setAttribute('aria-pressed', String((c.dataset.cat ?? '') === active)));
+
+			const p = new URLSearchParams(location.search);
+			active ? p.set('c', active) : p.delete('c');
+			const qs = p.toString();
+			const next = location.pathname + (qs ? `?${qs}` : '') + location.hash;
+			if (next !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', next);
+		}
+
+		chips.forEach((c) => c.addEventListener('click', () => { active = c.dataset.cat ?? ''; apply(true); }));
+		root.querySelector('[data-clear]')?.addEventListener('click', () => { active = ''; apply(true); });
+		if (active) apply(false);
+	}
+	bindExplainers();
+	document.addEventListener('astro:page-load', bindExplainers);
 </script>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 2.5rem 0 1.75rem;
-}
-.page-header h1 { font-size: clamp(1.75rem, 4vw, 2.4rem); margin: 0.5rem 0 0.3rem; }
-.page-header p { color: rgb(var(--gray)); font-size: 0.95rem; }
-.post-count { font-weight: 700; color: var(--primary); }
+	.ex-hero { padding: var(--s-8) 0 var(--s-10); }
+	.ex-hero__in { display: grid; gap: var(--s-6); margin-top: var(--s-6); }
+	.ex-hero__copy { display: grid; gap: var(--s-5); }
+	.ex-hero__title { font-size: var(--text-5xl); max-width: 16ch; text-wrap: balance; }
+	.ex-hero__links { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+	.ex-hero__links .chip :global(.icon) { color: var(--ink-3); }
+	.ex-hero__links .chip:hover :global(.icon) { color: var(--accent); }
 
-/* Category tabs */
-.cat-tabs-wrap {
-	background: var(--bg-alt);
-	border-bottom: 1px solid var(--border);
-	position: sticky;
-	top: 64px;
-	z-index: 100;
-}
-.cat-tabs {
-	display: flex;
-	gap: 0;
-	overflow-x: auto;
-	-webkit-overflow-scrolling: touch;
-	scrollbar-width: none;
-}
-.cat-tabs::-webkit-scrollbar { display: none; }
-.cat-tab {
-	padding: 0.75rem 1.1rem;
-	background: none;
-	border: none;
-	border-bottom: 2px solid transparent;
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: rgb(var(--gray));
-	cursor: pointer;
-	white-space: nowrap;
-	transition: color 0.15s, border-color 0.15s;
-	font-family: inherit;
-}
-.cat-tab:hover { color: rgb(var(--black)); }
-.cat-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+	.ex-feature { display: grid; gap: var(--s-5); padding-bottom: var(--s-4); }
+	.ex-feature__label { margin: 0; }
 
-.articles-section { padding: 1.75rem 0 3rem; }
-.results-label { font-size: 0.82rem; color: rgb(var(--gray)); margin-bottom: 1rem; }
+	.ex-list__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-4); }
+	.ex-list__head h2 { font-size: var(--text-2xl); }
+	.ex-list__count { font-size: var(--text-sm); }
+	.ex-chips { display: flex; gap: var(--s-2); margin: var(--s-5) 0 var(--s-8); padding-bottom: 2px; }
+	.ex-chips .chip { flex-shrink: 0; }
+	.ex-chips .chip :global(.icon) { color: var(--ink-3); }
+	.ex-chips .chip[aria-pressed='true'] :global(.icon) { color: inherit; }
+	.ex-grid { row-gap: var(--s-10); }
+	.ex-empty { margin-top: var(--s-8); font-size: var(--text-base); }
+	.ex-empty .btn--link { font-weight: 600; }
 
-.post-list {
-	display: flex;
-	flex-direction: column;
-	gap: 1.1rem;
-}
-
-.post-item {
-	display: grid;
-	grid-template-columns: 200px 1fr;
-	gap: 1.25rem;
-	align-items: center;
-	padding: 1rem;
-	color: inherit;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
-}
-.post-item:hover {
-	box-shadow: 0 4px 20px rgba(0,200,150,0.12);
-	transform: translateY(-2px);
-	border-color: rgba(0,200,150,0.3);
-}
-
-.post-item__img {
-	width: 200px;
-	height: 130px;
-	border-radius: var(--radius);
-	overflow: hidden;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	font-size: 2rem;
-}
-.post-item__img img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	transition: transform 0.3s ease;
-}
-.post-item:hover .post-item__img img { transform: scale(1.04); }
-
-.post-item__meta {
-	display: flex;
-	align-items: center;
-	gap: 0.35rem;
-	margin-bottom: 0.4rem;
-	flex-wrap: wrap;
-}
-.meta-sep { color: rgb(var(--gray)); font-size: 0.75rem; }
-.meta-date { font-size: 0.75rem; color: rgb(var(--gray)); }
-
-.post-item__title {
-	font-size: 1.07rem;
-	line-height: 1.3;
-	color: rgb(var(--black));
-	margin-bottom: 0.3rem;
-	transition: color 0.15s;
-}
-.post-item:hover .post-item__title { color: var(--primary); }
-
-.post-item__excerpt {
-	font-size: 0.86rem;
-	color: rgb(var(--gray));
-	margin: 0 0 0.5rem;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	line-height: 1.5;
-}
-.post-item__cta { font-size: 0.8rem; font-weight: 700; color: var(--primary); }
-
-.no-results { color: rgb(var(--gray)); font-size: 0.9rem; padding: 1.5rem 0; }
-.no-results a { color: var(--primary); font-weight: 600; }
-
-@media (max-width: 600px) {
-	.post-item { grid-template-columns: 1fr; }
-	.post-item__img { width: 100%; height: 160px; }
-}
+	@media (min-width: 900px) {
+		.ex-hero__in { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+		.ex-hero__links { justify-content: flex-end; }
+	}
+	@media (max-width: 720px) {
+		.ex-hero__title { font-size: var(--text-4xl); }
+		.ex-list__head { flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+	}
 </style>

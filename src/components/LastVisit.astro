@@ -1,0 +1,35 @@
+---
+/**
+ * "New since your last visit" support.
+ * Exposes window.__aib.lastVisit() → epoch ms of the visitor's PREVIOUS session
+ * (null on a first-ever visit). localStorage['aib-last-visit'] is stamped once per
+ * browser session (sessionStorage flag), so every page in the current session
+ * agrees on the same "previous visit" value. Must run after ScrollReveal, which
+ * creates window.__aib; if it hasn't yet, we attach on DOMContentLoaded.
+ */
+---
+<script is:inline>
+	(function () {
+		var KEY = 'aib-last-visit', PREV = 'aib-prev-visit', FLAG = 'aib-visit-stamped';
+		var prev = null;
+		try {
+			if (sessionStorage.getItem(FLAG)) {
+				var p = sessionStorage.getItem(PREV);
+				prev = p ? Number(p) || null : null;
+			} else {
+				var last = localStorage.getItem(KEY);
+				prev = last ? Number(last) || null : null;
+				sessionStorage.setItem(FLAG, '1');
+				sessionStorage.setItem(PREV, prev ? String(prev) : '');
+				localStorage.setItem(KEY, String(Date.now()));
+			}
+		} catch (e) { prev = null; }
+		function lastVisit() { return prev; }
+		function install() {
+			if (!window.__aib) return false;
+			window.__aib.lastVisit = lastVisit;
+			return true;
+		}
+		if (!install()) document.addEventListener('DOMContentLoaded', install);
+	})();
+</script>

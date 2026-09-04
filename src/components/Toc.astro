@@ -1,0 +1,100 @@
+---
+/**
+ * Sticky table of contents with scroll-spy. Generic: pass the `headings`
+ * returned by `render(entry)` (or any {depth, slug, text}[]) and it renders a
+ * nested list of anchor links, marking the section currently in view.
+ *
+ *   <Toc headings={headings} />
+ *   <Toc headings={headings} title="In this article" minDepth={2} maxDepth={3} />
+ *
+ * Scroll-spy sets `aria-current="location"` + `.is-active` on the active link.
+ * Sticky positioning is applied by the wrapper you place it in (the component
+ * only sets `top` via `--toc-top`, default header height + 32px).
+ */
+import Icon from './Icon.astro';
+
+interface Heading { depth: number; slug: string; text: string }
+interface Props {
+	headings: Heading[];
+	title?: string;
+	minDepth?: number;
+	maxDepth?: number;
+	/** show a "Back to top" link under the list */
+	backToTop?: boolean;
+	class?: string;
+}
+const { headings, title = 'On this page', minDepth = 2, maxDepth = 3, backToTop = true, class: className } = Astro.props;
+const items = headings.filter((h) => h.depth >= minDepth && h.depth <= maxDepth);
+---
+{items.length > 0 && (
+	<nav class:list={['toc', className]} data-toc aria-label={title || 'On this page'}>
+		<p class="toc__title meta">{title}</p>
+		<ol role="list" class="toc__list">
+			{items.map((h) => (
+				<li class:list={['toc__item', `toc__item--d${h.depth - minDepth + 1}`]}>
+					<a href={`#${h.slug}`} class="toc__link">{h.text}</a>
+				</li>
+			))}
+		</ol>
+		{backToTop && (
+			<a href="#main" class="toc__top"><Icon name="arrow-up" size={13} /> Back to top</a>
+		)}
+	</nav>
+)}
+
+<script>
+	/* Scroll-spy: the last heading whose top has passed the reading line is active. */
+	function bindToc() {
+		document.querySelectorAll<HTMLElement>('[data-toc]:not([data-bound])').forEach((nav) => {
+			nav.dataset.bound = '1';
+			const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a.toc__link'));
+			const targets = links
+				.map((a) => document.getElementById(decodeURIComponent(a.getAttribute('href')!.slice(1))))
+				.filter((el): el is HTMLElement => !!el);
+			if (!targets.length) return;
+			let ticking = false;
+			const update = () => {
+				ticking = false;
+				const header = document.querySelector<HTMLElement>('.site-header');
+				const line = (header?.offsetHeight ?? 64) + 120;
+				let current: HTMLElement | null = null;
+				for (const t of targets) {
+					if (t.getBoundingClientRect().top <= line) current = t; else break;
+				}
+				// At the very end of the page the last section is the one being read.
+				if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = targets[targets.length - 1];
+				links.forEach((a) => {
+					const on = !!current && a.getAttribute('href') === `#${current.id}`;
+					a.classList.toggle('is-active', on);
+					if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+				});
+			};
+			const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+			addEventListener('scroll', onScroll, { passive: true });
+			addEventListener('resize', onScroll, { passive: true });
+			update();
+		});
+	}
+	bindToc();
+	document.addEventListener('astro:page-load', bindToc);
+</script>
+
+<style>
+	.toc { --toc-top: calc(var(--header-h, 64px) + 32px); font-size: var(--text-sm); }
+	.toc__title { margin-bottom: var(--s-3); }
+	.toc__list { display: grid; border-left: 1px solid var(--line); }
+	.toc__link {
+		position: relative; display: block; padding: 6px 0 6px 14px; margin-left: -1px;
+		color: var(--ink-3); line-height: 1.35; border-left: 2px solid transparent;
+		transition: color var(--dur-2), border-color var(--dur-2), transform var(--dur-2) var(--ease-out);
+		text-wrap: pretty;
+	}
+	.toc__item--d2 .toc__link { padding-left: 26px; font-size: var(--text-xs); }
+	.toc__link:hover { color: var(--ink); }
+	.toc__link.is-active { color: var(--ink); font-weight: 600; border-left-color: var(--accent); }
+	.toc__top {
+		display: inline-flex; align-items: center; gap: 6px; margin-top: var(--s-5);
+		font-size: var(--text-xs); font-weight: 600; color: var(--ink-3); transition: color var(--dur-2);
+	}
+	.toc__top:hover { color: var(--ink); }
+</style>

@@ -1,85 +1,76 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
 import { SITE_TITLE, TOOL_LISTING } from '../../consts';
 ---
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`Submission Received | ${SITE_TITLE}`}
-		description="Your AI tool listing subscription is active. We'll review your tool and publish it within 48 hours."
-	/>
-	<meta name="robots" content="noindex, nofollow" />
-</head>
-<body>
-<Header />
+<Base
+	title={`Submission received | ${SITE_TITLE}`}
+	description="Your AI tool listing subscription is active. We'll review your tool and publish it within 48 hours."
+	noindex
+	noNudge
+>
+	<meta slot="head" name="robots" content="noindex, nofollow" />
 
-<main class="container success-body">
+	<div class="container container--prose success-body">
 
-	<!-- Paid + confirmed -->
-	<div class="success-card" id="ok-card" hidden>
-		<div class="tick">
-			<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-		</div>
-		<h1>You're in — payment received</h1>
-		<p class="lede">
-			Thanks! Your subscription is active and <strong id="ok-tool">your tool</strong> is queued for review.
-			A receipt is on its way to your inbox from Polar.
-		</p>
+		<!-- Paid + confirmed -->
+		<article class="card card--pad success" id="ok-card" hidden>
+			<div class="success__mark success__mark--good"><Icon name="check" size={28} strokeWidth={2.25} /></div>
+			<span class="eyebrow">Payment received</span>
+			<h1 class="success__title">You're in.</h1>
+			<p class="lead">
+				Your subscription is active and <strong id="ok-tool">your tool</strong> is queued for review.
+				A receipt is on its way to your inbox from Polar.
+			</p>
 
-		<dl class="receipt">
-			<div><dt>Submission reference</dt><dd><code id="ok-ref">—</code></dd></div>
-			<div><dt>Checkout ID</dt><dd><code id="ok-checkout">—</code></dd></div>
-			<div><dt>Plan</dt><dd>{TOOL_LISTING.priceLabel}, renews automatically</dd></div>
-		</dl>
+			<dl class="receipt">
+				<div><dt>Submission reference</dt><dd><code id="ok-ref">—</code></dd></div>
+				<div><dt>Checkout ID</dt><dd><code id="ok-checkout">—</code></dd></div>
+				<div><dt>Plan</dt><dd>{TOOL_LISTING.priceLabel}, renews automatically</dd></div>
+			</dl>
 
-		<h2>What happens next</h2>
-		<ol class="next-list">
-			<li><strong>We review your tool</strong> — we check it's working, legitimate, and meets our <a href="/terms/">listing criteria</a>.</li>
-			<li><strong>It goes live</strong> — usually within 48 hours. We'll email you the link to your listing page.</li>
-			<li><strong>It stays live while you're subscribed</strong> — see below for how cancelling works.</li>
-		</ol>
+			<h2 class="success__h2">What happens next</h2>
+			<ol class="next" role="list">
+				<li><span class="next__num tnum">1</span><div><strong>We review your tool</strong><p>We check it's working, legitimate, and meets our <a href="/terms/" class="link-u">listing criteria</a>.</p></div></li>
+				<li><span class="next__num tnum">2</span><div><strong>It goes live</strong><p>Usually within 48 hours. We'll email you the link to your listing page.</p></div></li>
+				<li><span class="next__num tnum">3</span><div><strong>It stays live while you're subscribed</strong><p>See below for exactly how cancelling works.</p></div></li>
+			</ol>
 
-		<div class="terms-box">
-			<h3>Your subscription, in plain English</h3>
-			<ul>
-				<li>You'll be charged <strong>{TOOL_LISTING.price} {TOOL_LISTING.currency} every {TOOL_LISTING.interval}</strong> until you cancel.</li>
-				<li><strong>Payments are non-refundable</strong>, including part-months and unused time.</li>
-				<li>Cancel any time from the <a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener">Polar customer portal</a> — the link is also in your receipt email.</li>
-				<li>When you cancel, your listing stays live for the rest of the {TOOL_LISTING.interval} you've paid for, then is <strong>automatically removed</strong> from the directory at the start of the next billing period.</li>
-			</ul>
-		</div>
+			<div class="terms-box">
+				<h3 class="terms-box__title"><Icon name="info" size={15} /> Your subscription, in plain English</h3>
+				<ul class="terms-box__list" role="list">
+					<li>You'll be charged <strong>{TOOL_LISTING.price} {TOOL_LISTING.currency} every {TOOL_LISTING.interval}</strong> until you cancel.</li>
+					<li><strong>Payments are non-refundable</strong>, including part-months and unused time.</li>
+					<li>Cancel any time from the <a href={TOOL_LISTING.portalUrl} target="_blank" rel="noopener">Polar customer portal</a> — the link is also in your receipt email.</li>
+					<li>When you cancel, your listing stays live for the rest of the {TOOL_LISTING.interval} you've paid for, then is <strong>automatically removed</strong> from the Toolbox at the start of the next billing period.</li>
+				</ul>
+			</div>
 
-		<div class="cta-row">
-			<a href="/tools/" class="btn btn--primary">Browse the directory</a>
-			<a href="/contact/" class="btn btn--secondary">Contact us</a>
-		</div>
+			<div class="cta-row">
+				<a href="/" class="btn btn--accent">Read today's brief <Icon name="arrow-right" class="icon--arrow" /></a>
+				<a href="/tools/" class="btn btn--ghost">Open the Toolbox</a>
+				<a href="/contact/" class="btn btn--ghost">Contact us</a>
+			</div>
+		</article>
+
+		<!-- Landed here without a checkout id -->
+		<article class="card card--pad success success--warn" id="unknown-card" hidden>
+			<div class="success__mark success__mark--warn"><Icon name="circle-alert" size={26} strokeWidth={2} /></div>
+			<span class="eyebrow">No checkout reference</span>
+			<h1 class="success__title">We couldn't confirm a payment.</h1>
+			<p class="lead">
+				This page is shown after a completed checkout, but no checkout reference came through with it.
+				If you've just paid, your receipt email from Polar is the confirmation that counts — nothing is lost.
+			</p>
+			<div class="cta-row">
+				<a href="/submit/" class="btn btn--accent">Back to the listing form <Icon name="arrow-right" class="icon--arrow" /></a>
+				<a href="/contact/" class="btn btn--ghost">Contact us</a>
+			</div>
+		</article>
+
 	</div>
-
-	<!-- Landed here without a checkout id -->
-	<div class="success-card success-card--warn" id="unknown-card" hidden>
-		<div class="tick tick--warn">
-			<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
-		</div>
-		<h1>We couldn't confirm a payment</h1>
-		<p class="lede">
-			This page is shown after a completed checkout, but no checkout reference came through with it.
-			If you've just paid, your receipt email from Polar is the confirmation that counts — nothing is lost.
-		</p>
-		<div class="cta-row">
-			<a href="/submit/" class="btn btn--primary">Back to Submit a Tool</a>
-			<a href="/contact/" class="btn btn--secondary">Contact us</a>
-		</div>
-	</div>
-
-</main>
-
-<Footer />
-</body>
-</html>
+</Base>
 
 <script define:vars={{ FORMSPREE_URL: TOOL_LISTING.formspreeUrl }} data-astro-rerun>
 const params = new URLSearchParams(window.location.search);
@@ -125,64 +116,37 @@ if (checkoutId) {
 </script>
 
 <style>
-.success-body { padding: 3.5rem 0 5rem; max-width: 720px; }
+	.success-body { padding-block: clamp(2.5rem, 2rem + 3vw, 5rem) var(--section); }
+	.success { padding: clamp(1.5rem, 1.2rem + 2.5vw, 2.75rem); display: grid; gap: var(--s-4); }
+	.success__mark {
+		width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+		background: var(--good-soft); color: var(--good); margin-bottom: var(--s-2);
+	}
+	.success__mark--warn { background: var(--warn-soft); color: var(--warn); }
+	.success__title { font-size: var(--text-3xl); }
+	.success__h2 { font-size: var(--text-lg); margin-top: var(--s-4); }
 
-.success-card {
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-top: 3px solid var(--primary);
-	border-radius: var(--radius);
-	padding: 2.25rem;
-}
-.success-card--warn { border-top-color: #fb923c; }
+	.receipt { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; margin-top: var(--s-2); }
+	.receipt > div { display: flex; justify-content: space-between; align-items: center; gap: var(--s-4); padding: var(--s-3) var(--s-4); font-size: var(--text-sm); }
+	.receipt > div + div { border-top: 1px solid var(--line); }
+	.receipt dt { color: var(--ink-3); }
+	.receipt dd { margin: 0; font-weight: 600; text-align: right; word-break: break-all; }
+	.receipt code { font-family: var(--font-mono); font-size: 0.78rem; background: var(--surface-2); border: 1px solid var(--line); padding: 0.15rem 0.45rem; border-radius: 6px; }
 
-.tick {
-	width: 58px; height: 58px;
-	border-radius: 50%;
-	background: rgba(52, 211, 153, 0.12); color: #34d399;
-	display: flex; align-items: center; justify-content: center;
-	margin-bottom: 1.25rem;
-}
-.tick--warn { background: rgba(251, 146, 60, 0.12); color: #fdba74; }
+	.next { display: grid; gap: var(--s-4); }
+	.next li { display: flex; align-items: flex-start; gap: var(--s-3); }
+	.next__num { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; margin-top: 1px; }
+	.next strong { display: block; font-size: var(--text-base); margin-bottom: 2px; }
+	.next p { font-size: var(--text-sm); color: var(--ink-3); line-height: 1.55; }
 
-.success-card h1 { font-size: clamp(1.5rem, 4vw, 1.9rem); margin: 0 0 0.6rem; }
-.lede { color: rgb(var(--gray-dark)); line-height: 1.7; font-size: 0.95rem; margin: 0 0 1.5rem; }
+	.terms-box { background: var(--warn-soft); border-left: 3px solid var(--warn); border-radius: var(--r-md); padding: var(--s-5); }
+	.terms-box__title { display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--warn); margin-bottom: var(--s-3); }
+	.terms-box__list { display: grid; gap: var(--s-3); padding-left: 1.1em; }
+	.terms-box__list li { font-size: var(--text-sm); line-height: 1.6; color: var(--ink-2); }
+	.terms-box__list li::marker { color: var(--warn); }
+	.terms-box__list strong { color: var(--ink); }
+	.terms-box__list a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 0.18em; font-weight: 600; }
 
-.receipt {
-	display: flex; flex-direction: column; gap: 0;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	margin-bottom: 2rem;
-	overflow: hidden;
-}
-.receipt > div {
-	display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-	padding: 0.7rem 1rem;
-	font-size: 0.85rem;
-}
-.receipt > div + div { border-top: 1px solid var(--border); }
-.receipt dt { color: rgb(var(--gray)); }
-.receipt dd { margin: 0; font-weight: 600; text-align: right; word-break: break-all; }
-.receipt code { font-size: 0.78rem; background: var(--bg-alt); padding: 0.15rem 0.45rem; border-radius: 4px; }
-
-.success-card h2 { font-size: 1.05rem; margin: 0 0 0.85rem; }
-.next-list { margin: 0 0 2rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.next-list li { font-size: 0.88rem; line-height: 1.65; color: rgb(var(--gray-dark)); }
-.next-list a { color: var(--primary); font-weight: 600; }
-
-.terms-box {
-	background: rgba(251, 146, 60, 0.07);
-	border: 1px solid rgba(251, 146, 60, 0.28);
-	border-left: 3px solid #fb923c;
-	border-radius: var(--radius);
-	padding: 1.1rem 1.25rem;
-	margin-bottom: 2rem;
-}
-.terms-box h3 { font-size: 0.9rem; margin: 0 0 0.7rem; color: #fdba74; }
-.terms-box ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.terms-box li { font-size: 0.84rem; line-height: 1.6; color: rgb(var(--gray-dark)); }
-.terms-box a { color: #fdba74; font-weight: 600; }
-
-.cta-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-.cta-row .btn { flex: 1; min-width: 180px; text-align: center; }
+	.cta-row { display: flex; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-2); }
+	@media (max-width: 520px) { .cta-row .btn { width: 100%; } }
 </style>

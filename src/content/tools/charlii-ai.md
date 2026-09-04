@@ -2,7 +2,7 @@
 name: Charlii AI
 description: AI knowledge hub with practical workflow guides, tool comparisons, prompt libraries, and research summaries for founders, operators, and small teams.
 category: ai-productivity
-subcategory: AI Learning Resources
+subcategory: AI Documents Generator
 url: https://www.charliiai.com/
 pricing: freemium
 tags: [ai-guides, workflows, tool-comparisons, prompts, ai-news, research, tutorials]

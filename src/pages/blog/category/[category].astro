@@ -1,205 +1,151 @@
 ---
-import { Image } from 'astro:assets';
+/**
+ * `/blog/category/<slug>/` — one topic of the explainers section.
+ * Same card design as `/blog/`; the chips are real links so every topic is crawlable.
+ */
 import { getCollection } from 'astro:content';
-import BaseHead from '../../../components/BaseHead.astro';
-import Header from '../../../components/Header.astro';
-import Footer from '../../../components/Footer.astro';
-import Newsletter from '../../../components/Newsletter.astro';
-import FormattedDate from '../../../components/FormattedDate.astro';
+import Base from '../../../layouts/Base.astro';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
-
-const categoryLabels: Record<string, string> = {
-	'ai-explained': 'AI Explained',
-	'future-of-work': 'Future of Work',
-	'how-ai-works': 'How AI Works',
-	'ai-news': 'AI News',
-	'comparisons': 'Comparisons',
-	'guides': 'Guides',
-};
-
-const categoryDescriptions: Record<string, string> = {
-	'ai-explained': 'What is AI, machine learning, neural networks — explained in plain English for everyone.',
-	'future-of-work': 'How AI is changing jobs, careers, and the workplace. What it means for you.',
-	'how-ai-works': 'The technical ideas behind AI made simple. No math, no jargon.',
-	'ai-news': 'The most important AI developments explained in context — what happened and why it matters.',
-	'comparisons': 'ChatGPT vs Claude, best AI tools for specific tasks — tested and explained practically.',
-	'guides': 'Practical how-to guides for using AI tools at work and in everyday life.',
-};
+import ArticleCard from '../../../components/ArticleCard.astro';
+import Newsletter from '../../../components/Newsletter.astro';
+import Icon from '../../../components/Icon.astro';
+import { SITE_TITLE, SITE_URL } from '../../../consts';
+import { byNewest, categoryName, categoryIcon, categoryIntro, countWords } from '../../../lib/articles';
+import { ogUrl } from '../../../og/url';
 
 export async function getStaticPaths() {
-	const allPosts = await getCollection('blog');
-	const categories = [...new Set(allPosts.map((post) => post.data.category))];
-
+	const all = await getCollection('blog');
+	const categories = [...new Set(all.map((p) => p.data.category))];
+	const counts = Object.fromEntries(categories.map((c) => [c, all.filter((p) => p.data.category === c).length]));
 	return categories.map((category) => ({
 		params: { category },
 		props: {
-			posts: allPosts
-				.filter((post) => post.data.category === category)
-				.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+			posts: byNewest(all.filter((p) => p.data.category === category)),
+			siblings: categories.map((slug) => ({ slug, count: counts[slug] as number })),
+			total: all.length,
 		},
 	}));
 }
 
-const { category } = Astro.params;
-const { posts } = Astro.props;
-const label = categoryLabels[category] || category;
-const description = categoryDescriptions[category] || `Articles about ${label}.`;
----
+/* Reading time is measured, not asserted. */
+const readTime = (body?: string) => `${Math.max(1, Math.round(countWords(body ?? '') / 200))} min read`;
 
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`${label} — AI Briefs`}
-		description={description}
-	/>
-</head>
-<body>
-	<Header />
-	<main>
-		<section class="page-header">
-			<div class="container">
-				<Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Articles', href: '/blog/' }, { label: label }]} />
-				<h1>{label}</h1>
-				<p>{description}</p>
+const { category } = Astro.params;
+const { posts, siblings, total } = Astro.props;
+const [feature, ...rest] = posts;
+
+const label = categoryName(category!);
+const intro = categoryIntro(category!);
+const description = `${intro} ${posts.length} explainer${posts.length === 1 ? '' : 's'} from ${SITE_TITLE}.`;
+
+const collectionSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'CollectionPage',
+	name: label,
+	description: intro,
+	url: `${SITE_URL}/blog/category/${category}/`,
+	isPartOf: { '@type': 'WebSite', name: SITE_TITLE, url: SITE_URL },
+	mainEntity: {
+		'@type': 'ItemList',
+		numberOfItems: posts.length,
+		itemListElement: posts.map((p, i) => ({
+			'@type': 'ListItem', position: i + 1, name: p.data.title, url: `${SITE_URL}/blog/${p.id}/`,
+		})),
+	},
+};
+
+const ordered = [...siblings].sort((a, b) => categoryName(a.slug).localeCompare(categoryName(b.slug)));
+---
+<Base
+	title={`${label} — explainers | ${SITE_TITLE}`}
+	{description}
+	image={ogUrl('category', category)}
+
+	noNudge>
+	<Fragment slot="head">
+		<script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+	</Fragment>
+
+	<section class="cat-hero">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Explainers', href: '/blog/' }, { name: label }]} />
+			<div class="cat-hero__in">
+				<span class="eyebrow"><Icon name={categoryIcon(category!)} size={13} /> {posts.length} of {total} explainers</span>
+				<h1 class="cat-hero__title">{label}</h1>
+				<p class="lead">{intro}</p>
+			</div>
+		</div>
+	</section>
+
+	<nav class="container cat-chips scroll-x" aria-label="Explainer topics">
+		<a class="chip" href="/blog/">All <span class="chip__count">{total}</span></a>
+		{ordered.map((s) => (
+			<a
+				class="chip"
+				href={`/blog/category/${s.slug}/`}
+				aria-current={s.slug === category ? 'page' : undefined}
+				aria-pressed={s.slug === category ? 'true' : undefined}
+			>
+				<Icon name={categoryIcon(s.slug)} size={15} /> {categoryName(s.slug)} <span class="chip__count">{s.count}</span>
+			</a>
+		))}
+	</nav>
+
+	{feature && (
+		<section class="container cat-feature">
+			<ArticleCard
+				slug={feature.id}
+				title={feature.data.title}
+				description={feature.data.description}
+				category={feature.data.category}
+				pubDate={feature.data.pubDate}
+				readingTime={readTime(feature.body)}
+				heroImage={feature.data.heroImage}
+				author={feature.data.author}
+				variant="feature"
+				eager
+			/>
+		</section>
+	)}
+
+	{rest.length > 0 && (
+		<section class="container section--tight cat-list">
+			<div class="grid grid--3 cat-grid" data-stagger>
+				{rest.map((p) => (
+					<ArticleCard
+						slug={p.id}
+						title={p.data.title}
+						description={p.data.description}
+						category={p.data.category}
+						pubDate={p.data.pubDate}
+						readingTime={readTime(p.body)}
+						heroImage={p.data.heroImage}
+					/>
+				))}
 			</div>
 		</section>
+	)}
 
-		<section class="container articles-section">
-			{posts.length > 0 ? (
-				<div class="articles-grid">
-					{posts.map((post) => (
-						<article class="card">
-							<a href={`/blog/${post.id}/`}>
-								<div class="card__img">
-									{post.data.heroImage ? (
-										<Image width={400} height={225} src={post.data.heroImage} alt={post.data.title} loading="lazy" />
-									) : (
-										<div class="card__placeholder" aria-hidden="true">&#129302;</div>
-									)}
-								</div>
-								<div class="card__body">
-									<span class="badge">{post.data.category.replace(/-/g, ' ')}</span>
-									<h2 class="card__title">{post.data.title}</h2>
-									<p class="card__excerpt">{post.data.description}</p>
-									<span class="card__meta">
-										<FormattedDate date={post.data.pubDate} />
-										{post.data.readingTime && <span> &middot; {post.data.readingTime}</span>}
-									</span>
-								</div>
-							</a>
-						</article>
-					))}
-				</div>
-			) : (
-				<p class="no-posts">No articles in this category yet. Check back soon!</p>
-			)}
+	{posts.length === 0 && (
+		<section class="container cat-empty">
+			<p class="lead">Nothing filed here yet.</p>
+			<a href="/blog/" class="btn btn--ghost">Browse every explainer <Icon name="arrow-right" class="icon--arrow" /></a>
 		</section>
+	)}
 
-		<Newsletter />
-	</main>
-	<Footer />
-</body>
-</html>
+	<Newsletter variant="band" />
+</Base>
 
 <style>
-	.articles-section { padding: 2.5rem 0 3rem; }
-
-	.articles-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1.5rem;
-	}
-
-	.card {
-		background: var(--bg);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		overflow: hidden;
-		transition:
-			box-shadow 0.55s ease,
-			transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
-			border-color 0.4s ease;
-	}
-
-	.card:hover {
-		box-shadow:
-			0 0 0 1px rgba(0, 200, 150, 0.15),
-			0 6px 24px rgba(0, 200, 150, 0.18),
-			0 12px 40px rgba(0, 200, 150, 0.10);
-		transform: translateY(-5px);
-		border-color: rgba(0, 200, 150, 0.35);
-	}
-
-	.card a { color: inherit; display: block; }
-
-	.card__img {
-		overflow: hidden;
-	}
-
-	.card__img img {
-		width: 100%;
-		height: 200px;
-		object-fit: cover;
-		transition: transform 0.65s cubic-bezier(0.25, 0.8, 0.25, 1);
-	}
-
-	.card:hover .card__img img {
-		transform: scale(1.06);
-	}
-
-	.card__placeholder {
-		height: 200px;
-		background: var(--primary-light);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 2.5rem;
-		color: var(--primary);
-		opacity: 0.3;
-	}
-
-	.card__body { padding: 1.25rem; }
-
-	.card__title {
-		font-size: 1.1rem;
-		margin: 0.5rem 0 0.4rem;
-		line-height: 1.35;
-		color: rgb(var(--black));
-		transition: color 0.45s ease;
-	}
-
-	.card:hover .card__title {
-		color: var(--primary);
-	}
-
-	.card__excerpt {
-		font-size: 0.88rem;
-		color: rgb(var(--gray));
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		margin-bottom: 0.5rem;
-	}
-
-	.card__meta {
-		font-size: 0.78rem;
-		color: rgb(var(--gray));
-	}
-
-	.no-posts {
-		text-align: center;
-		color: rgb(var(--gray));
-		padding: 3rem 0;
-		font-size: 1.05rem;
-	}
-
-	@media (min-width: 640px) {
-		.articles-grid { grid-template-columns: repeat(2, 1fr); }
-	}
-
-	@media (min-width: 1024px) {
-		.articles-grid { grid-template-columns: repeat(3, 1fr); }
-	}
+	.cat-hero { padding: var(--s-8) 0 var(--s-6); }
+	.cat-hero__in { display: grid; gap: var(--s-4); margin-top: var(--s-6); }
+	.cat-hero__title { font-size: var(--text-5xl); max-width: 16ch; text-wrap: balance; }
+	.cat-chips { display: flex; gap: var(--s-2); padding-bottom: 2px; }
+	.cat-chips .chip { flex-shrink: 0; }
+	.cat-chips .chip :global(.icon) { color: var(--ink-3); }
+	.cat-chips .chip[aria-current='page'] :global(.icon) { color: inherit; }
+	.cat-feature { padding-top: var(--s-10); }
+	.cat-grid { row-gap: var(--s-10); }
+	.cat-empty { display: grid; gap: var(--s-5); justify-items: start; padding-block: var(--s-16); }
+	@media (max-width: 720px) { .cat-hero__title { font-size: var(--text-4xl); } }
 </style>

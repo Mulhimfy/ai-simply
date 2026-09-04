@@ -1,318 +1,275 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseHead from '../../../components/BaseHead.astro';
-import Header from '../../../components/Header.astro';
-import Footer from '../../../components/Footer.astro';
+/**
+ * "{tool} alternatives" — always noindex (crawl-budget rule, see astro.config.mjs).
+ * Same-subcategory tools first, then the rest of the category, ranked by rating.
+ */
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
-import { TOOL_CATEGORIES, PRICING_BADGE, SITE_TITLE } from '../../../consts';
+import ToolCard from '../../../components/ToolCard.astro';
+import ToolLogo from '../../../components/ToolLogo.astro';
+import Stars from '../../../components/Stars.astro';
+import Icon from '../../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS, SUBCATEGORY_INTROS, SITE_URL } from '../../../consts';
+import { ogUrl } from '../../../og/url';
+
+type Tool = CollectionEntry<'tools'>;
 
 export async function getStaticPaths() {
 	const tools = await getCollection('tools');
 	// Only generate alternatives pages for tools that have at least 2 peers in their category
 	return tools
-		.filter(tool => {
-			const peers = tools.filter(t => t.data.category === tool.data.category && t.id !== tool.id);
-			return peers.length >= 2;
-		})
-		.map(tool => ({ params: { slug: tool.id }, props: { tool } }));
+		.filter((tool) => tools.filter((t) => t.data.category === tool.data.category && t.id !== tool.id).length >= 2)
+		.map((tool) => ({ params: { slug: tool.id }, props: { tool } }));
 }
 
-const { tool } = Astro.props;
+const { tool } = Astro.props as { tool: Tool };
+const d = tool.data;
 const allTools = await getCollection('tools');
+const category = TOOL_CATEGORIES.find((c) => c.slug === d.category);
+const others = allTools.filter((t) => t.id !== tool.id);
+const byRank = (a: Tool, b: Tool) =>
+	(b.data.rating ?? 0) - (a.data.rating ?? 0) ||
+	Number(b.data.featured) - Number(a.data.featured) ||
+	b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
 
-const category = TOOL_CATEGORIES.find(c => c.slug === tool.data.category);
-const badge = PRICING_BADGE[tool.data.pricing];
+const sameSub = d.subcategory ? others.filter((t) => t.data.subcategory === d.subcategory).sort(byRank) : [];
+const sameCat = others.filter((t) => t.data.category === d.category && !sameSub.includes(t)).sort(byRank);
+const alternatives = [...sameSub, ...sameCat].slice(0, 12);
+const closest = alternatives.filter((t) => sameSub.includes(t));
+const broader = alternatives.filter((t) => !sameSub.includes(t));
 
-// Alternatives: same category, sorted by rating desc, exclude current tool
-const alternatives = allTools
-	.filter(t => t.data.category === tool.data.category && t.id !== tool.id)
-	.sort((a, b) => {
-		// Featured first, then by rating
-		if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-		return (b.data.rating ?? 0) - (a.data.rating ?? 0);
-	})
-	.slice(0, 12);
+/* Indexable comparison pages only (both tools rated, same subcategory-or-category key). */
+const sortedIds = allTools.map((t) => t.id);
+function vsHref(t: Tool) {
+	if (!d.rating || !t.data.rating) return null;
+	if ((t.data.subcategory ?? t.data.category) !== (d.subcategory ?? d.category)) return null;
+	const [a, b] = sortedIds.indexOf(tool.id) < sortedIds.indexOf(t.id) ? [tool.id, t.id] : [t.id, tool.id];
+	return `/tools/vs/${a}-vs-${b}/`;
+}
+const comparisons = alternatives.map((t) => ({ t, href: vsHref(t) })).filter((x): x is { t: Tool; href: string } => !!x.href);
 
-const toolDomain = new URL(tool.data.url).hostname;
-const toolFavicon = `https://www.google.com/s2/favicons?domain=${toolDomain}&sz=64`;
+/* Intro copy, generated from the taxonomy + this tool's own trade-offs. */
+const subName = d.subcategory ?? category?.name ?? 'AI tool';
+/** "AI Chatbot" → "AI chatbot": keep initialisms, lowercase the rest, so generated
+ *  sentences read like English instead of a database field. */
+const speak = (str: string) => str.split(' ').map((w) => (/^[A-Z0-9.]{2,}$/.test(w) ? w : w.toLowerCase())).join(' ');
+const subSpoken = speak(subName);
+/** "an AI chatbot" / "a video generator" — taxonomy names, not arbitrary prose. */
+const article = (str: string) => (/^[aeiou]/i.test(str) && !/^(uni|eu|use)/i.test(str) ? 'an' : 'a');
+const lc = (s: string) => s.replace(/\.$/, '').replace(/^[A-Z](?![A-Z])/, (m) => m.toLowerCase());
+const intro = SUBCATEGORY_INTROS[d.subcategory ?? ''] ?? `${category?.name ?? 'AI'} tools ${lc(category?.description ?? 'help with everyday work')}. They vary a lot in output quality, pricing and how well they fit an existing workflow.`;
+const freeCount = alternatives.filter((t) => t.data.pricing !== 'paid').length;
+const ratedCount = alternatives.filter((t) => t.data.rating).length;
+const topCon = d.cons?.[0];
+const lookFor = [
+	`Judge ${article(subSpoken)} ${subSpoken} on output quality first, then on how the pricing scales with real use, then on fit with the tools you already run.`,
+	topCon ? `The usual reason people look past ${d.name}: ${lc(topCon)}.` : '',
+	`${freeCount === alternatives.length ? `All ${alternatives.length} picks` : `${freeCount} of the ${alternatives.length} picks`} below are free to start${ratedCount ? `, and ${ratedCount} carry an editorial score from hands-on testing` : ''}.`,
+].filter(Boolean).join(' ');
+
+const visitUrl = d.affiliateUrl ?? d.url;
+const visitRel = `noopener noreferrer${d.affiliateUrl ? ' sponsored' : ''}`;
+const pricingLabel = { free: 'Free', freemium: 'Freemium', paid: 'Paid' }[d.pricing];
+const seoTitle = `${d.name} alternatives (2026): ${alternatives.length} ${subSpoken} tools worth trying instead`;
+const seoDesc = `Looking past ${d.name}? ${alternatives.length} ${subSpoken} tools ranked by our editorial scores, with the one reason to consider each.`;
+const cardProps = (t: Tool) => ({
+	slug: t.id, name: t.data.name, description: t.data.description, category: t.data.category, subcategory: t.data.subcategory,
+	pricing: t.data.pricing, rating: t.data.rating, ratingCount: t.data.ratingCount, tags: t.data.tags, featured: t.data.featured,
+	sponsored: t.data.sponsored, verified: t.data.verified, pubDate: t.data.pubDate,
+});
+const altRel = (t: Tool) => `noopener noreferrer${t.data.affiliateUrl ? ' sponsored' : ''}`;
+let rank = 0;
 ---
-
-<!doctype html>
-<html lang="en">
-<head>
-	<BaseHead
-		title={`Best ${tool.data.name} Alternatives (2026) — Top ${category?.name ?? 'AI'} Tools | ${SITE_TITLE}`}
-		description={`Looking for alternatives to ${tool.data.name}? We've compiled the ${alternatives.length} best ${category?.name ?? 'AI'} tools that offer similar or better features in 2026.`}
-		noindex={true}
-	/>
-</head>
-<body>
-<Header />
-
-<section class="page-header">
-	<div class="container">
-		<Breadcrumb crumbs={[
-			{ label: 'Home', href: '/' },
-			{ label: 'AI Tools', href: '/tools/' },
-			{ label: tool.data.name, href: `/tools/${tool.id}/` },
-			{ label: 'Alternatives' },
-		]} />
-		<div class="header-content">
-			<div class="source-tool">
-				<div class="source-logo">
-					<img src={toolFavicon} alt={tool.data.name} width="40" height="40" loading="eager"
-						class="js-favicon" />
-					<span class="source-logo-fb" style="display:none">{category?.emoji ?? '🤖'}</span>
+<Base title={seoTitle} description={seoDesc} image={ogUrl('tool', tool.id)} noindex={true} noNudge>
+	<section class="ah">
+		<div class="container">
+			<Breadcrumb items={[{ name: 'Toolbox', href: '/tools/' }, { name: d.name, href: `/tools/${tool.id}/` }, { name: 'Alternatives' }]} />
+			<div class="ah__grid">
+				<div class="ah__copy">
+					<span class="eyebrow">{alternatives.length} alternatives · {subName}</span>
+					<h1 class="ah__title">{d.name} <em class="serif">alternatives</em></h1>
+					<p class="lead">{intro}</p>
 				</div>
-				<div>
-					<div class="alt-label">Alternatives to</div>
-					<h1>{tool.data.name} Alternatives</h1>
-				</div>
-			</div>
-			<p>The {alternatives.length} best alternatives to {tool.data.name} — ranked by rating, features, and value. All in the {category?.name ?? 'AI'} category.</p>
-		</div>
-	</div>
-</section>
-
-<main class="container alts-body">
-
-	<!-- Current tool card -->
-	<div class="current-tool-wrap">
-		<h2 class="section-label">You're comparing alternatives to:</h2>
-		<div class="current-tool">
-			<div class="ct-logo">
-				<img src={toolFavicon} alt={tool.data.name} width="48" height="48" loading="lazy"
-					class="js-favicon" />
-				<span class="ct-logo-fb" style="display:none">{category?.emoji ?? '🤖'}</span>
-			</div>
-			<div class="ct-info">
-				<div class="ct-name-row">
-					<h3>{tool.data.name}</h3>
-					<span class="pricing-pill" style={`background:${badge.bg};color:${badge.text}`}>{badge.label}</span>
-					{tool.data.rating && <span class="tool-rating">★ {tool.data.rating.toFixed(1)}</span>}
-				</div>
-				<p>{tool.data.description}</p>
-				<div class="ct-actions">
-					<a href={`/tools/${tool.id}/`} class="btn btn--secondary btn--sm">View {tool.data.name}</a>
-					<a href={tool.data.url} target="_blank" rel="noopener noreferrer" class="btn btn--outline btn--sm">Visit Site →</a>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- Alternatives list -->
-	<div class="alts-header">
-		<h2>{alternatives.length} Alternatives to {tool.data.name}</h2>
-		<span class="alt-count">{category?.emoji} {category?.name}</span>
-	</div>
-
-	<div class="alts-list">
-		{alternatives.map((alt, i) => {
-			const altDomain = new URL(alt.data.url).hostname;
-			const altFavicon = `https://www.google.com/s2/favicons?domain=${altDomain}&sz=64`;
-			const altBadge = PRICING_BADGE[alt.data.pricing];
-			return (
-				<a href={`/tools/${alt.id}/`} class="alt-card">
-					<span class="alt-rank">#{i + 1}</span>
-					<div class="alt-logo">
-						<img src={altFavicon} alt={alt.data.name} width="40" height="40" loading="lazy"
-							class="js-favicon" />
-						<span class="alt-logo-fb" style="display:none">{category?.emoji ?? '🤖'}</span>
-					</div>
-					<div class="alt-info">
-						<div class="alt-name-row">
-							<h3>{alt.data.name}</h3>
-							<span class="pricing-pill" style={`background:${altBadge.bg};color:${altBadge.text}`}>{altBadge.label}</span>
-							{alt.data.featured && <span class="featured-badge">Featured</span>}
-						</div>
-						<p>{alt.data.description}</p>
-					</div>
-					{alt.data.rating ? (
-						<div class="alt-score">
-							<span class="score-num">{alt.data.rating.toFixed(1)}</span>
-							<span class="score-stars">{'★'.repeat(Math.floor(alt.data.rating))}{'☆'.repeat(5 - Math.floor(alt.data.rating))}</span>
-						</div>
-					) : (
-						<div class="alt-score alt-score--empty">
-							<span class="score-na">N/A</span>
-						</div>
-					)}
+				<a href={`/tools/${tool.id}/`} class="card card--pad ah__source hover-lift" data-reveal="right">
+					<span class="meta">You're comparing against</span>
+					<span class="ah__source-row">
+						<ToolLogo slug={tool.id} name={d.name} size={56} />
+						<span class="ah__source-id">
+							<span class="ah__source-name">{d.name}{d.verified && <Icon name="badge-check" size={16} class="ah__verified" />}</span>
+							<span class="ah__source-meta">
+								{d.rating ? <Stars rating={d.rating} size={13} /> : <span class="muted">Not yet rated</span>}
+								<span class:list={['pill', `pill--${d.pricing}`]}>{pricingLabel}</span>
+							</span>
+						</span>
+					</span>
+					<span class="ah__source-desc">{d.description}</span>
+					<span class="link-arrow">Read our review <Icon name="arrow-right" /></span>
 				</a>
-			);
-		})}
+			</div>
+		</div>
+	</section>
+
+	<div class="container al">
+		<aside class="al__look card card--sunk" aria-label="What to look for">
+			<div class="al__look-icon"><Icon name="compass" size={18} /></div>
+			<div>
+				<h2 class="h4">What to look for</h2>
+				<p>{lookFor}</p>
+			</div>
+		</aside>
+
+		{[{ id: 'closest', items: closest, eyebrow: 'Closest matches', title: `Other ${d.subcategory} tools`, more: false },
+		  { id: 'broader', items: broader, eyebrow: closest.length ? 'Worth a look' : 'Ranked', title: `More ${category?.name ?? 'AI'} tools`, more: true }]
+			.filter((g) => g.items.length > 0)
+			.map((g) => (
+			<section class="al__group" aria-labelledby={g.id}>
+				<div class="section-head al__head">
+					<div class="section-head__title">
+						<span class="eyebrow">{g.eyebrow}</span>
+						<h2 id={g.id}>{g.title}</h2>
+					</div>
+					{g.more && category && <a href={`/tools/category/${category.slug}/`} class="link-arrow">Browse the category <Icon name="arrow-right" /></a>}
+				</div>
+				<ol role="list" class="al__list" data-stagger>
+					{g.items.map((t) => { rank += 1; const href = vsHref(t); const why = t.data.pros?.[0]; return (
+						<li class="alt">
+							<span class="alt__rank serif tnum" aria-hidden="true">{String(rank).padStart(2, '0')}</span>
+							<div class="alt__main">
+								<ToolCard {...cardProps(t)} variant="row" />
+								<div class="alt__foot">
+									{why && <p class="alt__why"><Icon name="check" size={14} class="alt__why-icon" /><span><b>Why consider:</b> {why}</span></p>}
+									<div class="alt__links">
+										{href && <a href={href} class="chip"><Icon name="git-compare" size={13} /> vs {d.name}</a>}
+										<a href={t.data.affiliateUrl ?? t.data.url} target="_blank" rel={altRel(t)} class="chip" data-track="visit">Visit <Icon name="arrow-up-right" size={13} /></a>
+									</div>
+								</div>
+							</div>
+						</li>
+					); })}
+				</ol>
+			</section>
+		))}
+
+		{comparisons.length > 0 && (
+			<section class="al__cmp card card--pad" aria-label="Side-by-side comparisons">
+				<div class="between">
+					<h2 class="h4">Compare side by side</h2>
+					<span class="meta hide-mobile">Rated pairs only</span>
+				</div>
+				<div class="al__cmp-list">
+					{comparisons.map(({ t, href }) => (
+						<a href={href} class="al__cmp-link">
+							<ToolLogo slug={tool.id} name={d.name} size={28} />
+							<span class="serif al__vs">vs</span>
+							<ToolLogo slug={t.id} name={t.data.name} size={28} />
+							<span class="al__cmp-name">{d.name} vs {t.data.name}</span>
+							<Icon name="arrow-right" size={14} class="al__cmp-arrow" />
+						</a>
+					))}
+				</div>
+			</section>
+		)}
+
+		<section class="card card--ink al__back" aria-label="Back to the review">
+			<div class="al__back-copy">
+				<span class="eyebrow">Still leaning {d.name}?</span>
+				<h2 class="al__back-title">Read the full <em class="serif">review</em> before you decide.</h2>
+				<p>Pros, cons, pricing and who it is actually for — from hands-on testing.</p>
+			</div>
+			<div class="al__back-actions">
+				<a href={`/tools/${tool.id}/`} class="btn al__back-btn">{d.name} review <Icon name="arrow-right" class="icon--arrow" /></a>
+				<a href={visitUrl} target="_blank" rel={visitRel} class="btn btn--ghost al__back-ghost" data-track="visit">Visit site <Icon name="arrow-up-right" /></a>
+			</div>
+		</section>
+
+		<div class="al__links">
+			{category && <a href={`/tools/category/${category.slug}/`} class="link-arrow"><Icon name={CATEGORY_ICONS[category.slug] ?? 'boxes'} size={16} /> All {category.name} tools <Icon name="arrow-right" /></a>}
+			<a href="/tools/alternatives/" class="link-arrow">Alternatives to other tools <Icon name="arrow-right" /></a>
+			<a href="/tools/" class="link-arrow">Browse the toolbox <Icon name="arrow-right" /></a>
+		</div>
 	</div>
+</Base>
 
-	<!-- Back links -->
-	<div class="back-links">
-		<a href={`/tools/category/${tool.data.category}/`} class="btn btn--secondary">
-			Browse all {category?.name} tools →
-		</a>
-		<a href="/tools/" class="btn btn--outline">All AI Tools</a>
-	</div>
-
-</main>
-
-<Footer />
-</body>
-</html>
+<script>
+	/* GA4 outbound "visit" clicks — same event as the tool page. */
+	if (!(document as any).__visitBound) {
+		(document as any).__visitBound = true;
+		document.addEventListener('click', (e) => {
+			const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('[data-track="visit"]');
+			if (!a) return;
+			const g = (window as any).gtag;
+			if (typeof g === 'function') g('event', 'outbound_click', { url: a.href });
+		});
+	}
+</script>
 
 <style>
-.page-header {
-	background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-	border-bottom: 1px solid var(--border);
-	padding: 3rem 0 2rem;
-}
-.header-content { margin-top: 0.75rem; }
-.source-tool {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	margin-bottom: 0.75rem;
-}
-.source-logo {
-	width: 52px; height: 52px;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: 12px;
-	display: flex; align-items: center; justify-content: center;
-	flex-shrink: 0; overflow: hidden;
-}
-.source-logo img { width: 40px; height: 40px; object-fit: contain; }
-.source-logo-fb { font-size: 1.6rem; }
-.alt-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgb(var(--gray)); margin-bottom: 0.15rem; }
-.page-header h1 { font-size: clamp(1.5rem, 3.5vw, 2.2rem); margin: 0; }
-.page-header p { color: rgb(var(--gray)); max-width: 560px; font-size: 0.93rem; }
+	.ah { position: relative; padding: var(--s-8) 0 var(--s-12); border-bottom: 1px solid var(--line); overflow: hidden; }
+	.ah::before { content: ''; position: absolute; left: -10%; top: -50%; width: 40%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, var(--accent-soft), transparent 72%); filter: blur(40px); pointer-events: none; }
+	.ah .container { position: relative; }
+	.ah__grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: var(--s-16); align-items: center; margin-top: var(--s-6); }
+	.ah__copy { display: grid; gap: var(--s-5); }
+	.ah__title { font-size: var(--text-5xl); }
+	.ah__source { display: grid; gap: var(--s-4); color: inherit; max-width: 480px; justify-self: end; width: 100%; }
+	.ah__source-row { display: flex; align-items: center; gap: var(--s-4); }
+	.ah__source-id { display: grid; gap: 6px; min-width: 0; }
+	.ah__source-name { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; }
+	.ah__source-name :global(.ah__verified) { color: var(--info); }
+	.ah__source-meta { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+	.ah__source-desc { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.5; }
 
-.alts-body { padding: 2.5rem 0 5rem; }
+	.al { display: grid; gap: var(--s-12); padding-block: var(--s-12) var(--s-20); max-width: 980px; }
+	.al__look { display: flex; gap: var(--s-5); padding: var(--s-6); }
+	.al__look-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); }
+	.al__look h2 { margin-bottom: 6px; }
+	.al__look p { font-size: var(--text-base); color: var(--ink-2); line-height: 1.6; max-width: 70ch; }
+	.al__head { margin-bottom: var(--s-6); }
+	.al__list { display: grid; gap: var(--s-4); }
+	.alt { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+	.alt__rank { font-size: 2.25rem; line-height: 1; color: var(--ink-4); padding-top: 14px; text-align: right; }
+	.alt__main { display: grid; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; transition: border-color var(--dur-3), box-shadow var(--dur-3); }
+	.alt__main:hover { border-color: var(--line-2); box-shadow: var(--shadow-md); }
+	.alt__main :global(.tc--row) { border: 0; border-radius: 0; box-shadow: none; }
+	.alt__main :global(.tc--row:hover) { transform: none; box-shadow: none; }
+	.alt__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; padding: 10px 16px 12px; border-top: 1px solid var(--line); background: var(--surface-2); }
+	.alt__why { display: flex; gap: 8px; align-items: flex-start; font-size: var(--text-sm); color: var(--ink-2); line-height: 1.45; min-width: 0; flex: 1; }
+	.alt__why b { font-weight: 600; color: var(--ink); }
+	.alt__why :global(.alt__why-icon) { flex-shrink: 0; margin-top: 3px; color: var(--good); }
+	.alt__links { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
 
-/* Current tool */
-.current-tool-wrap { margin-bottom: 2.5rem; }
-.section-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgb(var(--gray)); margin-bottom: 0.75rem; }
+	.al__cmp-list { display: grid; gap: 6px; margin-top: var(--s-4); }
+	.al__cmp-link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-md); color: var(--ink); transition: background-color var(--dur-2); }
+	.al__cmp-link:hover { background: var(--surface-2); }
+	.al__vs { color: var(--ink-3); font-size: 1.05rem; }
+	.al__cmp-name { flex: 1; font-size: var(--text-sm); font-weight: 500; margin-left: 4px; }
+	.al__cmp-link :global(.al__cmp-arrow) { color: var(--ink-4); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.al__cmp-link:hover :global(.al__cmp-arrow) { transform: translateX(3px); color: var(--ink); }
 
-.current-tool {
-	display: flex;
-	align-items: flex-start;
-	gap: 1rem;
-	padding: 1.25rem 1.5rem;
-	border: 2px solid var(--border);
-	border-radius: var(--radius);
-	background: var(--bg);
-}
-.ct-logo {
-	width: 56px; height: 56px;
-	background: var(--primary-light);
-	border-radius: var(--radius);
-	display: flex; align-items: center; justify-content: center;
-	flex-shrink: 0; overflow: hidden;
-}
-.ct-logo img { width: 40px; height: 40px; object-fit: contain; }
-.ct-logo-fb { font-size: 1.6rem; }
+	.al__back { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-8); align-items: center; padding: var(--s-8); }
+	.al__back-copy { display: grid; gap: var(--s-3); }
+	.al__back .eyebrow { color: var(--accent); }
+	.al__back-title { font-size: var(--text-2xl); }
+	.al__back p { color: inherit; opacity: 0.7; font-size: var(--text-sm); }
+	.al__back-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+	.al__back-btn { --btn-bg: var(--bg); --btn-fg: var(--ink); }
+	.al__back-ghost { --btn-fg: inherit; --btn-bd: rgba(255,255,255,0.25); }
+	.al__back-ghost:hover { background: rgba(255,255,255,0.1); }
+	:root[data-theme='dark'] .al__back-ghost { --btn-bd: rgba(0,0,0,0.2); }
+	:root[data-theme='dark'] .al__back-ghost:hover { background: rgba(0,0,0,0.08); }
+	.al__links { display: flex; flex-wrap: wrap; gap: var(--s-4) var(--s-8); }
 
-.ct-info { flex: 1; }
-.ct-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
-.ct-name-row h3 { font-size: 1.1rem; margin: 0; }
-.ct-info p { font-size: 0.87rem; color: rgb(var(--gray-dark)); margin: 0 0 0.85rem; line-height: 1.6; }
-.ct-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-
-/* Alternatives list */
-.alts-header {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 1.25rem;
-}
-.alts-header h2 { font-size: 1.2rem; margin: 0; }
-.alt-count { font-size: 0.8rem; color: rgb(var(--gray)); background: var(--bg-alt); border: 1px solid var(--border); padding: 0.2rem 0.65rem; border-radius: 99px; }
-
-.alts-list { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 2.5rem; }
-
-.alt-card {
-	display: grid;
-	grid-template-columns: 2rem 52px 1fr auto;
-	align-items: center;
-	gap: 1rem;
-	padding: 1rem 1.25rem;
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	color: inherit;
-	transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-}
-.alt-card:hover {
-	transform: translateY(-2px);
-	border-color: rgba(0,200,150,0.35);
-	box-shadow: 0 4px 14px rgba(0,200,150,0.1);
-}
-
-.alt-rank { font-size: 0.9rem; font-weight: 800; color: rgb(var(--gray)); text-align: center; }
-
-.alt-logo {
-	width: 48px; height: 48px;
-	background: var(--primary-light);
-	border-radius: var(--radius);
-	display: flex; align-items: center; justify-content: center;
-	flex-shrink: 0; overflow: hidden;
-}
-.alt-logo img { width: 36px; height: 36px; object-fit: contain; }
-.alt-logo-fb { font-size: 1.4rem; }
-
-.alt-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
-.alt-name-row h3 { font-size: 0.97rem; margin: 0; }
-.alt-card:hover h3 { color: var(--primary); }
-.alt-info p { font-size: 0.82rem; color: rgb(var(--gray)); margin: 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-
-.pricing-pill { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 99px; flex-shrink: 0; }
-.featured-badge { font-size: 0.65rem; font-weight: 700; background: #fef9c3; color: #854d0e; padding: 0.15rem 0.45rem; border-radius: 99px; }
-.tool-rating { font-size: 0.78rem; font-weight: 700; color: #f59e0b; }
-
-.alt-score { text-align: right; flex-shrink: 0; min-width: 48px; }
-.score-num { display: block; font-size: 1.4rem; font-weight: 800; line-height: 1; color: rgb(var(--black)); }
-.score-stars { display: block; font-size: 0.65rem; color: #f59e0b; margin-top: 0.15rem; }
-.alt-score--empty .score-na { font-size: 0.8rem; color: rgb(var(--gray)); }
-
-/* Back links */
-.back-links { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-
-/* Buttons */
-.btn--secondary {
-	display: inline-flex;
-	align-items: center;
-	padding: 0.55rem 1.1rem;
-	border: 1.5px solid var(--primary);
-	color: var(--primary);
-	border-radius: var(--radius);
-	font-size: 0.87rem;
-	font-weight: 700;
-	transition: background 0.15s, color 0.15s;
-}
-.btn--secondary:hover { background: var(--primary); color: #fff; }
-.btn--outline {
-	display: inline-flex;
-	align-items: center;
-	padding: 0.55rem 1.1rem;
-	border: 1.5px solid var(--border);
-	color: rgb(var(--gray-dark));
-	border-radius: var(--radius);
-	font-size: 0.87rem;
-	font-weight: 600;
-	transition: border-color 0.15s, color 0.15s;
-}
-.btn--outline:hover { border-color: var(--primary); color: var(--primary); }
-.btn--sm { padding: 0.4rem 0.85rem; font-size: 0.8rem; }
-
-@media (max-width: 600px) {
-	.alt-card { grid-template-columns: 1.8rem 44px 1fr; }
-	.alt-score { display: none; }
-	.current-tool { flex-direction: column; }
-}
+	@media (max-width: 960px) {
+		.ah__grid { grid-template-columns: 1fr; gap: var(--s-8); }
+		.ah__source { justify-self: stretch; max-width: none; }
+		.al__back { grid-template-columns: 1fr; }
+	}
+	@media (max-width: 640px) {
+		.ah__title { font-size: var(--text-4xl); }
+		.alt { grid-template-columns: 1fr; gap: 6px; }
+		.alt__rank { text-align: left; padding-top: 0; font-size: 1.5rem; }
+		.al__look { flex-direction: column; }
+		.alt__links { width: 100%; margin-left: 0; }
+		.alt__links .chip { flex: 1; justify-content: center; }
+	}
 </style>
-
-<script data-astro-rerun>
-document.querySelectorAll('.js-favicon').forEach(img => {
-	img.addEventListener('error', () => {
-		img.style.display = 'none';
-		const fb = img.nextElementSibling;
-		if (fb) fb.style.display = 'flex';
-	}, { once: true });
-});
-</script>

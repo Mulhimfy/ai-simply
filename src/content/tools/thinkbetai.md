@@ -2,7 +2,7 @@
 name: ThinkBetAI
 description: AI sports betting analytics for matchup context, odds movement, injury signals, and risk notes.
 category: ai-research
-subcategory: AI Analytics
+subcategory: AI Predictions
 url: https://thinkbetai.com
 pricing: freemium
 tags: [sports, analytics, betting-research, odds, data, risk-analysis]

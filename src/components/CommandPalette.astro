@@ -1,0 +1,225 @@
+---
+/**
+ * ⌘K command palette. Lazily fetches /search-index.json on first open,
+ * fuzzy-ranks tools / articles / categories / pages, supports keyboard
+ * navigation, recent searches, and a few quick actions.
+ */
+import Icon from './Icon.astro';
+---
+<div class="palette" id="palette" hidden role="dialog" aria-modal="true" aria-label="Search">
+	<div class="palette__backdrop" data-palette-close></div>
+	<div class="palette__panel">
+		<div class="palette__bar">
+			<Icon name="search" size={18} class="palette__icon" />
+			<input class="palette__input" id="palette-input" type="text" placeholder="Search 220+ tools, articles, categories…" autocomplete="off" spellcheck="false" aria-controls="palette-results" aria-autocomplete="list" />
+			<button type="button" class="palette__esc" data-palette-close><kbd class="kbd">esc</kbd></button>
+		</div>
+		<div class="palette__results" id="palette-results" role="listbox"></div>
+		<div class="palette__foot">
+			<span><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> navigate</span>
+			<span><kbd class="kbd">↵</kbd> open</span>
+			<span><kbd class="kbd">tab</kbd> filter</span>
+			<span class="palette__foot-brand">AI Briefs</span>
+		</div>
+	</div>
+</div>
+
+<script>
+	type Idx = { tools: any[]; articles: any[]; categories: any[]; pages: any[] };
+	let idx: Idx | null = null;
+	let loading: Promise<Idx> | null = null;
+	let sel = 0;
+	let filter: 'all' | 'tools' | 'articles' | 'categories' = 'all';
+
+	const ICON: Record<string, string> = {
+		tool: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+		article: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>',
+		category: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>',
+		page: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>',
+		action: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>',
+	};
+
+	function load(): Promise<Idx> {
+		if (idx) return Promise.resolve(idx);
+		if (!loading) loading = fetch('/search-index.json').then((r) => r.json()).then((j) => (idx = j));
+		return loading;
+	}
+	function norm(s: string) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+	function score(q: string, hay: string, boost = 0) {
+		const h = norm(hay); if (!q) return 0;
+		if (h === q) return 100 + boost;
+		if (h.startsWith(q)) return 80 + boost;
+		const wi = h.indexOf(q);
+		if (wi >= 0) return (h[wi - 1] === ' ' ? 60 : 40) + boost - Math.min(20, wi / 4);
+		// subsequence fuzzy
+		let qi = 0, gaps = 0;
+		for (let i = 0; i < h.length && qi < q.length; i++) { if (h[i] === q[qi]) qi++; else if (qi) gaps++; }
+		return qi === q.length ? Math.max(1, 25 - gaps) + boost : 0;
+	}
+	function esc(s: string) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string)); }
+	function hi(text: string, q: string) {
+		if (!q) return esc(text);
+		const i = norm(text).indexOf(q);
+		if (i < 0) return esc(text);
+		return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+	}
+	function recents(): string[] { try { return JSON.parse(localStorage.getItem('palette-recent') || '[]'); } catch { return []; } }
+	function remember(label: string, url: string) {
+		try { const r = recents().filter((x: any) => x.u !== url); r.unshift({ n: label, u: url }); localStorage.setItem('palette-recent', JSON.stringify(r.slice(0, 5))); } catch {}
+	}
+
+	type Row = { type: string; n: string; d?: string; u: string; meta?: string; logo?: string | null; s: number; action?: () => void };
+
+	function rows(q: string): Row[] {
+		if (!idx) return [];
+		const out: Row[] = [];
+		const nq = norm(q.trim());
+		if (!nq) {
+			for (const r of recents() as any[]) out.push({ type: 'recent', n: r.n, u: r.u, s: 1 });
+			out.push({ type: 'action', n: 'Find my AI tool', d: 'Take the 60-second quiz', u: '/tools/quiz/', s: 1 });
+			out.push({ type: 'action', n: 'Surprise me', d: 'Open a random top-rated tool', u: '#random', s: 1, action: () => { const t = idx!.tools.filter((x) => x.r).sort(() => Math.random() - 0.5)[0]; if (t) location.href = t.u; } });
+			out.push({ type: 'action', n: 'Toggle theme', d: 'Light / dark', u: '#theme', s: 1, action: () => document.querySelector<HTMLElement>('[data-theme-toggle]')?.click() });
+			for (const c of idx.categories.slice(0, 6)) out.push({ type: 'category', n: c.n, d: `${c.k} tools`, u: c.u, s: 1 });
+			for (const t of idx.tools.slice(0, 5)) out.push({ type: 'tool', n: t.n, d: t.d, u: t.u, meta: t.c, logo: t.l, s: 1 });
+			return out;
+		}
+		if (filter === 'all' || filter === 'tools') for (const t of idx.tools) {
+			const s = Math.max(score(nq, t.n, 10), score(nq, t.c, -10), score(nq, (t.t || []).join(' '), -15), score(nq, t.d, -25));
+			if (s > 0) out.push({ type: 'tool', n: t.n, d: t.d, u: t.u, meta: t.c + (t.p ? ' · ' + t.p : ''), logo: t.l, s: s + (t.r ? t.r : 0) });
+		}
+		if (filter === 'all' || filter === 'articles') for (const a of idx.articles) {
+			const s = Math.max(score(nq, a.n, 5), score(nq, a.d, -25));
+			if (s > 0) out.push({ type: 'article', n: a.n, d: a.d, u: a.u, meta: a.c + (a.rt ? ' · ' + a.rt : ''), s });
+		}
+		if (filter === 'all' || filter === 'categories') for (const c of idx.categories) {
+			const s = score(nq, c.n, 8);
+			if (s > 0) out.push({ type: 'category', n: c.n, d: `${c.k} tools`, u: c.u, s });
+		}
+		if (filter === 'all') for (const p of idx.pages) {
+			const s = Math.max(score(nq, p.n, 0), score(nq, p.d || '', -20));
+			if (s > 0) out.push({ type: 'page', n: p.n, d: p.d, u: p.u, s });
+		}
+		out.sort((a, b) => b.s - a.s);
+		return out.slice(0, 24);
+	}
+
+	function render(q: string) {
+		const host = document.getElementById('palette-results')!;
+		// The index is fetched lazily, so a fast typist can reach render() before it
+		// lands. Showing "no results" then would be a lie — show a loading state and
+		// re-render as soon as it arrives.
+		if (!idx) {
+			host.innerHTML = '<div class="palette__loading"><span class="palette__spin"></span> Loading search…</div>';
+			load().then(() => render((document.getElementById('palette-input') as HTMLInputElement)?.value ?? q));
+			return;
+		}
+		const list = rows(q);
+		sel = 0;
+		if (!list.length) {
+			host.innerHTML = `<div class="palette__empty"><p>No results for “${esc(q)}”.</p><a class="btn btn--ghost btn--sm" href="/tools/?q=${encodeURIComponent(q)}">Browse the directory</a></div>`;
+			return;
+		}
+		let html = '';
+		let lastGroup = '';
+		const nq = norm(q.trim());
+		list.forEach((r, i) => {
+			const group = r.type === 'recent' ? 'Recent' : r.type === 'action' ? 'Quick actions' : r.type === 'tool' ? 'Tools' : r.type === 'article' ? 'Articles' : r.type === 'category' ? 'Categories' : 'Pages';
+			if (group !== lastGroup) { html += `<div class="palette__group">${group}</div>`; lastGroup = group; }
+			const ic = r.logo ? `<img src="${r.logo}" alt="" width="20" height="20" loading="lazy">` : (ICON[r.type === 'recent' ? 'page' : r.type] || ICON.page);
+			html += `<a class="palette__row" role="option" data-i="${i}" href="${r.u}" aria-selected="${i === 0}">
+				<span class="palette__row-ic">${ic}</span>
+				<span class="palette__row-body"><span class="palette__row-title">${hi(r.n, nq)}</span>${r.d ? `<span class="palette__row-desc">${esc(r.d)}</span>` : ''}</span>
+				${r.meta ? `<span class="palette__row-meta">${esc(r.meta)}</span>` : ''}
+				<span class="palette__row-enter"><kbd class="kbd">↵</kbd></span>
+			</a>`;
+		});
+		host.innerHTML = html;
+		host.querySelectorAll<HTMLAnchorElement>('.palette__row').forEach((a) => {
+			const r = list[Number(a.dataset.i)];
+			a.addEventListener('click', (e) => { if (r.action) { e.preventDefault(); r.action(); close(); } else remember(r.n, r.u); });
+			a.addEventListener('mousemove', () => setSel(Number(a.dataset.i)));
+		});
+	}
+	function setSel(i: number) {
+		const rowsEl = document.querySelectorAll<HTMLElement>('.palette__row');
+		if (!rowsEl.length) return;
+		sel = (i + rowsEl.length) % rowsEl.length;
+		rowsEl.forEach((el, k) => el.setAttribute('aria-selected', String(k === sel)));
+		rowsEl[sel].scrollIntoView({ block: 'nearest' });
+	}
+	function open() {
+		const p = document.getElementById('palette')!; const input = document.getElementById('palette-input') as HTMLInputElement;
+		p.hidden = false; document.body.style.overflow = 'hidden';
+		requestAnimationFrame(() => { p.classList.add('is-open'); input.focus(); input.select(); });
+		load().then(() => render(input.value));
+	}
+	function close() {
+		const p = document.getElementById('palette')!;
+		p.classList.remove('is-open'); document.body.style.overflow = '';
+		setTimeout(() => { p.hidden = true; }, 200);
+	}
+	function bind() {
+		const p = document.getElementById('palette'); if (!p || (p as any).__bound) return; (p as any).__bound = true;
+		const input = document.getElementById('palette-input') as HTMLInputElement;
+		document.addEventListener('click', (e) => {
+			const t = e.target as HTMLElement;
+			if (t.closest('[data-palette-open]')) { e.preventDefault(); open(); }
+			if (t.closest('[data-palette-close]')) close();
+		});
+		document.addEventListener('keydown', (e) => {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); p.hidden ? open() : close(); return; }
+			if (e.key === '/' && !p.hidden === false && !/input|textarea|select/i.test((e.target as HTMLElement).tagName) && !(e.target as HTMLElement).isContentEditable) { e.preventDefault(); open(); return; }
+			if (p.hidden) return;
+			if (e.key === 'Escape') close();
+			else if (e.key === 'ArrowDown') { e.preventDefault(); setSel(sel + 1); }
+			else if (e.key === 'ArrowUp') { e.preventDefault(); setSel(sel - 1); }
+			else if (e.key === 'Enter') { const a = document.querySelectorAll<HTMLAnchorElement>('.palette__row')[sel]; if (a) a.click(); }
+			else if (e.key === 'Tab') { e.preventDefault(); const order: typeof filter[] = ['all', 'tools', 'articles', 'categories']; filter = order[(order.indexOf(filter) + 1) % order.length]; input.placeholder = filter === 'all' ? 'Search 220+ tools, articles, categories…' : `Search ${filter}… (tab to change)`; render(input.value); }
+		});
+		let t: any;
+		input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => render(input.value), 40); });
+		// warm the index when the trigger is hovered
+		document.querySelectorAll('[data-palette-open]').forEach((el) => el.addEventListener('pointerenter', () => load(), { once: true }));
+		document.addEventListener('astro:before-swap', () => { if (!p.hidden) close(); });
+	}
+	bind();
+	document.addEventListener('astro:page-load', bind);
+</script>
+
+<style>
+	.palette { position: fixed; inset: 0; z-index: var(--z-palette); display: grid; place-items: start center; padding: 12vh var(--s-4) var(--s-4); }
+	.palette__backdrop { position: absolute; inset: 0; background: rgba(10, 10, 11, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+	.palette.is-open .palette__backdrop { opacity: 1; }
+	.palette__panel {
+		position: relative; width: min(680px, 100%); max-height: 76vh; display: flex; flex-direction: column;
+		background: var(--bg-elev); border: 1px solid var(--line-2); border-radius: var(--r-xl); box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.04);
+		opacity: 0; transform: translateY(-10px) scale(0.98); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-3) var(--ease-out); overflow: hidden;
+	}
+	.palette.is-open .palette__panel { opacity: 1; transform: none; }
+	.palette__bar { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+	:global(.palette__icon) { color: var(--ink-3); flex-shrink: 0; }
+	.palette__input { flex: 1; height: 40px; background: none; border: 0; outline: none; font-size: var(--text-lg); color: var(--ink); }
+	.palette__input::placeholder { color: var(--ink-4); }
+	.palette__esc { color: var(--ink-3); }
+	.palette__results { overflow-y: auto; padding: var(--s-2); overscroll-behavior: contain; }
+	.palette__group { padding: var(--s-3) var(--s-3) var(--s-1); font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-4); }
+	.palette__row { display: grid; grid-template-columns: 32px 1fr auto auto; align-items: center; gap: var(--s-3); padding: 8px 10px; border-radius: var(--r-sm); color: var(--ink-2); }
+	.palette__row[aria-selected='true'] { background: var(--surface-2); color: var(--ink); }
+	.palette__row-ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--surface-2); color: var(--ink-3); overflow: hidden; }
+	.palette__row[aria-selected='true'] .palette__row-ic { background: var(--surface-3); }
+	.palette__row-ic img { width: 20px; height: 20px; object-fit: contain; }
+	.palette__row-body { min-width: 0; display: grid; }
+	.palette__row-title { font-size: var(--text-sm); font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.palette__row-title mark { background: none; color: var(--accent-ink); }
+	.palette__row-desc { font-size: var(--text-xs); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.palette__row-meta { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); white-space: nowrap; }
+	.palette__row-enter { opacity: 0; transition: opacity var(--dur-1); }
+	.palette__row[aria-selected='true'] .palette__row-enter { opacity: 1; }
+	.palette__loading { display: flex; align-items: center; gap: 10px; padding: var(--s-8) var(--s-4); color: var(--ink-3); font-size: var(--text-sm); justify-content: center; }
+	.palette__spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--accent); animation: spin 0.7s linear infinite; }
+	.palette__empty { padding: var(--s-10) var(--s-4); text-align: center; color: var(--ink-3); display: grid; gap: var(--s-4); justify-items: center; }
+	.palette__foot { display: flex; gap: var(--s-5); padding: var(--s-3) var(--s-4); border-top: 1px solid var(--line); font-size: var(--text-xs); color: var(--ink-3); }
+	.palette__foot span { display: inline-flex; align-items: center; gap: 4px; }
+	.palette__foot-brand { margin-left: auto; font-weight: 600; color: var(--ink-4); }
+	@media (max-width: 640px) { .palette { padding: 6vh var(--s-3) var(--s-3); } .palette__row-meta, .palette__row-enter, .palette__foot span:not(.palette__foot-brand) { display: none; } .palette__row { grid-template-columns: 32px 1fr; } }
+</style>

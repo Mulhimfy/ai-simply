@@ -1,0 +1,368 @@
+---
+/**
+ * /tools/vs/ — the comparisons hub. Indexable.
+ * Lists every comparison where both tools carry an editorial rating (the same
+ * gate as the sitemap and `isTestBatch` in [slug].astro), grouped by subcategory.
+ * Also handles `?a=slug&b=slug[&c=slug]` from the compare tray client-side: it
+ * fetches /search-index.json and renders a lightweight side-by-side at the top.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import ToolLogo from '../../../components/ToolLogo.astro';
+import Newsletter from '../../../components/Newsletter.astro';
+import Icon from '../../../components/Icon.astro';
+import { TOOL_CATEGORIES, CATEGORY_ICONS } from '../../../consts';
+
+const tools = await getCollection('tools');
+
+// Same pairing as [slug].astro: shared subcategory (or category), collection order.
+const bySub: Record<string, typeof tools> = {};
+for (const t of tools) {
+	const key = t.data.subcategory ?? t.data.category;
+	(bySub[key] ??= []).push(t);
+}
+interface Pair { slug: string; a: (typeof tools)[number]; b: (typeof tools)[number] }
+interface Group { key: string; label: string; category: string; catName: string; icon: string; pairs: Pair[] }
+const groups: Group[] = [];
+for (const [key, group] of Object.entries(bySub)) {
+	const pairs: Pair[] = [];
+	for (let i = 0; i < group.length; i++) {
+		for (let j = i + 1; j < group.length; j++) {
+			const a = group[i], b = group[j];
+			if (!a.data.rating || !b.data.rating) continue; // indexable batch only
+			pairs.push({ slug: `${a.id}-vs-${b.id}`, a, b });
+		}
+	}
+	if (!pairs.length) continue;
+	const category = pairs[0].a.data.category;
+	const cat = TOOL_CATEGORIES.find((c) => c.slug === category);
+	groups.push({ key, label: pairs[0].a.data.subcategory ?? cat?.name ?? key, category, catName: cat?.name ?? category, icon: CATEGORY_ICONS[category] ?? 'layers', pairs });
+}
+const catOrder = new Map(TOOL_CATEGORIES.map((c, i) => [c.slug, i]));
+groups.sort((x, y) => (catOrder.get(x.category) ?? 99) - (catOrder.get(y.category) ?? 99) || x.label.localeCompare(y.label));
+
+const totalPairs = groups.reduce((n, g) => n + g.pairs.length, 0);
+const ratedCount = tools.filter((t) => t.data.rating).length;
+
+// slug → [visit url, isAffiliate] for the client-side side-by-side (the search index has no external URLs).
+const visitMap = Object.fromEntries(tools.map((t) => [t.id, [t.data.affiliateUrl ?? t.data.url, t.data.affiliateUrl ? 1 : 0]]));
+const names = tools.map((t) => t.data.name).sort((a, b) => a.localeCompare(b));
+
+const title = 'Compare AI tools head-to-head';
+const description = `${totalPairs} honest side-by-side comparisons of rated AI tools, grouped by what they do. Same rows, same criteria, no invented winners.`;
+---
+
+<Base title={title} description={description} noNudge>
+	<section class="hub-hero section--tight">
+		<div class="glow hub-hero__glow" aria-hidden="true"></div>
+		<div class="container hub-hero__inner">
+			<Breadcrumb items={[{ name: 'AI Tools', href: '/tools/' }, { name: 'Compare' }]} />
+			<div class="hub-hero__copy">
+				<span class="eyebrow">Compare</span>
+				<h1 class="display"><span class="hub-hero__nb">Head-to-head,</span> <em class="serif">honestly</em>.</h1>
+				<p class="lead">Every comparison below pairs two tools we have actually rated, in the same subcategory, on the same eight rows. Where one is better we say so; where it is a toss-up we say that too.</p>
+				<div class="hub-hero__stats" role="list">
+					<div role="listitem"><strong class="tnum" data-count={totalPairs}>{totalPairs}</strong><span>comparisons</span></div>
+					<div role="listitem"><strong class="tnum" data-count={groups.length}>{groups.length}</strong><span>subcategories</span></div>
+					<div role="listitem"><strong class="tnum" data-count={ratedCount}>{ratedCount}</strong><span>rated tools</span></div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Client-side side-by-side for ?a=&b=[&c=] (filled by the script below) -->
+	<section class="section--tight sbs-wrap" id="vs-custom" hidden>
+		<div class="container hub-main" id="vs-custom-inner"></div>
+	</section>
+
+	<!-- Grouped comparisons -->
+	<section class="section--tight">
+		<div class="container hub-main">
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Rated pairs</span>
+					<h2>Every comparison we stand behind</h2>
+					<p class="section-head__desc">Grouped by subcategory. Each page compares rating, pricing, strengths and watch-outs, then gives a quick take.</p>
+				</div>
+				<a href="/tools/top-rated/" class="link-arrow">Top rated tools <Icon name="arrow-right" /></a>
+			</div>
+
+			<div class="groups">
+				{groups.map((g) => (
+					<section class="group" data-reveal>
+						<header class="group__head">
+							<span class="group__icon"><Icon name={g.icon} size={18} /></span>
+							<div class="group__title">
+								<h3>{g.label}</h3>
+								<a href={`/tools/category/${g.category}/`} class="group__cat link-u">{g.catName}</a>
+							</div>
+							<span class="group__count mono">{g.pairs.length} {g.pairs.length === 1 ? 'comparison' : 'comparisons'}</span>
+						</header>
+						<ul role="list" class="pairs">
+							{g.pairs.map((p) => (
+								<li>
+									<a href={`/tools/vs/${p.slug}/`} class="pair">
+										<span class="pair__side">
+											<ToolLogo slug={p.a.id} name={p.a.data.name} size={36} />
+											<span class="pair__name">{p.a.data.name}</span>
+											<span class="pair__score"><Icon name="star" size={10} /> {p.a.data.rating!.toFixed(1)}</span>
+										</span>
+										<span class="pair__vs" aria-hidden="true">vs</span>
+										<span class="pair__side pair__side--b">
+											<ToolLogo slug={p.b.id} name={p.b.data.name} size={36} />
+											<span class="pair__name">{p.b.data.name}</span>
+											<span class="pair__score"><Icon name="star" size={10} /> {p.b.data.rating!.toFixed(1)}</span>
+										</span>
+										<Icon name="arrow-right" size={16} class="pair__go" />
+									</a>
+								</li>
+							))}
+						</ul>
+					</section>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- Build your own -->
+	<section class="section--tight" id="build">
+		<div class="container hub-main">
+			<div class="build card" data-reveal>
+				<div class="build__copy">
+					<span class="eyebrow">Build your own</span>
+					<h2>Any two tools, <em class="serif">your</em> call.</h2>
+					<p class="build__text">Type two tool names, or use the <strong>Compare</strong> button on any tool card. Up to three tools stack in the tray at the bottom of the screen. If we have rated both, you land on a full comparison page; otherwise you get a quick side-by-side right here.</p>
+					<ol class="build__steps">
+						<li><span class="build__n">1</span> Add tools with <span class="build__kbd"><Icon name="git-compare" size={12} /> Compare</span></li>
+						<li><span class="build__n">2</span> Open the tray at the bottom of the page</li>
+						<li><span class="build__n">3</span> Hit <strong>Compare</strong> — or use the form here</li>
+					</ol>
+				</div>
+				<form class="build__form" action="/tools/vs/" method="get" id="build-form">
+					<label class="field">
+						<span class="field__label">First tool</span>
+						<input class="input" name="a" list="tool-names" placeholder="e.g. ChatGPT" autocomplete="off" required />
+					</label>
+					<label class="field">
+						<span class="field__label">Second tool</span>
+						<input class="input" name="b" list="tool-names" placeholder="e.g. Claude" autocomplete="off" required />
+					</label>
+					<datalist id="tool-names">{names.map((n) => <option value={n} />)}</datalist>
+					<button type="submit" class="btn btn--accent">Compare <Icon name="arrow-right" class="icon--arrow" /></button>
+					<a href="/tools/" class="btn btn--ghost">Browse all tools</a>
+				</form>
+			</div>
+		</div>
+	</section>
+
+	<Newsletter variant="band" heading="The tools worth *switching* to." text="What changed, what is better now, and what to skip. Plain English, no hype." />
+
+	<script type="application/json" id="vs-visit" set:html={JSON.stringify(visitMap)} />
+</Base>
+
+<script>
+	/**
+	 * ?a=&b=[&c=] → lightweight side-by-side from /search-index.json.
+	 * Accepts slugs or names (the form above submits names). Idempotent across
+	 * View Transitions: re-runs on astro:page-load, skips if already rendered.
+	 */
+	const esc = (s: string) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+	const STAR = '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z" fill="currentColor"/></svg>';
+	let idxPromise: Promise<any> | null = null;
+	const loadIndex = () => (idxPromise ??= fetch('/search-index.json').then((r) => r.json()));
+
+	function letterMark(name: string, slug: string, size: number) {
+		let h = 0; for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) % 360;
+		return `<span class="logo-mark" style="--mark:${size}px" aria-hidden="true"><span class="sbs__letter" style="--lm-h:${h}">${esc((name.trim()[0] || '?').toUpperCase())}</span></span>`;
+	}
+
+	async function run() {
+		const host = document.getElementById('vs-custom');
+		const inner = document.getElementById('vs-custom-inner');
+		if (!host || !inner) return;
+		const q = new URLSearchParams(location.search);
+		const want = ['a', 'b', 'c'].map((k) => (q.get(k) || '').trim()).filter(Boolean);
+		if (want.length < 2) { host.hidden = true; return; }
+		const key = want.join('|');
+		if (host.dataset.key === key) return;
+		host.dataset.key = key;
+		host.hidden = false;
+		inner.innerHTML = '<p class="muted sbs__loading">Loading comparison…</p>';
+
+		let idx: any;
+		try { idx = await loadIndex(); } catch { inner.innerHTML = '<p class="muted">Could not load the tool index. <a class="link-u" href="/tools/">Browse tools instead.</a></p>'; return; }
+		const visit: Record<string, [string, number]> = (() => { try { return JSON.parse(document.getElementById('vs-visit')?.textContent || '{}'); } catch { return {}; } })();
+		const norm = (s: string) => s.toLowerCase().replace(/^\/tools\/|\/$/g, '').trim();
+		const find = (raw: string) => {
+			const s = norm(raw);
+			return idx.tools.find((t: any) => t.u === `/tools/${s}/`)
+				|| idx.tools.find((t: any) => t.n.toLowerCase() === s)
+				|| idx.tools.find((t: any) => t.n.toLowerCase().startsWith(s))
+				|| idx.tools.find((t: any) => t.n.toLowerCase().includes(s));
+		};
+		const found = want.map((w) => ({ w, t: find(w) })).filter((x, i, arr) => !x.t || arr.findIndex((y) => y.t === x.t) === i);
+		const missing = found.filter((x) => !x.t).map((x) => x.w);
+		const cols = found.filter((x) => x.t).map((x) => x.t);
+
+		if (cols.length < 2) {
+			inner.innerHTML = `<div class="sbs__empty card card--pad"><p><strong>We couldn't find ${esc(missing.join(' and ') || 'both tools')}.</strong> Check the spelling, or pick from the list below.</p><a href="#build" class="btn btn--ghost btn--sm">Try again</a></div>`;
+			return;
+		}
+
+		const slugOf = (t: any) => t.u.replace(/^\/tools\/|\/$/g, '');
+		const vs: string[] = idx.vs || [];
+		const [s0, s1] = [slugOf(cols[0]), slugOf(cols[1])];
+		const staticSlug = vs.includes(`${s0}-vs-${s1}`) ? `${s0}-vs-${s1}` : vs.includes(`${s1}-vs-${s0}`) ? `${s1}-vs-${s0}` : null;
+		const priceLabel: Record<string, string> = { free: 'Free', freemium: 'Freemium', paid: 'Paid' };
+		const title = cols.map((t) => esc(t.n)).join(' <em class="serif">vs</em> ');
+		document.title = `${cols.map((t) => t.n).join(' vs ')} | AI Briefs`;
+
+		inner.innerHTML = `
+			<div class="section-head">
+				<div class="section-head__title">
+					<span class="eyebrow">Your comparison</span>
+					<h2 class="sbs__title">${title}</h2>
+					${missing.length ? `<p class="section-head__desc">We couldn't find ${esc(missing.join(', '))}, so it's left out.</p>` : ''}
+				</div>
+				<div class="row">
+					${staticSlug ? `<a href="/tools/vs/${esc(staticSlug)}/" class="btn btn--accent btn--sm">Full comparison <svg class="icon icon--arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>` : ''}
+					<a href="#build" class="btn btn--ghost btn--sm">Change</a>
+				</div>
+			</div>
+			<div class="sbs sbs--${cols.length}">
+				${cols.map((t) => {
+					const slug = slugOf(t);
+					const v = visit[slug];
+					return `<article class="sbs__col card">
+						<div class="sbs__top">
+							${t.l ? `<span class="logo-mark" style="--mark:56px" aria-hidden="true"><img src="${esc(t.l)}" alt="" width="34" height="34" loading="lazy" decoding="async"></span>` : letterMark(t.n, slug, 56)}
+							<div class="sbs__id"><h3 class="sbs__name">${esc(t.n)}</h3><span class="sbs__cat">${esc(t.c)}</span></div>
+						</div>
+						<div class="sbs__facts">
+							<span class="pill pill--${esc(t.p)}">${priceLabel[t.p] || esc(t.p)}</span>
+							${t.r ? `<span class="rating"><span class="stars">${STAR}</span><span class="rating__num tnum">${Number(t.r).toFixed(1)}</span></span>` : '<span class="sbs__unrated">Not yet rated</span>'}
+						</div>
+						<p class="sbs__desc">${esc(t.d)}</p>
+						<div class="sbs__actions">
+							<a href="${esc(t.u)}" class="btn btn--sm">Details</a>
+							${v ? `<a href="${esc(v[0])}" target="_blank" rel="noopener noreferrer${v[1] ? ' sponsored' : ''}" class="btn btn--ghost btn--sm">Visit</a>` : ''}
+						</div>
+					</article>`;
+				}).join('')}
+			</div>
+			${staticSlug ? '' : `<p class="sbs__foot muted">This is a quick side-by-side from the directory. Full comparison pages exist for pairs we have both rated. <a class="link-u" href="/tools/vs/#build">Pick another pair</a>.</p>`}`;
+		host.scrollIntoView({ block: 'start', behavior: 'smooth' });
+	}
+
+	run();
+	document.addEventListener('astro:page-load', run);
+</script>
+
+<style>
+	.hub-main { max-width: 1040px; }
+
+	/* hero */
+	.hub-hero { position: relative; overflow: hidden; padding-top: var(--s-6); border-bottom: 1px solid var(--line); }
+	.hub-hero::before {
+		content: ''; position: absolute; inset: 0; pointer-events: none;
+		background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+		background-size: 48px 48px;
+		mask-image: radial-gradient(ellipse 60% 60% at 30% 20%, #000 20%, transparent 100%);
+		-webkit-mask-image: radial-gradient(ellipse 60% 60% at 30% 20%, #000 20%, transparent 100%);
+	}
+	.hub-hero__glow { top: -200px; right: -120px; width: 520px; height: 520px; opacity: 0.5; }
+	.hub-hero__inner { position: relative; display: grid; gap: var(--s-8); max-width: 1040px; }
+	.hub-hero__copy { display: grid; gap: var(--s-5); max-width: 720px; }
+	.hub-hero__copy .display { font-size: var(--text-5xl); }
+	/* never break inside "Head-to-head" — the hyphen is a legal break point and it reads as a typo */
+	.hub-hero__nb { white-space: nowrap; }
+	.hub-hero__stats { display: flex; gap: var(--s-8); flex-wrap: wrap; margin-top: var(--s-2); }
+	.hub-hero__stats > div { display: grid; }
+	.hub-hero__stats strong { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+	.hub-hero__stats span { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+
+	/* groups */
+	.groups { display: grid; gap: var(--s-10); }
+	.group__head { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-4); }
+	.group__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--accent-ink); flex-shrink: 0; }
+	.group__title { display: grid; gap: 2px; flex: 1; min-width: 0; }
+	.group__title h3 { font-size: var(--text-lg); }
+	.group__cat { font-size: var(--text-xs); color: var(--ink-3); width: fit-content; }
+	.group__count { white-space: nowrap; }
+	.pairs { display: grid; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; }
+	.pairs li + li { border-top: 1px solid var(--line); }
+	.pair {
+		display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr) 24px; align-items: center; gap: var(--s-3);
+		padding: var(--s-4) var(--s-5); color: var(--ink);
+		transition: background-color var(--dur-2) var(--ease-out);
+	}
+	.pair:hover { background: var(--surface-2); }
+	.pair__side { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+	.pair__side--b { flex-direction: row-reverse; text-align: right; }
+	.pair__name { font-weight: 600; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.pair__score { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px; border-radius: var(--r-full); background: var(--accent-soft); color: var(--accent-ink); font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+	.pair__score :global(.icon) { fill: currentColor; }
+	.pair__vs { justify-self: center; font-family: var(--font-serif); font-style: italic; font-size: 1.5rem; color: var(--ink-3); line-height: 1; }
+	.pair :global(.pair__go) { color: var(--ink-4); transition: transform var(--dur-2) var(--ease-out), color var(--dur-2); }
+	.pair:hover :global(.pair__go) { transform: translateX(3px); color: var(--accent-ink); }
+
+	/* build your own */
+	.build { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--s-10); padding: clamp(1.5rem, 4vw, 3rem); align-items: center; overflow: hidden; }
+	.build::before { content: ''; position: absolute; right: -80px; bottom: -120px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(closest-side, var(--accent-soft-2), transparent 70%); pointer-events: none; }
+	.build__copy { display: grid; gap: var(--s-4); position: relative; }
+	.build__text { color: var(--ink-2); max-width: 52ch; }
+	.build__steps { display: grid; gap: var(--s-2); padding: 0; list-style: none; font-size: var(--text-sm); color: var(--ink-2); }
+	.build__steps li { display: flex; align-items: center; gap: var(--s-3); }
+	.build__n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600; flex-shrink: 0; }
+	.build__kbd { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border: 1px solid var(--line-2); border-radius: var(--r-full); font-size: var(--text-xs); font-weight: 600; color: var(--ink); }
+	.build__form { position: relative; display: grid; gap: var(--s-3); grid-template-columns: 1fr 1fr; }
+	.build__form .btn { width: 100%; }
+
+	/* client-side side-by-side — the wrapper is server-rendered, everything inside
+	   it is injected by the script below and therefore styled in the is:global
+	   block at the end of this file (scoped rules never match runtime nodes). */
+	.sbs-wrap { border-bottom: 1px solid var(--line); background: var(--bg-sunk); }
+
+	@media (max-width: 900px) {
+		.build { grid-template-columns: 1fr; }
+	}
+	@media (max-width: 720px) {
+		.pair { grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); }
+		.pair :global(.pair__go) { display: none; }
+		.pair__side { flex-wrap: wrap; gap: var(--s-2); }
+		.pair__side--b { flex-direction: row-reverse; }
+		.pair__name { white-space: normal; flex-basis: 100%; }
+		.pair__side--b .pair__name { text-align: right; }
+		.pair__vs { font-size: 1.25rem; }
+		.build__form { grid-template-columns: 1fr; }
+	}
+</style>
+
+<style is:global>
+	/* Styles for the side-by-side the script injects into #vs-custom-inner.
+	   These nodes are created at runtime, so they never carry this page's
+	   data-astro-cid — a scoped rule would compile to a selector that matches
+	   nothing and the block would render unstyled. Kept under #vs-custom so
+	   nothing leaks to the rest of the site. */
+	#vs-custom .sbs__title { font-size: var(--text-3xl); }
+	#vs-custom .sbs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); }
+	#vs-custom .sbs--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	#vs-custom .sbs__col { display: grid; gap: var(--s-4); padding: var(--s-6); align-content: start; }
+	#vs-custom .sbs__top { display: flex; align-items: center; gap: var(--s-3); }
+	#vs-custom .sbs__id { display: grid; min-width: 0; }
+	#vs-custom .sbs__name { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.02em; }
+	#vs-custom .sbs__cat { font-size: var(--text-xs); color: var(--ink-3); }
+	#vs-custom .sbs__facts { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+	#vs-custom .sbs__unrated { font-size: var(--text-xs); color: var(--ink-4); }
+	#vs-custom .sbs__desc { font-size: var(--text-sm); color: var(--ink-2); line-height: 1.55; }
+	#vs-custom .sbs__actions { display: flex; gap: var(--s-2); margin-top: auto; padding-top: var(--s-2); }
+	#vs-custom .sbs__letter { display: grid; place-items: center; width: 100%; height: 100%; font-family: var(--font-serif); font-style: italic; font-size: 1.6rem; background: hsl(var(--lm-h, 20) 60% 92%); color: hsl(var(--lm-h, 20) 55% 32%); }
+	:root[data-theme='dark'] #vs-custom .sbs__letter { background: hsl(var(--lm-h, 20) 30% 18%); color: hsl(var(--lm-h, 20) 70% 78%); }
+	#vs-custom .sbs__foot { font-size: var(--text-sm); margin-top: var(--s-5); }
+	#vs-custom .sbs__empty { display: grid; gap: var(--s-4); justify-items: start; }
+	#vs-custom .sbs__loading { padding-block: var(--s-6); }
+	@media (max-width: 720px) {
+		#vs-custom .sbs, #vs-custom .sbs--3 { grid-template-columns: 1fr; }
+	}
+</style>

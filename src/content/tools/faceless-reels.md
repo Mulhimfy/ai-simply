@@ -1,8 +1,8 @@
 ---
 name: Faceless Reels
 description: Create faceless reels in minutes with AI scripts, voiceovers, captions, and auto-editing — plan, publish, and grow from one workspace.
-category: ai-productivity
-subcategory: AI Faceless Video Generator
+category: ai-video
+subcategory: AI Short Video Generator
 url: https://facelessreels.app
 pricing: free
 tags: [reels, faceless-video, short-form, voiceover, captions, auto-editing]

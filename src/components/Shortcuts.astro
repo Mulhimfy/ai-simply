@@ -1,0 +1,254 @@
+---
+/**
+ * Site-wide keyboard shortcuts + the "?" shortcuts sheet.
+ *   g h → today · g b → briefs (g n alias) · g a → explainers · g t → toolbox
+ *   g w → what to try · g s → my tools
+ *   ? → this sheet · t → theme · s → save · c → compare · Esc → close
+ * ⌘K and "/" are owned by CommandPalette; they are only listed here.
+ * Also paints the header's saved-count badge on every page (ToolCard's script
+ * only runs on pages that render a card). Idempotent across view transitions.
+ */
+import Icon from './Icon.astro';
+
+const groups = [
+	{
+		name: 'Go to',
+		items: [
+			{ keys: ['g', 'h'], label: 'Today', hint: "today's brief" },
+			{ keys: ['g', 'b'], label: 'Briefs', hint: 'the archive' },
+			{ keys: ['g', 'a'], label: 'Explainers' },
+			{ keys: ['g', 't'], label: 'Toolbox' },
+			{ keys: ['g', 'w'], label: 'What to try', hint: 'the quiz' },
+			{ keys: ['g', 's'], label: 'My tools', hint: 'saved' },
+		],
+	},
+	{
+		name: 'Actions',
+		items: [
+			{ keys: ['⌘', 'K'], label: 'Search', alt: ['/'] },
+			{ keys: ['t'], label: 'Toggle theme' },
+			{ keys: ['s'], label: 'Save tool', hint: 'on a tool page' },
+			{ keys: ['c'], label: 'Add to compare', hint: 'on a tool page' },
+			{ keys: ['?'], label: 'Show this sheet' },
+			{ keys: ['esc'], label: 'Close dialogs' },
+		],
+	},
+];
+---
+<div class="keys" id="shortcuts" hidden role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+	<div class="keys__backdrop" data-keys-close></div>
+	<div class="keys__panel" tabindex="-1">
+		<div class="keys__head">
+			<span class="keys__icon"><Icon name="keyboard" size={18} /></span>
+			<div class="keys__title-wrap">
+				<h2 class="keys__title" id="shortcuts-title">Keyboard <em class="serif">shortcuts</em></h2>
+				<p class="keys__sub">Press <kbd class="kbd">?</kbd> anywhere to open this sheet.</p>
+			</div>
+			<button type="button" class="keys__close" data-keys-close aria-label="Close"><Icon name="x" size={18} /></button>
+		</div>
+		<div class="keys__groups">
+			{groups.map((g) => (
+				<section class="keys__group" aria-label={g.name}>
+					<h3 class="keys__group-title">{g.name}</h3>
+					<ul role="list" class="keys__list">
+						{g.items.map((it) => (
+							<li class="keys__row">
+								<span class="keys__label">{it.label}{it.hint && <span class="keys__hint">{it.hint}</span>}</span>
+								<span class="keys__combo">
+									{it.keys.map((k, i) => (<><kbd class="kbd">{k}</kbd>{i < it.keys.length - 1 && k !== '⌘' && <span class="keys__then">then</span>}</>))}
+									{it.alt && (<><span class="keys__or">or</span>{it.alt.map((k) => <kbd class="kbd">{k}</kbd>)}</>)}
+								</span>
+							</li>
+						))}
+					</ul>
+				</section>
+			))}
+		</div>
+		<div class="keys__foot">
+			<span class="keys__foot-note">Shortcuts pause while you type in a field.</span>
+			<span class="keys__foot-brand">AI Briefs</span>
+		</div>
+	</div>
+</div>
+
+<script>
+	const SAVED_KEY = 'aib-saved';
+	const ROUTES: Record<string, string> = { h: '/', b: '/news/', n: '/news/', a: '/blog/', t: '/tools/', w: '/tools/quiz/', q: '/tools/quiz/', s: '/saved/' };
+	let pending = false;
+	let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+	let lastFocus: HTMLElement | null = null;
+
+	/* ── saved-count badge (header) ─────────────────────────────────────── */
+	function savedCount(): number {
+		try { return Object.keys(JSON.parse(localStorage.getItem(SAVED_KEY) || '{}')).length; } catch { return 0; }
+	}
+	function paintCount(pop = false) {
+		// header persists across view transitions → keep its active state honest
+		const onSaved = location.pathname.startsWith('/saved');
+		document.querySelectorAll<HTMLElement>('.icon-btn--saved').forEach((a) => { a.classList.toggle('is-active', onSaved); if (onSaved) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+		const n = savedCount();
+		document.querySelectorAll<HTMLElement>('[data-saved-count]').forEach((el) => {
+			const prev = el.textContent;
+			el.textContent = String(n);
+			el.toggleAttribute('hidden', n === 0);
+			if (pop && prev !== String(n)) { el.classList.remove('is-pop'); void el.offsetWidth; el.classList.add('is-pop'); }
+		});
+	}
+
+	/* ── sheet ──────────────────────────────────────────────────────────── */
+	function sheet() { return document.getElementById('shortcuts'); }
+	function isOpen() { const s = sheet(); return !!s && !s.hidden; }
+	function openSheet() {
+		const s = sheet(); if (!s || !s.hidden) return;
+		lastFocus = document.activeElement as HTMLElement | null;
+		s.hidden = false;
+		document.body.style.overflow = 'hidden';
+		requestAnimationFrame(() => { s.classList.add('is-open'); s.querySelector<HTMLElement>('.keys__panel')?.focus({ preventScroll: true }); });
+	}
+	function closeSheet() {
+		const s = sheet(); if (!s || s.hidden) return;
+		s.classList.remove('is-open');
+		document.body.style.overflow = '';
+		setTimeout(() => { s.hidden = true; }, 200);
+		lastFocus?.focus?.({ preventScroll: true }); lastFocus = null;
+	}
+
+	/* ── helpers ────────────────────────────────────────────────────────── */
+	function typing(t: EventTarget | null) {
+		const el = t as HTMLElement | null;
+		if (!el || !el.tagName) return false;
+		return /^(input|textarea|select)$/i.test(el.tagName) || el.isContentEditable || !!el.closest('[contenteditable=""],[contenteditable="true"]');
+	}
+	function paletteOpen() { const p = document.getElementById('palette'); return !!p && !p.hidden; }
+	/** The control `s`/`c` should act on: the card under the pointer/focus, else the
+	 *  page-level button (tool hero), else the only one on the page. */
+	function primary(sel: string): HTMLElement | null {
+		const here = document.querySelector<HTMLElement>(`.tc:hover ${sel}, .tc:focus-within ${sel}, .sv-card:hover ${sel}, .sv-card:focus-within ${sel}`);
+		if (here) return here;
+		const page = document.querySelector<HTMLElement>(`main ${sel}:not(.tc ${sel})`);
+		if (page) return page;
+		const all = document.querySelectorAll<HTMLElement>(sel);
+		return all.length === 1 ? all[0] : null;
+	}
+	/** aria-modal="true" only tells AT it's modal — keep Tab inside the panel too. */
+	function trapTab(e: KeyboardEvent) {
+		const panel = sheet()?.querySelector<HTMLElement>('.keys__panel'); if (!panel) return;
+		const f = Array.from(panel.querySelectorAll<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
+		e.preventDefault();
+		if (!f.length) { panel.focus({ preventScroll: true }); return; }
+		const i = f.indexOf(document.activeElement as HTMLElement);
+		f[e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === -1 || i === f.length - 1 ? 0 : i + 1)].focus();
+	}
+	function clickAt(el: HTMLElement) {
+		const r = el.getBoundingClientRect();
+		el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }));
+	}
+	function go(url: string) {
+		if (location.pathname === url) { (window as any).__aib?.toast("You're already here"); return; }
+		location.href = url;
+	}
+	function armPending() {
+		pending = true; clearTimeout(pendingTimer);
+		pendingTimer = setTimeout(() => { pending = false; }, 1200);
+	}
+
+	/* ── key handling ───────────────────────────────────────────────────── */
+	function onKey(e: KeyboardEvent) {
+		if (e.defaultPrevented) return;
+		// Esc closes the sheet even when a field is focused inside it
+		if (e.key === 'Escape') { if (isOpen()) { e.preventDefault(); closeSheet(); } pending = false; return; }
+		if (e.metaKey || e.ctrlKey || e.altKey) { pending = false; return; }
+		if (typing(e.target)) return;
+		if (paletteOpen()) return;
+
+		if (e.key === '?') { e.preventDefault(); isOpen() ? closeSheet() : openSheet(); pending = false; return; }
+		if (isOpen()) { if (e.key === 'Tab') trapTab(e); return; } // sheet open: only Tab, ? and Esc work
+
+		const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+		if (pending) {
+			pending = false; clearTimeout(pendingTimer);
+			if (ROUTES[k]) { e.preventDefault(); go(ROUTES[k]); }
+			return;
+		}
+		switch (k) {
+			case 'g': armPending(); return;
+			case 't': {
+				const b = document.querySelector<HTMLElement>('[data-theme-toggle]');
+				if (b) { e.preventDefault(); clickAt(b); }
+				return;
+			}
+			case 's': {
+				const b = primary('[data-save]');
+				if (b) { e.preventDefault(); b.click(); b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+				return;
+			}
+			case 'c': {
+				const b = primary('[data-compare]');
+				if (b) { e.preventDefault(); b.click(); b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+				return;
+			}
+		}
+	}
+
+	function bind() {
+		paintCount();
+		if ((window as any).__aibKeysBound) return;
+		(window as any).__aibKeysBound = true;
+		document.addEventListener('keydown', onKey);
+		document.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('[data-keys-close]')) closeSheet(); if ((e.target as HTMLElement).closest('[data-keys-open]')) { e.preventDefault(); openSheet(); } });
+		document.addEventListener('aib:saved-change', () => paintCount(true));
+		window.addEventListener('storage', (e) => { if (e.key === SAVED_KEY) paintCount(true); });
+		document.addEventListener('astro:before-swap', () => { closeSheet(); pending = false; });
+		document.addEventListener('astro:page-load', () => paintCount());
+	}
+	bind();
+</script>
+
+<style>
+	.keys { position: fixed; inset: 0; z-index: var(--z-palette); display: grid; place-items: center; padding: var(--s-4); }
+	.keys__backdrop { position: absolute; inset: 0; background: rgba(10, 10, 11, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+	.keys.is-open .keys__backdrop { opacity: 1; }
+	.keys__panel {
+		position: relative; width: min(640px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column;
+		background: var(--bg-elev); outline: none;
+		border: 1px solid var(--line-2); border-radius: var(--r-xl); box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.04); overflow: hidden;
+		opacity: 0; transform: translateY(12px) scale(0.98);
+		transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-3) var(--ease-out);
+	}
+	.keys.is-open .keys__panel { opacity: 1; transform: none; }
+	.keys__head { display: flex; align-items: flex-start; gap: var(--s-4); padding: var(--s-6) var(--s-6) var(--s-4); border-bottom: 1px solid var(--line); }
+	.keys__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); flex-shrink: 0; }
+	.keys__title-wrap { flex: 1; display: grid; gap: 4px; }
+	.keys__title { font-size: var(--text-xl); }
+	.keys__sub { font-size: var(--text-sm); color: var(--ink-3); }
+	.keys__sub .kbd { vertical-align: -3px; margin-inline: 1px; }
+	.keys__close { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); flex-shrink: 0; transition: background-color var(--dur-2), color var(--dur-2); }
+	.keys__close:hover { background: var(--surface-2); color: var(--ink); }
+	.keys__groups { display: grid; grid-template-columns: 1fr 1fr; overflow-y: auto; overscroll-behavior: contain; }
+	.keys__group { padding: var(--s-4) var(--s-6) var(--s-5); }
+	.keys__group + .keys__group { border-left: 1px solid var(--line); }
+	.keys__group-title { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-4); font-weight: 500; margin-bottom: var(--s-3); }
+	.keys__list { display: grid; }
+	.keys__row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); min-height: 40px; padding: 4px 0; border-top: 1px solid var(--line); font-size: var(--text-sm); color: var(--ink-2); }
+	.keys__row:first-child { border-top: 0; }
+	.keys__label { display: grid; gap: 1px; min-width: 0; }
+	.keys__hint { font-size: var(--text-xs); color: var(--ink-4); }
+	.keys__combo { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+	.keys__then, .keys__or { font-family: var(--font-mono); font-size: 0.625rem; color: var(--ink-4); padding: 0 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+	.keys__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); padding: var(--s-3) var(--s-6); border-top: 1px solid var(--line); font-size: var(--text-xs); color: var(--ink-3); }
+	.keys__foot-brand { font-weight: 600; color: var(--ink-4); }
+	@media (max-width: 640px) {
+		.keys { place-items: end center; padding: 0; }
+		.keys__panel { border-radius: var(--r-xl) var(--r-xl) 0 0; border-bottom: 0; max-height: 88dvh; transform: translateY(24px); }
+		.keys__groups { grid-template-columns: 1fr; }
+		.keys__group + .keys__group { border-left: 0; border-top: 1px solid var(--line); }
+		.keys__head, .keys__group, .keys__foot { padding-inline: var(--s-5); }
+		.keys__foot { padding-bottom: max(var(--s-3), env(safe-area-inset-bottom)); }
+	}
+</style>
+
+<style is:global>
+	/* header badge painted by this component; markup lives in Header.astro */
+	[data-saved-count].is-pop { animation: badge-pop 420ms var(--ease-spring); }
+	@keyframes badge-pop { 40% { transform: scale(1.35); } }
+</style>

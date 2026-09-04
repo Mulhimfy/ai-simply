@@ -1,0 +1,63 @@
+---
+/**
+ * Tool brand mark. Uses the locally fetched logo (public/logos/<slug>.png) when
+ * present, otherwise a lettermark tinted from the name. No third-party hotlinks.
+ *
+ * Logos are wildly inconsistent: some are white-on-transparent (invisible on a
+ * light tile), some near-black (invisible on a dark tile). `public/logos/_tiles.json`
+ * records which need a contrasting tile, computed from the alpha-weighted luminance
+ * by `scripts/logo-tiles.mjs`, so a mark is always visible in both themes.
+ */
+import { existsSync, readFileSync } from 'node:fs';
+
+interface Props {
+	slug: string;
+	name: string;
+	size?: number;
+	/** emit the file as data-src so the HTML parser's preload scanner skips it;
+	    the owner swaps it in when the card is actually revealed */
+	defer?: boolean;
+	class?: string;
+}
+const { slug, name, size = 44, defer = false, class: className } = Astro.props;
+
+let TILES: Record<string, 'dark' | 'light' | 'none'> = {};
+try {
+	TILES = JSON.parse(readFileSync('public/logos/_tiles.json', 'utf8'));
+} catch {}
+
+const src = existsSync(`public/logos/${slug}.png`) ? `/logos/${slug}.png` : null;
+const tile = src ? (TILES[slug] ?? 'none') : 'none';
+const letter = (name.trim()[0] ?? '?').toUpperCase();
+// deterministic hue from the slug so lettermarks feel intentional, not random
+let h = 0;
+for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) % 360;
+---
+<span
+	class:list={['logo-mark', `logo-mark--tile-${tile}`, className]}
+	style={`--mark:${size}px;${src ? '' : `--lm-h:${h}`}`}
+	aria-hidden="true"
+>
+	{src
+		? <img {...(defer ? { 'data-src': src } : { src })} alt="" width={Math.round(size * 0.6)} height={Math.round(size * 0.6)} loading="lazy" decoding="async" />
+		: <span class="logo-mark__letter">{letter}</span>}
+</span>
+
+<style>
+	.logo-mark__letter {
+		display: grid; place-items: center; width: 100%; height: 100%;
+		background: hsl(var(--lm-h, 20) 60% 92%);
+		color: hsl(var(--lm-h, 20) 55% 32%);
+		font-family: var(--font-serif); font-style: italic; font-weight: 400;
+		font-size: calc(var(--mark, 44px) * 0.5); line-height: 1;
+	}
+	:root[data-theme='dark'] .logo-mark__letter {
+		background: hsl(var(--lm-h, 20) 30% 18%);
+		color: hsl(var(--lm-h, 20) 70% 78%);
+	}
+
+	/* A near-white logo needs a dark tile in BOTH themes; a near-black logo needs
+	   a light one. Neutral logos keep the surface tile from global.css. */
+	.logo-mark--tile-dark { background: #1c1b19; border-color: rgba(255, 255, 255, 0.12); }
+	.logo-mark--tile-light { background: #ffffff; border-color: rgba(22, 21, 18, 0.14); }
+</style>

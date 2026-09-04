@@ -1,0 +1,56 @@
+---
+/**
+ * Site shell: head, skip link, header, main, footer, ⌘K palette, global scripts.
+ * Every page uses this. Pages provide <main> content via the default slot.
+ */
+import type { ImageMetadata } from 'astro';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CommandPalette from '../components/CommandPalette.astro';
+import CompareTray from '../components/CompareTray.astro';
+import ScrollReveal from '../components/ScrollReveal.astro';
+import Shortcuts from '../components/Shortcuts.astro';
+import LastVisit from '../components/LastVisit.astro';
+
+interface Props {
+	title: string;
+	description: string;
+	image?: ImageMetadata | string;
+	type?: 'website' | 'article';
+	publishDate?: Date;
+	updatedDate?: Date;
+	category?: string;
+	noindex?: boolean;
+	/** extra classes on <body> (e.g. "theme-ink" for an all-dark landing) */
+	bodyClass?: string;
+	/** hide the newsletter capture card that floats in after scrolling */
+	noNudge?: boolean;
+}
+const { title, description, image, type, publishDate, updatedDate, category, noindex, bodyClass, noNudge } = Astro.props;
+---
+<!doctype html>
+<html lang="en" class="no-js">
+	<head>
+		<BaseHead {title} {description} {image} {type} {publishDate} {updatedDate} {category} {noindex} />
+		<slot name="head" />
+	</head>
+	<body class:list={[bodyClass]}>
+		<a href="#main" class="skip-link">Skip to content</a>
+		<Header />
+		<main id="main" class="site-main">
+			<slot />
+		</main>
+		<Footer noNudge={noNudge} />
+		<CommandPalette />
+		<CompareTray />
+		<ScrollReveal />
+		<Shortcuts />
+		<LastVisit />
+	</body>
+</html>
+
+<style is:global>
+	.site-main { min-height: 60vh; }
+	body { padding-top: var(--header-h, 64px); }
+</style>
