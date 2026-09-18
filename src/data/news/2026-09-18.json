@@ -1,0 +1,174 @@
+{
+  "date": "2026-09-18",
+  "fetchedAt": "2026-09-18T12:01:52.488Z",
+  "items": [
+    {
+      "title": "Could AI really kill us all? Your questions, answered.",
+      "link": "https://www.technologyreview.com/2026/09/18/1144435/could-ai-really-kill-us-all-your-questions-answered/",
+      "date": "Fri, 18 Sep 2026 11:29:22 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Flash floods can strike without warning — this new technology could change that",
+      "link": "https://www.theverge.com/science/997083/flash-flood-warning-tacls-satellite-machine-learning",
+      "date": "2026-09-18T07:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The Leftist Split Over AI Doom",
+      "link": "https://www.wired.com/story/inside-the-surprising-leftist-split-over-ai-doom/",
+      "date": "Fri, 18 Sep 2026 10:15:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Napster Is Back, and It Wants to Digitally Clone Teachers",
+      "link": "https://www.wired.com/story/napster-is-back-and-it-wants-to-digitally-clone-teachers/",
+      "date": "Fri, 18 Sep 2026 09:15:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Why AI Isn’t Likely to Wipe Out Humanity With Bioweapons",
+      "link": "https://www.wired.com/story/why-ai-bioweapons-wont-wipe-out-humanity/",
+      "date": "Fri, 18 Sep 2026 09:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "The specter of AI-enabled bioweapons is a wake-up call for biotech",
+      "link": "https://www.technologyreview.com/2026/09/18/1144329/the-specter-of-ai-enabled-bioweapons-is-a-wake-up-call-for-biotech/",
+      "date": "Fri, 18 Sep 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Crusoe raises $3.9B to build massive data centers and small modular ‘AI factories’",
+      "link": "https://techcrunch.com/2026/09/17/crusoe-raises-3-9b-to-build-massive-data-centers-and-small-modular-ai-factories/",
+      "date": "Thu, 17 Sep 2026 23:25:52 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Google DeepMind launches institute to widen the AGI debate",
+      "link": "https://techcrunch.com/2026/09/17/google-deepmind-launches-institute-to-widen-the-agi-debate/",
+      "date": "Thu, 17 Sep 2026 23:21:17 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "PrismML hopes its tiny LLM will change how we all use AI",
+      "link": "https://techcrunch.com/2026/09/17/prismml-hopes-its-tiny-llm-could-change-how-we-all-use-ai/",
+      "date": "Thu, 17 Sep 2026 22:34:09 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Here’s What the AI Apocalypse Could Look Like",
+      "link": "https://www.wired.com/story/uncanny-valley-podcast-heres-what-the-ai-apocalypse-could-look-like/",
+      "date": "Thu, 17 Sep 2026 22:20:21 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "The FAA’s plan to fix air traffic? $875M worth of AI",
+      "link": "https://techcrunch.com/2026/09/17/the-faas-plan-to-fix-air-traffic-875-million-worth-of-ai/",
+      "date": "Thu, 17 Sep 2026 22:14:59 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Small AI models let drones autonomously identify and attack battlefield targets",
+      "link": "https://arstechnica.com/ai/2026/09/nato-backed-startup-adapts-ai-for-autonomous-drone-recon-and-attack-missions/",
+      "date": "Thu, 17 Sep 2026 22:12:58 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Google announces new experimental \"CC\" AI agent for families",
+      "link": "https://arstechnica.com/google/2026/09/google-announces-new-experimental-cc-ai-agent-for-families/",
+      "date": "Thu, 17 Sep 2026 20:24:34 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Microsoft exec called AI scraping the “largest theft of labor in human history”",
+      "link": "https://arstechnica.com/tech-policy/2026/09/microsoft-exec-called-ai-scraping-the-largest-theft-of-labor-in-human-history/",
+      "date": "Thu, 17 Sep 2026 20:10:41 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The AI Superintelligence Slowdown",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/996923/ai-safety-slow-openai-anthropic",
+      "date": "2026-09-17T15:28:24-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Claude Code relaunches Projects to manage multiple AI agents in the cloud",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/997134/anthropic-claude-code-projects",
+      "date": "2026-09-17T14:58:05-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "LLMs respond differently to harmful prompts when AI watermarking is used",
+      "link": "https://arstechnica.com/security/2026/09/ai-text-watermarking-can-make-models-more-vulnerable-to-adversarial-prompts/",
+      "date": "Thu, 17 Sep 2026 18:33:13 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Microsoft AI CEO says AI threats are real, and Anthropic is making it worse",
+      "link": "https://www.theverge.com/podcast/996412/microsoft-ai-ceo-mustafa-suleyman-regulation-safety-anthropic-claude",
+      "date": "2026-09-17T10:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The Download: mice with part-human brains and climate tech innovators",
+      "link": "https://www.technologyreview.com/2026/09/17/1144314/the-download-mice-part-human-brains-climate-tech-innovators/",
+      "date": "Thu, 17 Sep 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Meet the innovators under 35 shaping climate tech",
+      "link": "https://www.technologyreview.com/2026/09/17/1144251/innovators-shaping-climate-tech/",
+      "date": "Thu, 17 Sep 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Rethinking Robot Safety in the Age of AI",
+      "link": "https://spectrum.ieee.org/physical-ai-robot-cybersecurity-vicone",
+      "date": "Wed, 16 Sep 2026 16:51:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Single-Phase Direct Liquid Cooling Is Proven for the Next Decade of Ultra-Dense Compute",
+      "link": "https://content.knowledgehub.wiley.com/single-phase-direct-liquid-cooling-is-proven-for-the-next-decade-of-ultra-dense-compute/",
+      "date": "Wed, 16 Sep 2026 13:24:18 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Your Agent Aced the Task. Will It Do It Again?",
+      "link": "https://huggingface.co/blog/ibm-research/altk-evolve-consistency",
+      "date": "Tue, 15 Sep 2026 16:00:44 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Responsible AI for Higher Education",
+      "link": "https://webinars.on24.com/wileyevents/ResponsibleAI",
+      "date": "Mon, 14 Sep 2026 14:18:11 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "How OpenAI Used Its Own LLMs to Design Its Jalapeño Chip",
+      "link": "https://spectrum.ieee.org/llms-for-chip-design",
+      "date": "Mon, 14 Sep 2026 14:06:31 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Async GRPO with LoRA across HF Jobs: a bucket, a proxy, and no NCCL",
+      "link": "https://huggingface.co/blog/asyncgrpo-lora-hfjobs",
+      "date": "Thu, 10 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Rebuilding AUTOMATIC1111 with Gradio Workflow",
+      "link": "https://huggingface.co/blog/gradio-workflow-1111",
+      "date": "Thu, 10 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Safety for Whom? Refusing the Right Subset of a Topic, Not the Whole Topic",
+      "link": "https://huggingface.co/blog/MultiverseComputingCAI/safety-for-whom",
+      "date": "Tue, 08 Sep 2026 14:23:07 GMT",
+      "source": "Hugging Face"
+    }
+  ]
+}
