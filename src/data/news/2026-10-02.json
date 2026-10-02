@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-02",
+  "fetchedAt": "2026-10-02T13:29:45.564Z",
+  "items": [
+    {
+      "title": "The Download: a biological de-aging contest and why LLMs don’t reason",
+      "link": "https://www.technologyreview.com/2026/10/02/1145666/the-download-biological-de-aging-ai-reasoning/",
+      "date": "Fri, 02 Oct 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "AI hallucinations are making entitled customers even worse",
+      "link": "https://www.theverge.com/report/1002963/ai-hallucinations-customer-service-jobs-agents",
+      "date": "2026-10-02T08:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "If a data center is camouflaged in the woods, will anyone hate it?",
+      "link": "https://www.theverge.com/tech/1003681/microsoft-data-centers-ai-environment-biomimicry",
+      "date": "2026-10-02T08:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Amazon writes scary blog warning communities not to block data centers",
+      "link": "https://www.theverge.com/tech/1003929/amazon-ai-data-center-blog-warning",
+      "date": "2026-10-02T07:52:20-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "A Flaw in ChatGPT’s Mac App Could Have Let Hackers Grab Sensitive Data",
+      "link": "https://www.wired.com/story/a-flaw-in-chatgpts-mac-app-could-have-let-hackers-grab-sensitive-data/",
+      "date": "Fri, 02 Oct 2026 09:45:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "AI music maker Suno now generates spoken words",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1003925/suno-speech-ai-voice-feature-beta-availability",
+      "date": "2026-10-02T05:42:19-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Health Care Workers Are Tired of Cleaning Up Palantir’s Mess",
+      "link": "https://www.wired.com/story/healthcare-workers-are-tired-of-cleaning-up-palantirs-mess/",
+      "date": "Fri, 02 Oct 2026 09:30:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "A new contest pits competitors against each other in a race to biological youth",
+      "link": "https://www.technologyreview.com/2026/10/02/1145610/younger-contest-race-to-biological-youth/",
+      "date": "Fri, 02 Oct 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Don’t be fooled—LLMs don’t reason",
+      "link": "https://www.technologyreview.com/2026/10/02/1145639/dont-be-fooled-llms-dont-reason/",
+      "date": "Fri, 02 Oct 2026 08:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "AutoSynthData: Generating Training Data for Enterprise Agents",
+      "link": "https://huggingface.co/blog/ServiceNow-AI/autosynthdata",
+      "date": "Fri, 02 Oct 2026 04:01:31 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Whatever AI Safety Is, It’s Not This",
+      "link": "https://www.wired.com/story/whatever-ai-safety-looks-like-its-not-this/",
+      "date": "Thu, 01 Oct 2026 22:10:42 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Musk’s AI chatbot Grok reportedly encouraged Trump to capture  Venezuela’s president",
+      "link": "https://techcrunch.com/2026/10/01/musks-ai-chatbot-grok-reportedly-encouraged-trump-to-capture-venezuelas-president/",
+      "date": "Thu, 01 Oct 2026 21:08:11 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Judge dismisses Chegg and Penske antitrust lawsuits targeting Google AI search",
+      "link": "https://arstechnica.com/google/2026/10/antitrust-lawsuits-targeting-google-ai-search-dismissed-by-federal-judge/",
+      "date": "Thu, 01 Oct 2026 20:11:55 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Trump’s ‘Morally Binding’ AI ‘Accord,’ the Rise of AI Agents, and Extremists on the Ballot",
+      "link": "https://www.wired.com/story/uncanny-valley-podcast-trumps-pinky-swear-ai-safety-accord-an-ai-agent-worth-the-risk/",
+      "date": "Thu, 01 Oct 2026 19:58:31 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "ChatGPT can now virtually try on clothes for you",
+      "link": "https://techcrunch.com/2026/10/01/chatgpt-can-now-virtually-try-on-clothes-for-you/",
+      "date": "Thu, 01 Oct 2026 19:21:53 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Google thinks SpaceX’s Starship has to launch 1,800 times before space data centers get off the ground",
+      "link": "https://techcrunch.com/2026/10/01/google-thinks-spacexs-starship-has-to-launch-1600-times-before-space-data-centers-get-off-the-ground/",
+      "date": "Thu, 01 Oct 2026 19:18:03 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI cuts ties with 3 safety researchers, WSJ reports",
+      "link": "https://techcrunch.com/2026/10/01/openai-cuts-ties-with-three-safety-researchers-wsj-reports/",
+      "date": "Thu, 01 Oct 2026 18:14:42 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "With most information hidden, the game Stratego had stumped AI—until now",
+      "link": "https://arstechnica.com/science/2026/10/ai-finally-beat-the-best-stratego-player-in-history-and-did-it-on-a-budget/",
+      "date": "Thu, 01 Oct 2026 16:28:04 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Introducing Olmo-core 3: Open, scalable training infrastructure for large MoEs",
+      "link": "https://huggingface.co/blog/allenai/olmocore3",
+      "date": "Thu, 01 Oct 2026 15:01:43 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "The Download: AI “mind-reading” and creative uses for small batteries",
+      "link": "https://www.technologyreview.com/2026/10/01/1145592/the-download-ai-mind-reading-small-batteries/",
+      "date": "Thu, 01 Oct 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Google announces Gemini 4 Argon AI model, but you can't use it yet",
+      "link": "https://arstechnica.com/google/2026/09/google-announces-gemini-4-argon-ai-model-but-you-cant-use-it-yet/",
+      "date": "Wed, 30 Sep 2026 20:11:08 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "RFK Jr. thinks AI will free us from the \"tyranny\" of medical facts, expertise",
+      "link": "https://arstechnica.com/health/2026/09/rfk-jr-says-ai-backs-his-anti-vaccine-views-we-checked-it-doesnt/",
+      "date": "Wed, 30 Sep 2026 19:31:25 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Open TTS Leaderboard: Scalable Evaluation for Multilingual Text-to-Speech and Voice Cloning",
+      "link": "https://huggingface.co/blog/open-tts-leaderboard",
+      "date": "Wed, 30 Sep 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "NVIDIA Kumo Tabular Sets a New Accuracy-Efficiency Frontier for Tabular Prediction",
+      "link": "https://huggingface.co/blog/nvidia/kumo-tabular",
+      "date": "Tue, 29 Sep 2026 15:30:38 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "How to Stop AI Agents From Secretly Collaborating",
+      "link": "https://spectrum.ieee.org/ai-agent-security",
+      "date": "Tue, 29 Sep 2026 12:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Unveiling IC-STAR: Full-Flow Autonomy from Digital to Analog",
+      "link": "https://event.on24.com/wcc/r/5507421/A45CEFBA43BC7B2A43F265520AFDBA32",
+      "date": "Tue, 29 Sep 2026 10:00:06 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "A Day in the Life of a Roboticist: Charlie Kemp",
+      "link": "https://robotsguide.com/learn/a-day-in-the-life-of-a-roboticist-charlie-kemp",
+      "date": "Mon, 28 Sep 2026 21:48:56 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Generative AI Gives Spacecraft the Autonomy Engineers Once Feared",
+      "link": "https://spectrum.ieee.org/generative-ai-in-space-exploration",
+      "date": "Mon, 28 Sep 2026 11:00:05 +0000",
+      "source": "IEEE Spectrum"
+    }
+  ]
+}
