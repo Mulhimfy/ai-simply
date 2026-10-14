@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-14",
+  "fetchedAt": "2026-10-14T12:36:26.606Z",
+  "items": [
+    {
+      "title": "The Download: faking blood and the future of batteries",
+      "link": "https://www.technologyreview.com/2026/10/14/1146452/the-download-military-fake-blood-future-batteries/",
+      "date": "Wed, 14 Oct 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "OpenAI, Google pushing new AI models easily tricked into making nudes, researchers say",
+      "link": "https://arstechnica.com/tech-policy/2026/10/openai-google-pushing-new-ai-models-easily-tricked-into-making-nudes-researchers-say/",
+      "date": "Wed, 14 Oct 2026 11:00:30 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Scimplify raises $25M to challenge China’s grip on critical materials with AI",
+      "link": "https://techcrunch.com/2026/10/14/scimplify-raises-25m-to-challenge-chinas-grip-on-critical-materials-with-ai/",
+      "date": "Wed, 14 Oct 2026 11:00:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "My Friend Has No Soul",
+      "link": "https://www.wired.com/story/my-friend-has-no-soul/",
+      "date": "Wed, 14 Oct 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Men Can’t Stop Faking How Much They Know About AI",
+      "link": "https://www.wired.com/story/men-cant-stop-faking-how-much-they-know-about-ai/",
+      "date": "Wed, 14 Oct 2026 09:30:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "AI Models Can Be Easily Modified to Assist Terrorist and Extremist Activity",
+      "link": "https://www.wired.com/story/ai-models-can-be-easily-modified-to-assist-terrorist-and-extremist-activity/",
+      "date": "Wed, 14 Oct 2026 09:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "The US military’s race to make fake blood",
+      "link": "https://www.technologyreview.com/2026/10/14/1145807/us-military-race-to-make-fake-blood/",
+      "date": "Wed, 14 Oct 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "An OpenAI Employee Allegedly Used a Chatbot to Help Plant a Recording Device at the Office",
+      "link": "https://www.wired.com/story/an-openai-employee-allegedly-used-a-chatbot-to-help-plant-a-recording-device-at-the-office/",
+      "date": "Tue, 13 Oct 2026 23:17:59 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Science Corporation implants its vision-restoring chip in its first Stargardt disease patient",
+      "link": "https://techcrunch.com/2026/10/13/science-corporation-implants-its-vision-restoring-chip-in-its-first-stargardt-disease-patient/",
+      "date": "Tue, 13 Oct 2026 23:13:31 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Cerebras CEO says we’re nearing a future where everyone has a personal AI assistant at home",
+      "link": "https://techcrunch.com/2026/10/13/cerebras-ceo-says-were-nearing-a-future-where-everyone-has-a-personal-ai-assistant-at-home/",
+      "date": "Tue, 13 Oct 2026 23:05:34 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Industrial Next wants factory robots to switch tasks in minutes, not weeks",
+      "link": "https://techcrunch.com/2026/10/13/industrial-next-wants-factory-robots-to-switch-tasks-in-minutes-not-weeks/",
+      "date": "Tue, 13 Oct 2026 23:00:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "OpenAI employee arrested for allegedly planting a bug in a conference room",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1010642/openai-employee-arrested-recording-device",
+      "date": "2026-10-13T16:45:25-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Shopify opens its catalog up to more AI agents",
+      "link": "https://www.theverge.com/news/1010365/shopify-opens-its-catalog-up-to-more-ai-agents",
+      "date": "2026-10-13T15:42:42-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Xbox is officially embracing the chaos of AI-powered game ports",
+      "link": "https://www.theverge.com/news/1010406/xbox-labs-game-decompiling-emulation-exploration",
+      "date": "2026-10-13T15:00:48-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Disney offers $20M for Character.AI’s scandal-plagued chatbot tech",
+      "link": "https://arstechnica.com/tech-policy/2026/10/disney-offers-20m-for-character-ais-scandal-plagued-chatbot-tech/",
+      "date": "Tue, 13 Oct 2026 18:23:33 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "I don’t miss the camera on the Ray-Ban Meta Audio glasses",
+      "link": "https://www.theverge.com/tech/1009128/ray-ban-meta-audio-glasses-review-smart-glasses-headphones-wearables",
+      "date": "2026-10-13T14:00:00-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Run fast, private agents on-device with LFM2.5-24B-A2B",
+      "link": "https://huggingface.co/blog/LiquidAI/lfm25-24b-a2b",
+      "date": "Tue, 13 Oct 2026 17:05:48 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Google wants to host your personal vibe-coded apps in the Play Store",
+      "link": "https://arstechnica.com/google/2026/10/google-wants-to-host-your-personal-vibe-coded-apps-in-the-play-store/",
+      "date": "Tue, 13 Oct 2026 17:00:39 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Gemini 4 Argon begins rolling out in Gemini app and Antigravity, but only if you pay",
+      "link": "https://arstechnica.com/ai/2026/10/gemini-4-argon-begins-rolling-out-in-gemini-app-and-antigravity-but-only-if-you-pay/",
+      "date": "Tue, 13 Oct 2026 16:00:02 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Google Deepmind’s New Resident Philosopher Tackles AI Ethics",
+      "link": "https://spectrum.ieee.org/ai-ethics-deepmind-philosopher-shevlin",
+      "date": "Tue, 13 Oct 2026 13:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: open model trade-offs and geothermal power’s promise",
+      "link": "https://www.technologyreview.com/2026/10/13/1146382/the-download-open-models-trade-offs-geothermal-power/",
+      "date": "Tue, 13 Oct 2026 12:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Open models have real benefits. Do they outweigh the risks?",
+      "link": "https://www.technologyreview.com/2026/10/13/1146366/open-models-have-real-benefits-do-they-outweigh-the-risks/",
+      "date": "Tue, 13 Oct 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Meet the Anthropic Engineer Keeping Its AI Agent Trustworthy",
+      "link": "https://spectrum.ieee.org/anthropic-engineer-ai-agent",
+      "date": "Mon, 12 Oct 2026 18:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Learning to Play Like a Pro: Adaptive Motion Planning and Tracking for Humanoid Robots",
+      "link": "https://content.knowledgehub.wiley.com/learning-to-play-like-a-pro-adaptive-motion-planning-and-tracking-for-humanoid-robots/",
+      "date": "Mon, 12 Oct 2026 10:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Master AI Chip Principles With New IEEE Design Program",
+      "link": "https://spectrum.ieee.org/master-ai-chip-principles-ieee",
+      "date": "Fri, 09 Oct 2026 18:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Impactful scheduling for GPU clusters",
+      "link": "https://huggingface.co/blog/allenai/impactful-scheduling",
+      "date": "Fri, 09 Oct 2026 15:20:29 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "The model that didn't exist, so you made it yourself",
+      "link": "https://huggingface.co/blog/building-with-ml-intern",
+      "date": "Thu, 08 Oct 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Introducing Falcon ASR",
+      "link": "https://huggingface.co/blog/tiiuae/falcon-asr",
+      "date": "Wed, 07 Oct 2026 13:21:03 GMT",
+      "source": "Hugging Face"
+    }
+  ]
+}
