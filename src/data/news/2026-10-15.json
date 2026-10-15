@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-15",
+  "fetchedAt": "2026-10-15T12:23:55.619Z",
+  "items": [
+    {
+      "title": "How much more can nuclear power plants give?",
+      "link": "https://www.technologyreview.com/2026/10/15/1146577/nuclear-power-upgrade/",
+      "date": "Thu, 15 Oct 2026 10:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Six wild ideas for perpetuating your mind",
+      "link": "https://www.technologyreview.com/2026/10/15/1145819/six-wild-ideas-perpetuating-your-mind-cognitive-immortality/",
+      "date": "Thu, 15 Oct 2026 09:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Pig kidneys that were “frozen” for a year have been brought back to life",
+      "link": "https://www.technologyreview.com/2026/10/15/1146091/pig-kidneys-that-were-frozen-for-a-year-have-been-brought-back-to-life/",
+      "date": "Thu, 15 Oct 2026 08:43:24 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Figma announces new features to define how agents work on its platform",
+      "link": "https://techcrunch.com/2026/10/14/figma-announces-new-features-to-define-how-agents-work-on-its-platform/",
+      "date": "Thu, 15 Oct 2026 04:30:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Ricursive Intelligence is betting on AI-designed chips to help solve the compute crisis",
+      "link": "https://techcrunch.com/2026/10/14/ricursive-intelligence-is-betting-on-ai-designed-chips-to-help-solve-the-compute-crisis/",
+      "date": "Thu, 15 Oct 2026 01:01:32 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Gudea leverages AI to help organizations prevent social media crises before they erupt",
+      "link": "https://techcrunch.com/2026/10/14/gudea-leverages-ai-to-help-organizations-prevent-social-media-crises-before-they-erupt/",
+      "date": "Thu, 15 Oct 2026 00:00:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "McKinsey is making job applicants spar with a fake AI client",
+      "link": "https://www.theverge.com/news/1011654/mckinsey-ai-client-interview",
+      "date": "2026-10-14T18:53:31-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Flock CEO says its microphones detect ‘just gunshots’ — its website says different",
+      "link": "https://techcrunch.com/2026/10/14/flock-ceo-says-its-microphones-detect-just-gunshots-its-website-says-different/",
+      "date": "Wed, 14 Oct 2026 21:30:33 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Epic says its new vibe-coded Epic Games Launcher is faster than Steam",
+      "link": "https://arstechnica.com/gaming/2026/10/programming-is-hard-epic-games-leans-on-vibe-coding-for-its-new-launcher-app/",
+      "date": "Wed, 14 Oct 2026 21:15:56 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Eight states sue OpenAI, saying ChatGPT isn’t safe for kids",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1011500/openai-state-lawsuits-chatgpt-safety",
+      "date": "2026-10-14T17:11:28-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The AI race is back on",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1011311/the-ai-race-is-back-on",
+      "date": "2026-10-14T15:06:03-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Now that Character.AI is going bankrupt, what happens to all of its users’ data?",
+      "link": "https://www.theverge.com/policy/1011417/new-york-ag-characterai-bankruptcy",
+      "date": "2026-10-14T14:47:54-04:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "AI Came for Math. Now It’s Chasing the Rest of Science",
+      "link": "https://www.wired.com/story/ai-is-coming-for-science-next-watch-out/",
+      "date": "Wed, 14 Oct 2026 18:15:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Researchers use AI to design proteins that cut up other proteins",
+      "link": "https://arstechnica.com/science/2026/10/researchers-use-ai-to-design-proteins-that-cut-up-other-proteins/",
+      "date": "Wed, 14 Oct 2026 17:10:15 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Recording device hidden in toilet paper found in top-secret OpenAI meeting room",
+      "link": "https://arstechnica.com/tech-policy/2026/10/fbi-arrests-openai-engineer-suspected-of-planting-bug-in-conference-room/",
+      "date": "Wed, 14 Oct 2026 16:41:49 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "HiRO-ACEv2: Simulating extreme weather at 3 km resolution for a fraction of the cost",
+      "link": "https://huggingface.co/blog/allenai/hiro-acev2",
+      "date": "Wed, 14 Oct 2026 16:12:42 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Anthropic warns small AI models could self-replicate through IoT devices",
+      "link": "https://arstechnica.com/security/2026/10/anthropic-warns-small-ai-models-could-self-replicate-through-iot-devices/",
+      "date": "Wed, 14 Oct 2026 12:55:06 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The Download: faking blood and the future of batteries",
+      "link": "https://www.technologyreview.com/2026/10/14/1146452/the-download-military-fake-blood-future-batteries/",
+      "date": "Wed, 14 Oct 2026 12:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "My Friend Has No Soul",
+      "link": "https://www.wired.com/story/my-friend-has-no-soul/",
+      "date": "Wed, 14 Oct 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Men Can’t Stop Faking How Much They Know About AI",
+      "link": "https://www.wired.com/story/men-cant-stop-faking-how-much-they-know-about-ai/",
+      "date": "Wed, 14 Oct 2026 09:30:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "AI Models Can Be Easily Modified to Assist Terrorist and Extremist Activity",
+      "link": "https://www.wired.com/story/ai-models-can-be-easily-modified-to-assist-terrorist-and-extremist-activity/",
+      "date": "Wed, 14 Oct 2026 09:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Run fast, private agents on-device with LFM2.5-24B-A2B",
+      "link": "https://huggingface.co/blog/LiquidAI/lfm25-24b-a2b",
+      "date": "Tue, 13 Oct 2026 17:05:48 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Google DeepMind’s New Resident Philosopher Tackles AI Ethics",
+      "link": "https://spectrum.ieee.org/ai-ethics-deepmind-philosopher-shevlin",
+      "date": "Tue, 13 Oct 2026 13:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Meet the Anthropic Engineer Keeping Its AI Agent Trustworthy",
+      "link": "https://spectrum.ieee.org/anthropic-engineer-ai-agent",
+      "date": "Mon, 12 Oct 2026 18:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Learning to Play Like a Pro: Adaptive Motion Planning and Tracking for Humanoid Robots",
+      "link": "https://content.knowledgehub.wiley.com/learning-to-play-like-a-pro-adaptive-motion-planning-and-tracking-for-humanoid-robots/",
+      "date": "Mon, 12 Oct 2026 10:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Master AI Chip Principles With New IEEE Design Program",
+      "link": "https://spectrum.ieee.org/master-ai-chip-principles-ieee",
+      "date": "Fri, 09 Oct 2026 18:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The model that didn't exist, so you made it yourself",
+      "link": "https://huggingface.co/blog/building-with-ml-intern",
+      "date": "Thu, 08 Oct 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Introducing Falcon ASR",
+      "link": "https://huggingface.co/blog/tiiuae/falcon-asr",
+      "date": "Wed, 07 Oct 2026 13:21:03 GMT",
+      "source": "Hugging Face"
+    }
+  ]
+}
