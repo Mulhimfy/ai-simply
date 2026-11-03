@@ -1,5 +1,6 @@
 ---
 title: "What Is a Large Language Model (LLM)? Plain-English Guide (2026)"
+seoTitle: "What Is a Large Language Model (LLM)? Explained"
 description: "LLMs power ChatGPT, Claude, and Gemini — but what are they really? Learn how large language models actually work, in plain English. No jargon, no hype."
 pubDate: 2026-03-18
 updatedDate: 2026-03-18

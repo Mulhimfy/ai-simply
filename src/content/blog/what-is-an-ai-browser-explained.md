@@ -1,5 +1,6 @@
 ---
 title: "What Is an AI Browser? Atlas, Comet, and the Browser War of 2026"
+seoTitle: "What Is an AI Browser? Atlas, Comet and More"
 description: "AI browsers like ChatGPT Atlas and Perplexity Comet don't just show websites — they use them for you. Here's how they work, who makes them, and whether they're safe."
 pubDate: 2026-04-20
 updatedDate: 2026-04-20

@@ -115,7 +115,7 @@ const itemListSchema = post.body
 	: null;
 ---
 <Base
-	title={d.title}
+	title={d.seoTitle ?? d.title}
 	description={d.description}
 	image={d.heroImage ?? ogUrl('blog', slug)}
 	type="article"

@@ -1,5 +1,6 @@
 ---
 title: "What Are Deepfakes? How AI Fakes Reality (And How to Spot One)"
+seoTitle: "What Are Deepfakes? And How to Spot One"
 description: "Deepfakes cost one company $25 million. Here's exactly what deepfakes are, how AI makes them, and how to spot one before it fools you."
 pubDate: 2026-03-13
 updatedDate: 2026-03-13

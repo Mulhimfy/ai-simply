@@ -1,5 +1,6 @@
 ---
 title: "What Are AI Hallucinations? Why AI Lies to You (And How to Catch It)"
+seoTitle: "What Are AI Hallucinations? Why AI Makes Things Up"
 description: "AI hallucinations are when tools like ChatGPT confidently make things up. Learn why it happens, how often each model hallucinates, and how to spot it."
 pubDate: 2026-03-11
 updatedDate: 2026-03-11

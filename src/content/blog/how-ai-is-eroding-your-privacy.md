@@ -1,5 +1,6 @@
 ---
 title: "How AI Is Quietly Eroding Your Privacy: Surveillance, Face Scanning, and Digital Control"
+seoTitle: "How AI Is Quietly Eroding Your Privacy"
 description: "AI privacy threats are escalating — from facial recognition to digital IDs that track your every move. Here's what's really happening."
 pubDate: 2026-03-02
 updatedDate: 2026-03-02

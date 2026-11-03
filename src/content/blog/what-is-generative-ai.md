@@ -1,5 +1,6 @@
 ---
 title: "What Is Generative AI? Simply Explained in Plain English (2026)"
+seoTitle: "What Is Generative AI? Explained Simply (2026)"
 description: "Generative AI creates new content — text, images, video, code — instead of just analyzing data. Here's a simple explanation of what it is, how it works, and where it fails."
 pubDate: 2026-03-12
 updatedDate: 2026-03-25

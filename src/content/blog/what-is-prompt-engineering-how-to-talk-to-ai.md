@@ -1,5 +1,6 @@
 ---
 title: "What Is Prompt Engineering? The 2026 Guide to Better AI Results"
+seoTitle: "What Is Prompt Engineering? A 2026 Guide"
 description: "Prompt engineering lets you get 10x better results from ChatGPT and Claude. Learn the key techniques with real examples."
 pubDate: 2026-03-09
 updatedDate: 2026-03-09

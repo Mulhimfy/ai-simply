@@ -1,5 +1,6 @@
 ---
 title: "What Is Sovereign AI? The Global Race to Own Artificial Intelligence"
+seoTitle: "What Is Sovereign AI? The Race to Own AI"
 description: "Sovereign AI is reshaping who controls artificial intelligence. What it means, who's winning, and why it matters to you."
 pubDate: 2026-03-07
 updatedDate: 2026-03-07

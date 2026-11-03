@@ -1,5 +1,6 @@
 ---
 title: "Is AI Making Us Dumber? The Deskilling Problem Nobody's Talking About"
+seoTitle: "Is AI Making Us Dumber? The Deskilling Problem"
 description: "AI deskilling is real — research shows doctors, lawyers, and students are losing key abilities. Here's what the science says."
 pubDate: 2026-03-11
 updatedDate: 2026-03-11

@@ -1,5 +1,6 @@
 ---
 title: "Can AI Tell If You're Lying? Inside Emotion Detection AI"
+seoTitle: "Can AI Read Your Emotions? Emotion AI Explained"
 description: "Emotion AI claims to read your face and voice for hidden feelings. Here's what it does, where it's being used — and why scientists say it's broken."
 pubDate: 2026-03-16
 updatedDate: 2026-03-16

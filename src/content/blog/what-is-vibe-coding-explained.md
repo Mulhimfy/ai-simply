@@ -1,5 +1,6 @@
 ---
 title: "What Is Vibe Coding? The No-Code AI Revolution Explained (2026)"
+seoTitle: "What Is Vibe Coding? Explained (2026)"
 description: "Vibe coding lets anyone build real apps by describing them in plain English — no programming required. Here's how it works, who it's for, and the tools behind it."
 pubDate: 2026-03-21
 updatedDate: 2026-03-21

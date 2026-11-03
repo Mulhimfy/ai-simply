@@ -1,5 +1,6 @@
 ---
 title: "What Is an AI Reasoning Model? How 'Thinking' AI Actually Works (2026)"
+seoTitle: "What Is an AI Reasoning Model? How It Thinks"
 description: "AI reasoning models like o3 and DeepSeek R1 pause and think before answering. Here's exactly what that means, how it works, and when you should actually use one."
 pubDate: 2026-03-19
 updatedDate: 2026-03-19

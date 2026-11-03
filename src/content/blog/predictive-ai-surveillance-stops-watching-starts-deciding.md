@@ -1,5 +1,6 @@
 ---
 title: "Predictive AI: When Surveillance Stops Watching and Starts Deciding"
+seoTitle: "Predictive AI: When Surveillance Starts Deciding"
 description: "Predictive AI now judges and acts — in courts, insurance, schools, and hiring. How the shift from watching to deciding changes everything."
 pubDate: 2026-03-02
 updatedDate: 2026-03-02
