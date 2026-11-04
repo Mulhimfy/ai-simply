@@ -1,0 +1,174 @@
+{
+  "date": "2026-11-04",
+  "fetchedAt": "2026-11-04T15:00:51.042Z",
+  "items": [
+    {
+      "title": "Sam Altman addresses RAM comments: people should ‘put as much as they want in their computers’",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1026292/sam-altman-ram-shortage-pcs-comments",
+      "date": "2026-11-04T09:46:01-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "UK Officials Said AI Would Add £400 Billion to the Economy. That Figure Mainly Came From Google",
+      "link": "https://www.wired.com/story/uk-officials-said-ai-would-add-400-billion-to-the-economy-that-figure-mainly-came-from-google/",
+      "date": "Wed, 04 Nov 2026 13:49:51 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "The Download: blended meat, restored sight, and the agentic web",
+      "link": "https://www.technologyreview.com/2026/11/04/1148001/the-download-blended-meat-sight-restoring-implant-agentic-web/",
+      "date": "Wed, 04 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "TechCrunch Founder Summit 2026: Doors open at 9 a.m. ET in Boston",
+      "link": "https://techcrunch.com/2026/11/04/techcrunch-founder-summit-2026-todays-the-day/",
+      "date": "Wed, 04 Nov 2026 13:00:00 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Securing the agentic enterprise with data lineage",
+      "link": "https://www.technologyreview.com/2026/11/04/1147596/securing-the-agentic-enterprise-with-data-lineage/",
+      "date": "Wed, 04 Nov 2026 13:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Google hasn’t figured out how to make AI pay like its search engine",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1024862/google-search-ai-overviews-alphabet-earnings-q3",
+      "date": "2026-11-04T07:00:00-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The biggest modding site in PC gaming is taking a stance on AI",
+      "link": "https://www.theverge.com/games/1026085/nexus-mods-ai-disclosures",
+      "date": "2026-11-03T19:42:10-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Please stop asking me when the AI bubble will pop",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1025826/ai-bubble-pimco-apollo-bonds",
+      "date": "2026-11-03T18:37:45-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Anthropic is working on a system to prove AI models’ identity",
+      "link": "https://techcrunch.com/2026/11/03/anthropic-is-working-on-a-system-to-prove-ai-models-identity/",
+      "date": "Tue, 03 Nov 2026 22:41:03 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Data centers are turning to old jet engines as the wait for power grows",
+      "link": "https://techcrunch.com/2026/11/03/data-centers-are-turning-to-old-jet-engines-as-the-wait-for-power-grows/",
+      "date": "Tue, 03 Nov 2026 22:19:53 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Ted Schlein’s Ballistic Ventures seeks $490M for new funds amid AI-driven cybersecurity boom",
+      "link": "https://techcrunch.com/2026/11/03/ted-schleins-ballistic-ventures-seeks-490m-for-new-funds-amid-ai-driven-cybersecurity-boom/",
+      "date": "Tue, 03 Nov 2026 21:43:08 +0000",
+      "source": "TechCrunch"
+    },
+    {
+      "title": "Ukraine’s drone strikes spur hasty Russian plans for underground data centers",
+      "link": "https://arstechnica.com/ai/2026/11/russia-looks-to-hide-data-centers-underground-as-ukrainian-drones-strike-back/",
+      "date": "Tue, 03 Nov 2026 20:39:55 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Google will let schools skip AI tools, but they have to give up search, too",
+      "link": "https://arstechnica.com/ai/2026/11/google-will-let-schools-skip-ai-tools-but-they-have-to-give-up-search-too/",
+      "date": "Tue, 03 Nov 2026 17:54:43 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "StateBench: Testing how language models track state changes over long documents",
+      "link": "https://huggingface.co/blog/allenai/statebench",
+      "date": "Tue, 03 Nov 2026 17:15:21 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Palette: teaching a small model to build decks in your design language",
+      "link": "https://huggingface.co/blog/ibm-research/palette-deck-building",
+      "date": "Tue, 03 Nov 2026 16:35:36 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Here’s Why You Shouldn’t Use AI to Vote",
+      "link": "https://www.wired.com/story/heres-why-you-shouldnt-use-ai-to-vote/",
+      "date": "Tue, 03 Nov 2026 14:45:08 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "How a Kenyan Startup Is Rethinking AI for Small Businesses",
+      "link": "https://spectrum.ieee.org/ai-small-business-mobile-money-startup",
+      "date": "Tue, 03 Nov 2026 14:30:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: controlling AI agents and “Super Intelligence” loyalty tests",
+      "link": "https://www.technologyreview.com/2026/11/03/1147940/the-download-controlling-ai-agents-trump-super-intelligence/",
+      "date": "Tue, 03 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "‘Our Risk, Their Reward’: Zohran Mamdani on AI and Data Centers",
+      "link": "https://www.wired.com/story/the-big-interview-podcast-nyc-mayor-zohran-mamdani/",
+      "date": "Tue, 03 Nov 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "How “reverse game theory” could keep AI agents in check",
+      "link": "https://www.technologyreview.com/2026/11/03/1147934/reverse-game-theory-mechanism-design-ai-alignment/",
+      "date": "Tue, 03 Nov 2026 10:43:41 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "CWE-bench v2: More coverage, quality, and transparency",
+      "link": "https://huggingface.co/blog/cwe-bench",
+      "date": "Tue, 03 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Transformers Model Integration Contracts",
+      "link": "https://huggingface.co/blog/transformers-mic",
+      "date": "Tue, 03 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Coming in 2027: Apple’s $1,000 home robot for FaceTime and switching on lights",
+      "link": "https://arstechnica.com/apple/2026/11/apples-roaming-home-robot-may-do-facetime-switch-lights-on-and-yell-at-your-cat/",
+      "date": "Mon, 02 Nov 2026 18:32:21 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Claude’s new rules against game cloning won’t stop the AI copying boom",
+      "link": "https://arstechnica.com/ai/2026/11/claudes-new-rules-against-game-cloning-wont-stop-the-ai-copying-boom/",
+      "date": "Mon, 02 Nov 2026 18:05:31 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "When You Should—and Shouldn’t—Use AI to Search the Web",
+      "link": "https://www.wired.com/story/when-you-should-and-shouldnt-use-ai-to-search-the-web/",
+      "date": "Mon, 02 Nov 2026 12:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Guarding the Gates of Knowledge",
+      "link": "https://spectrum.ieee.org/ai-slop-trust-science",
+      "date": "Sun, 01 Nov 2026 14:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Consumer Appetite for Personal AI Goes Mainstream",
+      "link": "https://spectrum.ieee.org/ai-personal-assistant-intelligent-wearables",
+      "date": "Thu, 29 Oct 2026 19:18:20 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Systems Thinking Is Vital in the Age of AI",
+      "link": "https://spectrum.ieee.org/systems-thinking-vital-in-ai",
+      "date": "Wed, 28 Oct 2026 18:00:02 +0000",
+      "source": "IEEE Spectrum"
+    }
+  ]
+}
