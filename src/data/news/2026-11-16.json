@@ -1,0 +1,150 @@
+{
+  "date": "2026-11-16",
+  "fetchedAt": "2026-11-16T16:41:43.396Z",
+  "items": [
+    {
+      "title": "Jensen Huang Is Gone. Now What?",
+      "link": "https://www.wired.com/story/the-big-interview-podcast-lauren-goode-jensen-huang/",
+      "date": "Mon, 16 Nov 2026 16:12:51 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Building trustworthy AI by fencing it in, not predicting it",
+      "link": "https://www.technologyreview.com/2026/11/16/1148565/building-trustworthy-ai-by-fencing-it-in-not-predicting-it/",
+      "date": "Mon, 16 Nov 2026 16:04:28 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Jensen Huang allies build a \"war room\" to get him back at Nvidia",
+      "link": "https://arstechnica.com/ai/2026/11/jensen-huang-allies-build-a-war-room-to-get-him-back-at-nvidia/",
+      "date": "Mon, 16 Nov 2026 14:06:16 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Audible is trying to make it easier to find audiobooks you’ll actually like",
+      "link": "https://www.theverge.com/tech/1034083/audible-audio-discovery-ai-feature-availability",
+      "date": "2026-11-16T09:00:00-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Google Maps can now create trip itineraries for you",
+      "link": "https://www.theverge.com/tech/1034110/google-ask-maps-ai-trip-planning",
+      "date": "2026-11-16T09:00:00-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The Download: testing tech promises and searching for cognitive immortality",
+      "link": "https://www.technologyreview.com/2026/11/16/1148599/the-download-testing-tech-promises-cognitive-immortality-quest/",
+      "date": "Mon, 16 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "The Nvidia scandal isn’t slowing down",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1031740/jensen-huang-nvidia-scandal-isnt-slowing-down",
+      "date": "2026-11-16T08:00:00-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Building AI that can work across the enterprise",
+      "link": "https://www.technologyreview.com/2026/11/16/1146070/building-ai-that-can-work-across-the-enterprise/",
+      "date": "Mon, 16 Nov 2026 13:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Nvidia Was Already in Trouble Before the Jensen Huang Mess",
+      "link": "https://www.wired.com/story/nvidia-was-already-in-trouble-before-the-jensen-huang-mess/",
+      "date": "Mon, 16 Nov 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "28 Zero-Day Findings in Under Two Days. Is Robotics Security Keeping Pace?",
+      "link": "https://spectrum.ieee.org/zero-day-robotics-vulnerabilities-vicone-security",
+      "date": "Mon, 16 Nov 2026 10:00:01 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Apple’s new study looks to improve the effectiveness of AI health tools",
+      "link": "https://www.theverge.com/tech/1033355/apples-new-study-looks-to-improve-the-effectiveness-of-ai-health-tools",
+      "date": "2026-11-15T20:26:56-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "AI DJs Completely Kill My Groove",
+      "link": "https://www.wired.com/story/ai-djs-completely-kill-my-groove/",
+      "date": "Sun, 15 Nov 2026 12:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "This AI Tamagotchi Turns Everyday Objects Into Needy Virtual Pets",
+      "link": "https://www.wired.com/story/this-ai-tamagotchi-oats-turns-everyday-objects-into-needy-virtual-pets/",
+      "date": "Sun, 15 Nov 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "FAA expands AI advice to manage air traffic congestion across entire US airspace",
+      "link": "https://arstechnica.com/features/2026/11/faa-expands-ai-advice-to-manage-air-traffic-congestion-across-entire-us-airspace/",
+      "date": "Fri, 13 Nov 2026 21:20:47 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "How Microcredentials Help Engineers Build Trustworthy AI",
+      "link": "https://spectrum.ieee.org/microcredentials-trustworthy-ai",
+      "date": "Fri, 13 Nov 2026 19:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Build a Robot Pick-and-Place Simulation with SimReady Assets",
+      "link": "https://huggingface.co/blog/nvidia/simready-assets-robot-pick-and-place",
+      "date": "Fri, 13 Nov 2026 18:00:39 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "OpenAI board member worries an AI \"takeover\" of society could be months away",
+      "link": "https://arstechnica.com/ai/2026/11/ai-is-the-most-likely-reason-youll-die-openai-board-member-warns/",
+      "date": "Fri, 13 Nov 2026 17:25:45 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "XYBench: Helping with the problem behind the question",
+      "link": "https://huggingface.co/blog/allenai/xybench",
+      "date": "Fri, 13 Nov 2026 17:02:35 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "llama.cpp v1.0.0 : A stronger foundation for the local AI ecosystem",
+      "link": "https://huggingface.co/blog/ggml-org/llama-cpp-v1",
+      "date": "Fri, 13 Nov 2026 14:05:22 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "The Download: Silicon Valley’s blind spot and Nvidia’s chip-tracking plan",
+      "link": "https://www.technologyreview.com/2026/11/13/1148551/the-download-silicon-valley-midterms-nvidia-chip-tracking/",
+      "date": "Fri, 13 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Ars Live: What drone attacks on data centers mean for modern life in the cloud",
+      "link": "https://arstechnica.com/gadgets/2026/11/ars-live-can-the-cloud-survive-drone-strikes-on-data-centers/",
+      "date": "Thu, 12 Nov 2026 19:59:59 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "LLMON: An LLM-Native Markup Language, now in Granite 4.1 3B and 8B",
+      "link": "https://huggingface.co/blog/ibm-granite/llmon-an-llm-native-markup-language-now-in-granite",
+      "date": "Thu, 12 Nov 2026 19:07:35 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "When Does It Actually Make Sense to Put AI Into Products?",
+      "link": "https://spectrum.ieee.org/human-centered-ai-product-design",
+      "date": "Wed, 11 Nov 2026 14:00:02 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "NSF’s X-Labs Program Draws Support From Charities and Investors",
+      "link": "https://spectrum.ieee.org/national-science-foundation-x-labs",
+      "date": "Wed, 11 Nov 2026 13:00:03 +0000",
+      "source": "IEEE Spectrum"
+    }
+  ]
+}
