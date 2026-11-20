@@ -1,0 +1,144 @@
+{
+  "date": "2026-11-20",
+  "fetchedAt": "2026-11-20T15:52:47.854Z",
+  "items": [
+    {
+      "title": "The week everything fell apart",
+      "link": "https://www.theverge.com/podcast/1038419/outage-outlook-ground-stop-tech-failure-vergecast",
+      "date": "2026-11-20T09:06:59-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "The Download: inside the quest to make our minds immortal",
+      "link": "https://www.technologyreview.com/2026/11/20/1149371/the-download-quest-to-make-minds-immortal/",
+      "date": "Fri, 20 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Signal is blocking Gemini and Siri AI from reading your screen",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1038390/signal-blocking-ai-agent-screenshots-mobile-app",
+      "date": "2026-11-20T07:30:47-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Muse Is Unleashing a World of Pettiness on Instagram",
+      "link": "https://www.wired.com/story/muse-is-unleashing-a-world-of-pettiness-on-instagram/",
+      "date": "Fri, 20 Nov 2026 12:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Regular Tech Bros Are Worried About Honeypots",
+      "link": "https://www.wired.com/story/regular-tech-bros-are-worried-about-honeypots/",
+      "date": "Fri, 20 Nov 2026 11:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "This 16-Year-Old Founded an AI Missile Startup. He’s Targeting ‘Cost per Kill’",
+      "link": "https://www.wired.com/story/henrijs-dandzbergs-polemos-missiles-ai-warfare/",
+      "date": "Fri, 20 Nov 2026 07:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Introducing harness adapters: adapt your favorite model to your harness to improve performance and cost",
+      "link": "https://huggingface.co/blog/harness-adapters-at-scale",
+      "date": "Fri, 20 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Apple is hiring engineers to build its own AI agent",
+      "link": "https://www.theverge.com/tech/1038227/apple-ai-agent-engineer-job-listing",
+      "date": "2026-11-19T17:31:41-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "A brief history of Nvidia’s recent stock fluctuations",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1038063/nvidia-stock-market-price-earnings",
+      "date": "2026-11-19T16:59:35-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "What’s With All These Outages?",
+      "link": "https://www.wired.com/story/uncanny-valley-podcast-whats-with-all-these-outages/",
+      "date": "Thu, 19 Nov 2026 21:57:01 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Traumatized teens sue school, cops after Doritos bag triggers AI gun alert",
+      "link": "https://arstechnica.com/tech-policy/2026/11/traumatized-teens-sue-school-cops-after-doritos-bag-triggers-ai-gun-alert/",
+      "date": "Thu, 19 Nov 2026 20:19:28 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Meet Shepherd, the Meta-Agent Keeping Rogue AI In Check",
+      "link": "https://spectrum.ieee.org/ai-agent-manager",
+      "date": "Thu, 19 Nov 2026 15:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "The Download: a living liver, a billion-dollar battery deal, and AI hype",
+      "link": "https://www.technologyreview.com/2026/11/19/1148979/the-download-liver-kept-alive-sila-battery-deal-ai-hype/",
+      "date": "Thu, 19 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Why a Computer Scientist Thinks Superintelligence Won’t Happen",
+      "link": "https://spectrum.ieee.org/ai-superintelligence-debate",
+      "date": "Thu, 19 Nov 2026 12:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "A human liver has been kept alive outside the body for a record seven weeks",
+      "link": "https://www.technologyreview.com/2026/11/19/1148934/a-human-liver-has-been-kept-alive-outside-the-body-for-seven-weeks-setting-a-record/",
+      "date": "Thu, 19 Nov 2026 12:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "DaisyRose-27B: Pushing the Frontier of Post-Training Efficiency",
+      "link": "https://huggingface.co/blog/RadixArk/daisyrose-27b-pushing-the-frontier-of-post-trainin",
+      "date": "Wed, 18 Nov 2026 19:54:56 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Muse privacy invasions are freaking out Meta staffers, internal chats show",
+      "link": "https://arstechnica.com/tech-policy/2026/11/muse-privacy-invasions-are-freaking-out-meta-staffers-internal-chats-show/",
+      "date": "Wed, 18 Nov 2026 19:19:33 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Why your fine-tuning job takes longer than the FLOPs say",
+      "link": "https://huggingface.co/blog/Dharma-AI/predicting-fine-tuning-time",
+      "date": "Wed, 18 Nov 2026 18:53:43 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Will Wright's next simulation will use AI to mine content from your memories",
+      "link": "https://arstechnica.com/gaming/2026/11/will-wrights-next-simulation-will-use-ai-to-mine-content-from-your-memories/",
+      "date": "Wed, 18 Nov 2026 18:10:33 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Time-Series Models in the Streamhouse: A New Frontier and Use Cases",
+      "link": "https://huggingface.co/blog/ibm-research/time-series-powered-streamhouse",
+      "date": "Wed, 18 Nov 2026 15:00:23 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Startup Makes Headway Towards Formalizing All of Math With AI",
+      "link": "https://spectrum.ieee.org/enormous-theorem-ai",
+      "date": "Wed, 18 Nov 2026 13:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Will AI Coding Eat Video Game Engines?",
+      "link": "https://spectrum.ieee.org/epic-games-unreal-engine-ai",
+      "date": "Wed, 18 Nov 2026 12:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Copilot is \"the new OS for work,\" and now Office runs inside of it",
+      "link": "https://arstechnica.com/gadgets/2026/11/microsoft-calls-copilot-the-new-os-for-work-at-ignite-keynote/",
+      "date": "Wed, 18 Nov 2026 00:27:29 +0000",
+      "source": "Ars Technica"
+    }
+  ]
+}
