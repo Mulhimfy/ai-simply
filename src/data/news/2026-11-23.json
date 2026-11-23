@@ -1,0 +1,138 @@
+{
+  "date": "2026-11-23",
+  "fetchedAt": "2026-11-23T18:55:31.552Z",
+  "items": [
+    {
+      "title": "Jensen Huang Is Back, and So Is Nvidia’s Stock",
+      "link": "https://www.wired.com/story/jensens-back-stocks-up-what-the-hell-sure/",
+      "date": "Mon, 23 Nov 2026 17:52:56 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "A legendary philosopher isn’t buying Anthropic’s consciousness argument",
+      "link": "https://www.technologyreview.com/2026/11/23/1149569/a-legendary-philosopher-isnt-buying-anthropics-consciousness-argument/",
+      "date": "Mon, 23 Nov 2026 17:36:08 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "RoboTrack: Point tracking for real-world robotic manipulation",
+      "link": "https://huggingface.co/blog/allenai/robotrack",
+      "date": "Mon, 23 Nov 2026 17:20:37 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "White House brags that Trump was ‘totally involved’ in getting Jensen reinstated",
+      "link": "https://www.theverge.com/policy/1040096/trump-nvidia-jensen-huang-reinstated",
+      "date": "2026-11-23T11:30:11-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Tech leaders are celebrating Jensen Huang’s return",
+      "link": "https://www.theverge.com/tech/1040069/jensen-huang-return-elon-musk-sam-altman-yay",
+      "date": "2026-11-23T11:14:04-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Jensen Huang reinstated as Nvidia CEO, board chair",
+      "link": "https://arstechnica.com/ai/2026/11/jensen-huang-reinstated-as-nvidia-ceo-board-chair/",
+      "date": "Mon, 23 Nov 2026 15:46:18 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Nvidia Is Powering Brain-Computer Interfaces Now",
+      "link": "https://www.wired.com/story/nvidia-is-powering-brain-computer-interfaces-now/",
+      "date": "Mon, 23 Nov 2026 13:11:48 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "The Download: AI’s judgment problem and carbon removal’s crop threat",
+      "link": "https://www.technologyreview.com/2026/11/23/1149548/the-download-ai-judgment-problem-carbon-removal-crop-threat/",
+      "date": "Mon, 23 Nov 2026 13:10:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Review: The Asus ProArt P16 offers a glimpse of a future powered by local AI",
+      "link": "https://arstechnica.com/reviews/2026/11/review-the-asus-proart-p16-offers-a-glimpse-of-a-future-powered-by-local-ai/",
+      "date": "Mon, 23 Nov 2026 12:00:00 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Submit Your Questions: Will Anyone Keep You Safe From AI?",
+      "link": "https://www.wired.com/story/livestream-will-anyone-keep-us-safe-from-ai/",
+      "date": "Mon, 23 Nov 2026 12:00:00 +0000",
+      "source": "Wired"
+    },
+    {
+      "title": "Meta Muse can do your Black Friday shopping at Walmart",
+      "link": "https://www.theverge.com/ai-artificial-intelligence/1039874/walmart-agent-gateway-meta-muse-black-friday",
+      "date": "2026-11-23T06:00:00-05:00",
+      "source": "The Verge"
+    },
+    {
+      "title": "Why using rocks for carbon removal could eventually reduce crop growth",
+      "link": "https://www.technologyreview.com/2026/11/23/1149392/why-using-rocks-for-carbon-removal-could-eventually-reduce-crop-growth/",
+      "date": "Mon, 23 Nov 2026 11:00:00 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "How to build and maintain an agentic evaluation",
+      "link": "https://huggingface.co/blog/agentic-evals",
+      "date": "Mon, 23 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Google rolls out new search homepage with AI chat history and no search button",
+      "link": "https://arstechnica.com/ai/2026/11/googles-latest-search-page-redesign-drops-the-search-button-adds-ai-sidebar/",
+      "date": "Fri, 20 Nov 2026 21:58:29 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "Meta reconsiders 2030 net-zero goal amid record emissions from AI data centers",
+      "link": "https://arstechnica.com/ai/2026/11/meta-reconsiders-2030-net-zero-goal-amid-record-emissions-from-ai-data-centers/",
+      "date": "Fri, 20 Nov 2026 21:47:10 +0000",
+      "source": "Ars Technica"
+    },
+    {
+      "title": "The most misunderstood graph in AI just got a major update",
+      "link": "https://www.technologyreview.com/2026/11/20/1149399/the-most-misunderstood-graph-in-ai-just-got-a-major-update/",
+      "date": "Fri, 20 Nov 2026 18:15:15 +0000",
+      "source": "MIT Tech Review"
+    },
+    {
+      "title": "Welcome Inkling 2 Mini, Cutting-edge Performance for your Local Setup",
+      "link": "https://huggingface.co/blog/inkling2mini",
+      "date": "Fri, 20 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Introducing harness adapters: adapt your favorite model to your harness to improve performance and cost",
+      "link": "https://huggingface.co/blog/harness-adapters-at-scale",
+      "date": "Fri, 20 Nov 2026 00:00:00 GMT",
+      "source": "Hugging Face"
+    },
+    {
+      "title": "Meet Shepherd, the Meta-Agent Keeping Rogue AI In Check",
+      "link": "https://spectrum.ieee.org/ai-agent-manager",
+      "date": "Thu, 19 Nov 2026 15:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Why a Computer Scientist Thinks Superintelligence Won’t Happen",
+      "link": "https://spectrum.ieee.org/ai-superintelligence-debate",
+      "date": "Thu, 19 Nov 2026 12:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Startup Makes Headway Towards Formalizing All of Math With AI",
+      "link": "https://spectrum.ieee.org/enormous-theorem-ai",
+      "date": "Wed, 18 Nov 2026 13:00:03 +0000",
+      "source": "IEEE Spectrum"
+    },
+    {
+      "title": "Will AI Coding Eat Video Game Engines?",
+      "link": "https://spectrum.ieee.org/epic-games-unreal-engine-ai",
+      "date": "Wed, 18 Nov 2026 12:00:03 +0000",
+      "source": "IEEE Spectrum"
+    }
+  ]
+}
